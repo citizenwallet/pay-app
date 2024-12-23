@@ -45,7 +45,7 @@ dependencies:
   flutter_svg: ^2.0.16
   web3dart: ^2.7.3
   cached_network_image: ^3.4.1
-  collection: ^1.19.1
+  collection: ^1.19.0
 
 
 dev_dependencies:
