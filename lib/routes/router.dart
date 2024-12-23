@@ -26,7 +26,7 @@ GoRouter createRouter(
         ),
         GoRoute(
           name: 'Home',
-          path: '/:id',
+          path: '/:id', // user id from supabase
           parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) {
             // state.pathParameters['id']!

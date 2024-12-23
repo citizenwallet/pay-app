@@ -33,7 +33,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   static const theme = CupertinoThemeData(
     primaryColor: CupertinoColors.systemCyan,
-    brightness: Brightness.dark,
+    brightness: Brightness.light,
     scaffoldBackgroundColor: CupertinoColors.systemBackground,
     textTheme: CupertinoTextThemeData(
       textStyle: TextStyle(
@@ -68,14 +68,14 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       routerConfig: router,
       theme: theme,
-      title: 'Espla',
+      title: 'Brussels Pay',
       locale: const Locale('en'),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context)
             .copyWith(textScaler: const TextScaler.linear(1.0)),
         child: CupertinoPageScaffold(
           key: const Key('main'),
-          backgroundColor: CupertinoColors.systemBackground,
+          backgroundColor: theme.scaffoldBackgroundColor,
           child: Column(
             children: [
               Expanded(
