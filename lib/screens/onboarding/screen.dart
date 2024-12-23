@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -19,6 +20,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _dismissKeyboard() {
     FocusScope.of(context).unfocus();
+  }
+
+  void handleConfirm(int userId) async {
+    final navigator = GoRouter.of(context);
+    navigator.replace('/$userId');
   }
 
   @override
@@ -108,9 +114,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         color: const Color(0xFF3431C4),
                         borderRadius: BorderRadius.circular(100),
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        onPressed: () {
-                          // Handle confirmation
-                        },
+                        onPressed: () => handleConfirm(1),
                         child: const Text(
                           'Confirm',
                           style: TextStyle(
