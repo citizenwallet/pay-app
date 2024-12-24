@@ -3,11 +3,9 @@ import 'package:flutter/material.dart';
 
 import 'package:pay_app/widgets/wide_button.dart';
 
-import 'accout_card.dart';
 import 'notifications.dart';
 import 'about.dart';
-
-// TODO: 1. reveal QR code
+import 'flip_card_animation/flip_card.dart';
 
 class MyAccount extends StatefulWidget {
   const MyAccount({super.key});
@@ -52,8 +50,8 @@ class _MyAccountState extends State<MyAccount> {
           onPressed: goBack,
           child: Icon(
             CupertinoIcons.chevron_left,
-            color: CupertinoTheme.of(context).primaryColor,
-            size: 16,
+            color: Color(0xFF09090B),
+            size: 20,
           ),
         ),
       ),
@@ -66,7 +64,11 @@ class _MyAccountState extends State<MyAccount> {
               scrollDirection: Axis.vertical,
               padding: const EdgeInsets.symmetric(horizontal: 15),
               children: [
-                AccountCard(),
+                // TODO: position
+                Center(
+                  child: FlipCard(),
+                ),
+
                 const SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
