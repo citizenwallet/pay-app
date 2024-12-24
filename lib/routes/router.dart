@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/screens/home/screen.dart';
 import 'package:pay_app/screens/onboarding/screen.dart';
+import 'package:pay_app/screens/account/view/screen.dart';
 
 GoRouter createRouter(
   GlobalKey<NavigatorState> rootNavigatorKey,
@@ -32,6 +33,16 @@ GoRouter createRouter(
             // state.pathParameters['id']!
             return const HomeScreen();
           },
+          routes: [
+            GoRoute(
+              name: 'MyAccount',
+              path: '/my-account',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) {
+                return const MyAccount();
+              },
+            ),
+          ],
         ),
       ],
     );

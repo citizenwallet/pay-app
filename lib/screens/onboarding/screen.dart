@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
+import 'package:pay_app/widgets/wide_button.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -108,22 +109,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     const SizedBox(height: 16),
 
                     // Confirm Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: CupertinoButton(
-                        color: const Color(0xFF3431C4),
-                        borderRadius: BorderRadius.circular(100),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        onPressed: () => handleConfirm(1),
-                        child: const Text(
-                          'Confirm',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: CupertinoColors.white,
-                          ),
-                        ),
-                      ),
+                    WideButton(
+                      text: 'Confirm',
+                      onPressed: () => handleConfirm(1),
                     ),
                     const SizedBox(height: 16),
                   ],

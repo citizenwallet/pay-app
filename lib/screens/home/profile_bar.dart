@@ -1,17 +1,28 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
+import 'package:go_router/go_router.dart';
 
-class ProfileBar extends StatelessWidget {
+class ProfileBar extends StatefulWidget {
   const ProfileBar({super.key});
+
+  @override
+  State<ProfileBar> createState() => _ProfileBarState();
+}
+
+class _ProfileBarState extends State<ProfileBar> {
+  void goToMyAccount() async {
+    final navigator = GoRouter.of(context);
+
+    final userId = GoRouter.of(context).state?.pathParameters['id'];
+
+    navigator.replace('/$userId/my-account');
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        // TODO: add a button to navigate to the settings screen
-        print('Settings');
-      },
+      onTap: goToMyAccount,
       child: Container(
         height: 80,
         color: CupertinoColors.systemBackground,

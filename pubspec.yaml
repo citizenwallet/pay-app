@@ -79,6 +79,9 @@ flutter:
     - assets/icons/profile.png
     - assets/icons/profile.jpg
     - assets/icons/shop.svg
+    - assets/icons/notification_bell.svg
+    - assets/icons/term-and-condition.svg
+    - assets/icons/docs.svg
     - assets/config/v4/communities.json
     - assets/config/v4/communities.test.json
     - assets/config/v4/debug.json
