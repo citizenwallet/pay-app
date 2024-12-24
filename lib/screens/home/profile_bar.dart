@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:go_router/go_router.dart';
-  
+
 class ProfileBar extends StatefulWidget {
   const ProfileBar({super.key});
 
@@ -11,10 +11,12 @@ class ProfileBar extends StatefulWidget {
 }
 
 class _ProfileBarState extends State<ProfileBar> {
-
   void goToMyAccount() async {
     final navigator = GoRouter.of(context);
-    navigator.replace('/my-account');
+
+    final userId = GoRouter.of(context).state?.pathParameters['id'];
+
+    navigator.replace('/$userId/my-account');
   }
 
   @override
