@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
@@ -81,292 +82,113 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void goToChatHistory(Interaction interaction) {
+    if (interaction.isPlace && interaction.placeId != null) {
+      _goToChatWithPlaceId(interaction.placeId!);
+    } else {
+      _goToChatWithUserId(interaction.accountAddress);
+    }
+  }
+
+  void _goToChatWithPlaceId(int placeId) {
+    final navigator = GoRouter.of(context);
+
+    final myUserId = GoRouter.of(context).state?.pathParameters['id'];
+
+    navigator.pushNamed('ChatWithPlace',
+        pathParameters: {'placeId': placeId.toString(), 'id': myUserId!});
+  }
+
+  void _goToChatWithUserId(String accountAddress) {
+    final navigator = GoRouter.of(context);
+
+    final myUserId = GoRouter.of(context).state?.pathParameters['id'];
+
+    navigator.pushNamed('ChatWithUser',
+        pathParameters: {'accountAddress': accountAddress, 'id': myUserId!});
+  }
+
   void _dismissKeyboard() {
     FocusScope.of(context).unfocus();
   }
 
   final List<Interaction> interactions = [
+    // place with no previous interactions
     Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
+      imageUrl:
+          'https://plus.unsplash.com/premium_photo-1661883237884-263e8de8869b?q=80&w=2689&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      name: 'Fat Duck',
       accountAddress: '0x1234567890',
       isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
+      hasUnreadMessages: false,
+      location: 'Broadwalk, London',
+      lastMessageAt: null,
       placeId: 1,
-      amount: 100,
+      amount: null,
+      description: null,
+    ),
+
+    // place with previous interactions. No unread messages
+    Interaction(
+      imageUrl:
+          'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      name: 'Neptune',
+      accountAddress: '0x1234567891',
+      isPlace: true,
+      hasUnreadMessages: false,
+      location: 'Lester, London',
+      lastMessageAt: DateTime.now().subtract(const Duration(days: 1)),
+      placeId: 2,
+      amount: 12.34,
       description: 'This is a test description',
     ),
+
+    // place with previous interactions. With unread messages
     Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
+      imageUrl:
+          'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      name: 'Brew',
+      accountAddress: '0x1234567892',
       isPlace: true,
       hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
+      location: 'Mackenzie, London',
+      lastMessageAt: DateTime.now().subtract(const Duration(days: 2)),
+      placeId: 3,
+      amount: 12.34,
       description: 'This is a test description',
     ),
+
+    // user with previous interactions. No unread messages
     Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
+      imageUrl: 'https://i.pravatar.cc/300',
       name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
+      accountAddress: '0x1234567893',
+      isPlace: false,
+      hasUnreadMessages: false,
+      location: null,
+      lastMessageAt: DateTime.now().subtract(const Duration(days: 3)),
+      placeId: null,
+      amount: 4.5,
       description: 'This is a test description',
     ),
+
+    // user with previous interactions. With unread messages
     Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
+      imageUrl: 'https://i.pravatar.cc/301',
+      name: 'Foo Bar',
+      accountAddress: '0x1234567894',
+      isPlace: false,
       hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
-      description: 'This is a test description',
-    ),
-    Interaction(
-      imageUrl: 'https://robohash.org/AAA.png?set=set2',
-      name: 'John Doe',
-      accountAddress: '0x1234567890',
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: '1000 Brussels',
-      lastMessageAt: DateTime.now(),
-      placeId: 1,
-      amount: 100,
+      location: null,
+      lastMessageAt: DateTime.now().subtract(const Duration(days: 4)),
+      placeId: null,
+      amount: 4.5,
       description: 'This is a test description',
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
-   
     final double heightFactor = 1 - (_scrollOffset / _maxScrollOffset);
 
     return CupertinoPageScaffold(
@@ -397,8 +219,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       childCount: interactions.length,
-                      (context, index) =>
-                          InteractionListItem(interaction: interactions[index]),
+                      (context, index) => InteractionListItem(
+                        interaction: interactions[index],
+                        onTap: goToChatHistory,
+                      ),
                     ),
                   ),
                 ],
