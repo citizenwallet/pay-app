@@ -112,6 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
     FocusScope.of(context).unfocus();
   }
 
+  // TODO: order by descending lastMessageAt
   final List<Interaction> interactions = [
     // place with no previous interactions
     Interaction(
