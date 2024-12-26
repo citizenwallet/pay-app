@@ -5,6 +5,8 @@ import 'package:pay_app/screens/home/screen.dart';
 import 'package:pay_app/screens/onboarding/screen.dart';
 import 'package:pay_app/screens/account/view/screen.dart';
 import 'package:pay_app/screens/account/edit/screen.dart';
+import 'package:pay_app/screens/chat/place/screen.dart';
+import 'package:pay_app/screens/chat/user/screen.dart';
 
 GoRouter createRouter(
   GlobalKey<NavigatorState> rootNavigatorKey,
@@ -52,6 +54,22 @@ GoRouter createRouter(
                   },
                 ),
               ],
+            ),
+            GoRoute(
+              name: 'ChatWithPlace',
+              path: '/place/:placeId',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) {
+                return const ChatWithPlaceScreen();
+              },
+            ),
+            GoRoute(
+              name: 'ChatWithUser',
+              path: '/user/:accountAddress',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) {
+                return const ChatWithUserScreen();
+              },
             ),
           ],
         ),
