@@ -49,7 +49,7 @@ class _MyAccountState extends State<MyAccount> {
           padding: EdgeInsets.zero,
           onPressed: goBack,
           child: Icon(
-            CupertinoIcons.chevron_left,
+            CupertinoIcons.back,
             color: Color(0xFF09090B),
             size: 20,
           ),

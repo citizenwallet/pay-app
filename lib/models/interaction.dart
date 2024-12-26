@@ -43,7 +43,7 @@ class Interaction {
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toMap() {
     return {
       'name': name,
       'imageUrl': imageUrl,
