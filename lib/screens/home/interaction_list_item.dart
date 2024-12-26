@@ -20,11 +20,11 @@ class InteractionListItem extends StatelessWidget {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: () => onTap(interaction),
-      child: Padding(
+      child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: 16.0,
-          vertical: 8.0,
+          horizontal: 16,
         ),
+        margin: const EdgeInsets.only(bottom: 16),
         child: Row(
           children: [
             // Profile/Business image
