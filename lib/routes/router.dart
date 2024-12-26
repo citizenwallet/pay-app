@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pay_app/screens/home/screen.dart';
 import 'package:pay_app/screens/onboarding/screen.dart';
 import 'package:pay_app/screens/account/view/screen.dart';
+import 'package:pay_app/screens/account/edit/screen.dart';
 
 GoRouter createRouter(
   GlobalKey<NavigatorState> rootNavigatorKey,
@@ -41,6 +42,16 @@ GoRouter createRouter(
               builder: (context, state) {
                 return const MyAccount();
               },
+              routes: [
+                GoRoute(
+                  name: 'EditMyAccount',
+                  path: '/edit',
+                  parentNavigatorKey: rootNavigatorKey,
+                  builder: (context, state) {
+                    return const EditAccountScreen();
+                  },
+                ),
+              ],
             ),
           ],
         ),

@@ -64,11 +64,9 @@ class _MyAccountState extends State<MyAccount> {
               scrollDirection: Axis.vertical,
               padding: const EdgeInsets.symmetric(horizontal: 15),
               children: [
-                // TODO: position
                 Center(
                   child: FlipCard(),
                 ),
-
                 const SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),

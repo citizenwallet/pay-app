@@ -11,18 +11,18 @@ class ProfileBar extends StatefulWidget {
 }
 
 class _ProfileBarState extends State<ProfileBar> {
-  void goToMyAccount() async {
+  void _goToMyAccount() async {
     final navigator = GoRouter.of(context);
 
     final userId = GoRouter.of(context).state?.pathParameters['id'];
 
-    navigator.replace('/$userId/my-account');
+    navigator.go('/$userId/my-account');
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: goToMyAccount,
+      onTap: _goToMyAccount,
       child: Container(
         height: 80,
         color: CupertinoColors.systemBackground,

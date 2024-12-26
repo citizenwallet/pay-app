@@ -370,7 +370,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final double heightFactor = 1 - (_scrollOffset / _maxScrollOffset);
 
     return CupertinoPageScaffold(
-      resizeToAvoidBottomInset: true,
       backgroundColor: CupertinoColors.systemBackground,
       child: GestureDetector(
         onTap: _dismissKeyboard,
