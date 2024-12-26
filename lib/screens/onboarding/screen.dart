@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/wide_button.dart';
+import 'package:pay_app/widgets/text_field.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -82,22 +83,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Email Input
-                    CupertinoTextField(
+                    CustomTextField(
                       controller: _emailController,
                       placeholder: 'Enter your email address',
-                      placeholderStyle: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFFB7ADC4),
-                      ),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: const Color(0xFF3431C4),
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(100),
-                      ),
                       suffix: const Padding(
                         padding: EdgeInsets.only(right: 16.0),
                         child: Icon(
@@ -105,6 +93,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           color: Color(0xFF3431C4),
                         ),
                       ),
+                      keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 16),
 
