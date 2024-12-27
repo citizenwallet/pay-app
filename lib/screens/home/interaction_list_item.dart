@@ -7,27 +7,24 @@ import 'package:pay_app/utils/date.dart';
 
 class InteractionListItem extends StatelessWidget {
   final Interaction interaction;
-  final Function(Interaction)? onTap;
-
+  final Function(Interaction) onTap;
 
   const InteractionListItem({
     super.key,
     required this.interaction,
-    this.onTap,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
-      onPressed: () {
-        // Handle transaction tap
-      },
-      child: Padding(
+      onPressed: () => onTap(interaction),
+      child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: 16.0,
-          vertical: 8.0,
+          horizontal: 16,
         ),
+        margin: const EdgeInsets.only(bottom: 16),
         child: Row(
           children: [
             // Profile/Business image
@@ -39,8 +36,6 @@ class InteractionListItem extends StatelessWidget {
             const SizedBox(width: 12),
 
             Details(interaction: interaction),
-
-            const SizedBox(width: 12),
 
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -65,6 +60,8 @@ class Details extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool showLocation = interaction.lastMessageAt == null;
+
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,11 +79,12 @@ class Details extends StatelessWidget {
               Name(name: interaction.name),
             ],
           ),
+          const SizedBox(height: 4),
           AmountDescription(
             amount: interaction.amount,
             description: interaction.description,
           ),
-          Location(location: interaction.location),
+          if (showLocation) Location(location: interaction.location),
         ],
       ),
     );

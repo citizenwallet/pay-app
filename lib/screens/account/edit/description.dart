@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/widgets/text_field.dart';
 
 class Description extends StatefulWidget {
   const Description({super.key});
@@ -45,23 +46,17 @@ class _DescriptionState extends State<Description> {
           ),
         ),
         const SizedBox(height: 10),
-        CupertinoTextField(
+        CustomTextField(
           controller: _descriptionController,
+          textInputAction: TextInputAction.newline,
+          placeholder: 'Description',
           minLines: 4,
           maxLines: 8,
           maxLength: 200,
           autocorrect: false,
           enableSuggestions: false,
           textCapitalization: TextCapitalization.sentences,
-          textInputAction: TextInputAction.newline,
           textAlignVertical: TextAlignVertical.top,
-          placeholder: 'Description',
-          placeholderStyle: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFFB7ADC4),
-          ),
-          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             border: Border.all(
               color: const Color(0xFF3431C4),

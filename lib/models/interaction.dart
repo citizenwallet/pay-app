@@ -10,7 +10,7 @@ class Interaction {
   final int? placeId; // id from supabase
   final String? location; // geo address of place
 
-  final String accountAddress;
+  final String accountAddress; // of the second user/ place
 
   final bool hasUnreadMessages;
   final DateTime? lastMessageAt;
@@ -43,7 +43,7 @@ class Interaction {
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toMap() {
     return {
       'name': name,
       'imageUrl': imageUrl,

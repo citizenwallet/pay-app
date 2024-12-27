@@ -81,6 +81,9 @@ flutter:
     - assets/icons/shop.svg
     - assets/icons/notification_bell.svg
     - assets/icons/term-and-condition.svg
+    - assets/icons/qr-code.png
+    - assets/icons/app.png
+    - assets/icons/card.png
     - assets/icons/docs.svg
     - assets/config/v4/communities.json
     - assets/config/v4/communities.test.json
