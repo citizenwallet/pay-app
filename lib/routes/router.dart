@@ -6,6 +6,7 @@ import 'package:pay_app/screens/onboarding/screen.dart';
 import 'package:pay_app/screens/account/view/screen.dart';
 import 'package:pay_app/screens/account/edit/screen.dart';
 import 'package:pay_app/screens/chat/place/screen.dart';
+import 'package:pay_app/screens/chat/place/menu/screen.dart';
 import 'package:pay_app/screens/chat/user/screen.dart';
 
 GoRouter createRouter(
@@ -62,6 +63,16 @@ GoRouter createRouter(
               builder: (context, state) {
                 return const ChatWithPlaceScreen();
               },
+              routes: [
+                GoRoute(
+                  name: 'PlaceMenu',
+                  path: '/menu',
+                  parentNavigatorKey: rootNavigatorKey,
+                  builder: (context, state) {
+                    return const PlaceMenuScreen();
+                  },
+                ),
+              ],
             ),
             GoRoute(
               name: 'ChatWithUser',

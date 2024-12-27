@@ -93,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _goToChatWithPlaceId(int placeId) {
     final navigator = GoRouter.of(context);
 
-    final myUserId = GoRouter.of(context).state?.pathParameters['id'];
+    final myUserId = navigator.state?.pathParameters['id'];
 
     navigator.pushNamed('ChatWithPlace',
         pathParameters: {'placeId': placeId.toString(), 'id': myUserId!});

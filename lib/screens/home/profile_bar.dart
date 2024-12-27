@@ -14,7 +14,7 @@ class _ProfileBarState extends State<ProfileBar> {
   void _goToMyAccount() async {
     final navigator = GoRouter.of(context);
 
-    final userId = GoRouter.of(context).state?.pathParameters['id'];
+    final userId = navigator.state?.pathParameters['id'];
 
     navigator.go('/$userId/my-account');
   }

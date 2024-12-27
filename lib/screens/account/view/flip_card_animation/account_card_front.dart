@@ -15,7 +15,7 @@ class _AccountCardFrontState extends State<AccountCardFront> {
   void _navigateToEditAccount() {
     final navigator = GoRouter.of(context);
 
-    final userId = GoRouter.of(context).state?.pathParameters['id'];
+    final userId = navigator.state?.pathParameters['id'];
 
     navigator.go('/$userId/my-account/edit');
   }
