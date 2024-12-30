@@ -10,7 +10,7 @@ class Interaction {
   final int? placeId; // id from supabase
   final String? location; // geo address of place
 
-  final String accountAddress; // of the second user/ place
+  final int? userId; // id from supabase
 
   final bool hasUnreadMessages;
   final DateTime? lastMessageAt;
@@ -18,7 +18,7 @@ class Interaction {
   const Interaction({
     required this.imageUrl,
     required this.name,
-    required this.accountAddress,
+    this.userId,
     this.isPlace = false,
     this.hasUnreadMessages = false,
     this.location,
@@ -37,7 +37,7 @@ class Interaction {
       isPlace: json['isPlace'],
       placeId: json['placeId'],
       location: json['location'],
-      accountAddress: json['accountAddress'],
+      userId: json['userId'],
       hasUnreadMessages: json['hasUnreadMessages'],
       lastMessageAt: json['lastMessageAt'],
     );
@@ -52,7 +52,7 @@ class Interaction {
       'isPlace': isPlace,
       'placeId': placeId,
       'location': location,
-      'accountAddress': accountAddress,
+      'userId': userId,
       'hasUnreadMessages': hasUnreadMessages,
       'lastMessageAt': lastMessageAt,
     };

@@ -261,6 +261,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
               onSend: sendMessage,
               amountFocusNode: amountFocusNode,
               messageFocusNode: messageFocusNode,
+              hasMenu: true,
             ),
           ],
         ),

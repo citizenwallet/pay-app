@@ -1,17 +1,21 @@
 import 'package:flutter/cupertino.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/text_field.dart';
+import 'package:pay_app/widgets/wide_button.dart';
 
 class Footer extends StatefulWidget {
   final Function(double, String?) onSend;
   final FocusNode amountFocusNode;
   final FocusNode messageFocusNode;
+  final bool hasMenu;
 
   const Footer({
     super.key,
     required this.onSend,
     required this.amountFocusNode,
     required this.messageFocusNode,
+    this.hasMenu = false,
   });
 
   @override
@@ -42,6 +46,15 @@ class _FooterState extends State<Footer> {
     });
   }
 
+  void _onMenuPressed() {
+    final navigator = GoRouter.of(context);
+
+    final myUserId = navigator.state?.pathParameters['id'];
+    final placeId = navigator.state?.pathParameters['placeId'];
+
+    navigator.push('/$myUserId/place/$placeId/menu');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -59,32 +72,38 @@ class _FooterState extends State<Footer> {
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _showAmountField
-                    ? AmountFieldWithMessageToggle(
-                        onToggle: _toggleField,
-                        amountController: _amountController,
-                        focusNode: widget.amountFocusNode,
-                      )
-                    : MessageFieldWithAmountToggle(
-                        onToggle: _toggleField,
-                        messageController: _messageController,
-                        focusNode: widget.messageFocusNode,
-                      ),
-              ),
-              SizedBox(width: 10),
-              SendButton(
-                amountController: _amountController,
-                messageController: _messageController,
-                onTap: () => widget.onSend(
-                  double.parse(_amountController.text),
-                  _messageController.text,
+          if (widget.hasMenu)
+            WideButton(
+              text: 'Menu',
+              onPressed: _onMenuPressed,
+            ),
+          if (!widget.hasMenu)
+            Row(
+              children: [
+                Expanded(
+                  child: _showAmountField
+                      ? AmountFieldWithMessageToggle(
+                          onToggle: _toggleField,
+                          amountController: _amountController,
+                          focusNode: widget.amountFocusNode,
+                        )
+                      : MessageFieldWithAmountToggle(
+                          onToggle: _toggleField,
+                          messageController: _messageController,
+                          focusNode: widget.messageFocusNode,
+                        ),
                 ),
-              ),
-            ],
-          ),
+                SizedBox(width: 10),
+                SendButton(
+                  amountController: _amountController,
+                  messageController: _messageController,
+                  onTap: () => widget.onSend(
+                    double.parse(_amountController.text),
+                    _messageController.text,
+                  ),
+                ),
+              ],
+            ),
           SizedBox(height: 10),
           CurrentBalance(),
         ],
@@ -203,7 +222,7 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
         Expanded(
           child: CustomTextField(
             focusNode: focusNode,
-              autocorrect: false,
+            autocorrect: false,
             enableSuggestions: false,
             textCapitalization: TextCapitalization.sentences,
             controller: messageController,

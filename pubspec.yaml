@@ -47,6 +47,7 @@ dependencies:
   cached_network_image: ^3.4.1
   collection: ^1.19.0
   simple_animations: ^5.1.0
+  scrollable_positioned_list: ^0.3.8
 
 
 dev_dependencies:
@@ -81,6 +82,8 @@ flutter:
     - assets/icons/shop.svg
     - assets/icons/notification_bell.svg
     - assets/icons/term-and-condition.svg
+    - assets/icons/menu-item-placeholder.svg
+    - assets/icons/menu-item-placeholder.png
     - assets/icons/qr-code.png
     - assets/icons/app.png
     - assets/icons/card.png
