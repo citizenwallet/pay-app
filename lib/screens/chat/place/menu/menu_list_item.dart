@@ -4,17 +4,25 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:pay_app/models/menu_item.dart';
+import 'package:pay_app/state/checkout.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 
 class MenuListItem extends StatelessWidget {
+  final CheckoutState checkoutState;
   final MenuItem menuItem;
-  const MenuListItem({super.key, required this.menuItem});
+
+  const MenuListItem({
+    super.key,
+    required this.menuItem,
+    required this.checkoutState,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 74,
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       decoration: BoxDecoration(
         border: Border.all(
           color: Color(0xFFD9D9D9),
@@ -46,8 +54,20 @@ class MenuListItem extends StatelessWidget {
             children: [
               ItemPrice(price: menuItem.priceString),
               const SizedBox(height: 4),
-              AddToCartButton(),
-              // IncDecButton(),
+              if (checkoutState.checkout.quantityOfMenuItem(menuItem) <= 0) ...[
+                AddToCartButton(
+                  onAddToCart: checkoutState.addItem,
+                  menuItem: menuItem,
+                ),
+              ],
+              if (checkoutState.checkout.quantityOfMenuItem(menuItem) > 0) ...[
+                IncDecButton(
+                  onIncrease: checkoutState.increaseItem,
+                  onDecrease: checkoutState.decreaseItem,
+                  quantityOfMenuItem: checkoutState.checkout.quantityOfMenuItem,
+                  menuItem: menuItem,
+                ),
+              ]
             ],
           ),
         ],
@@ -195,14 +215,21 @@ class ItemPrice extends StatelessWidget {
 }
 
 class AddToCartButton extends StatelessWidget {
-  const AddToCartButton({super.key});
+  final void Function(MenuItem) onAddToCart;
+  final MenuItem menuItem;
+
+  const AddToCartButton({
+    super.key,
+    required this.onAddToCart,
+    required this.menuItem,
+  });
 
   @override
   Widget build(BuildContext context) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       minSize: 0,
-      onPressed: () {},
+      onPressed: () => onAddToCart(menuItem),
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: 12,
@@ -226,7 +253,18 @@ class AddToCartButton extends StatelessWidget {
 }
 
 class IncDecButton extends StatelessWidget {
-  const IncDecButton({super.key});
+  final void Function(MenuItem) onIncrease;
+  final void Function(MenuItem) onDecrease;
+  final int Function(MenuItem) quantityOfMenuItem;
+  final MenuItem menuItem;
+
+  const IncDecButton({
+    super.key,
+    required this.onIncrease,
+    required this.onDecrease,
+    required this.quantityOfMenuItem,
+    required this.menuItem,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -238,7 +276,7 @@ class IncDecButton extends StatelessWidget {
         CupertinoButton(
           padding: EdgeInsets.zero,
           minSize: 0,
-          onPressed: () {},
+          onPressed: () => onDecrease(menuItem),
           child: Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 8,
@@ -262,8 +300,8 @@ class IncDecButton extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        const Text(
-          '1',
+        Text(
+          quantityOfMenuItem(menuItem).toString(),
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
@@ -274,7 +312,7 @@ class IncDecButton extends StatelessWidget {
         CupertinoButton(
           padding: EdgeInsets.zero,
           minSize: 0,
-          onPressed: () {},
+          onPressed: () => onIncrease(menuItem),
           child: Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 8,

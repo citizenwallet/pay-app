@@ -95,6 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final myUserId = navigator.state?.pathParameters['id'];
 
+    // TODO: replace with full path
     navigator.pushNamed('ChatWithPlace',
         pathParameters: {'placeId': placeId.toString(), 'id': myUserId!});
   }
@@ -104,6 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final myUserId = GoRouter.of(context).state?.pathParameters['id'];
 
+    // TODO: replace with full path
     navigator.pushNamed('ChatWithUser',
         pathParameters: {'accountAddress': accountAddress, 'id': myUserId!});
   }
@@ -206,6 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 scrollBehavior: const CupertinoScrollBehavior(),
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
+                  // TODO: https://api.flutter.dev/flutter/material/SliverAppBar-class.html
                   SliverPersistentHeader(
                     floating: true,
                     delegate: ProfileBarDelegate(),

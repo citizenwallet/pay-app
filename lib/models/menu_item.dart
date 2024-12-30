@@ -6,13 +6,13 @@ class MenuItem {
   final String name;
   final String? description;
   final String category;
-  final int vat;
+  final int vat; // in percent
   final String? emoji;
   final double orderId;
 
-  double get formattedPrice => price / 100;
+  double get formattedPrice => price / 100 * (1 + vat / 100);
 
-  String get priceString => (price / 100).toStringAsFixed(2);
+  String get priceString => (formattedPrice).toStringAsFixed(2);
 
   const MenuItem({
     required this.id,
@@ -57,28 +57,4 @@ class MenuItem {
     };
   }
   
-}
-
-class PlaceMenu {
-  final List<MenuItem> menuItems;
-
-  const PlaceMenu({required this.menuItems});
-
-  factory PlaceMenu.fromJson(Map<String, dynamic> json) {
-    return PlaceMenu(
-      menuItems: (json['menuItems'] as List).map((i) => MenuItem.fromJson(i)).toList(),
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'menuItems': menuItems.map((i) => i.toMap()).toList(),
-    };
-  }
-
-  List<String> get categories => menuItems.map((i) => i.category).toSet().toList();
-
-  List<MenuItem> getItemsByCategory(String category) {
-    return menuItems.where((i) => i.category == category).toList();
-  }
 }

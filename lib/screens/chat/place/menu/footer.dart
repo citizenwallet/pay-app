@@ -3,7 +3,10 @@ import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/wide_button.dart';
 
 class Footer extends StatefulWidget {
+  final double checkoutTotal;
+
   const Footer({
+    required this.checkoutTotal,
     super.key,
   });
 
@@ -33,7 +36,7 @@ class _FooterState extends State<Footer> {
         ),
       ),
       child: WideButton(
-        text: 'Pay',
+        text: 'Pay ${widget.checkoutTotal.toStringAsFixed(2)}',
         onPressed: () => {},
         color: Color(0xFF171717),
       ),

@@ -1,6 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+// screens
 import 'package:pay_app/screens/home/screen.dart';
 import 'package:pay_app/screens/onboarding/screen.dart';
 import 'package:pay_app/screens/account/view/screen.dart';
@@ -8,6 +11,9 @@ import 'package:pay_app/screens/account/edit/screen.dart';
 import 'package:pay_app/screens/chat/place/screen.dart';
 import 'package:pay_app/screens/chat/place/menu/screen.dart';
 import 'package:pay_app/screens/chat/user/screen.dart';
+
+// state
+import 'package:pay_app/state/checkout.dart';
 
 GoRouter createRouter(
   GlobalKey<NavigatorState> rootNavigatorKey,
@@ -69,7 +75,17 @@ GoRouter createRouter(
                   path: '/menu',
                   parentNavigatorKey: rootNavigatorKey,
                   builder: (context, state) {
-                    return const PlaceMenuScreen();
+                    final userId = int.parse(state.pathParameters['id']!);
+                    final placeId = int.parse(state.pathParameters['placeId']!);
+
+                    return ChangeNotifierProvider(
+                      key: Key('menu-$userId-$placeId'),
+                      create: (_) => CheckoutState(
+                        userId: userId,
+                        placeId: placeId,
+                      ),
+                      child: const PlaceMenuScreen(),
+                    );
                   },
                 ),
               ],

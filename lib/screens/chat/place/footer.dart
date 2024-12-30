@@ -52,10 +52,7 @@ class _FooterState extends State<Footer> {
     final myUserId = navigator.state?.pathParameters['id'];
     final placeId = navigator.state?.pathParameters['placeId'];
 
-    navigator.pushNamed('PlaceMenu', pathParameters: {
-      'id': myUserId!,
-      'placeId': placeId!,
-    });
+    navigator.push('/$myUserId/place/$placeId/menu');
   }
 
   @override
