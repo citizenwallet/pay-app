@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 
-import 'package:pay_app/screens/chat/place/header.dart';
-import 'package:pay_app/screens/chat/place/transaction_list_item.dart';
 import 'package:pay_app/models/transaction.dart';
-import 'package:pay_app/screens/chat/place/footer.dart';
+import './header.dart';
+import './transaction_list_item.dart';
+import './footer.dart';
 
 class ChatWithPlaceScreen extends StatefulWidget {
   const ChatWithPlaceScreen({super.key});
