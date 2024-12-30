@@ -90,7 +90,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         padding: EdgeInsets.only(right: 16.0),
                         child: Icon(
                           CupertinoIcons.mail,
-                          color: theme.primaryColor,
+                          color: Color(0xFF4D4D4D),
                         ),
                       ),
                       keyboardType: TextInputType.emailAddress,

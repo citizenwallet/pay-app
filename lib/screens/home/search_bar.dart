@@ -28,7 +28,7 @@ class SearchBar extends StatelessWidget {
           padding: EdgeInsets.only(right: 16.0),
           child: Icon(
             CupertinoIcons.search,
-            color: theme.primaryColor,
+            color: Color(0xFF4D4D4D),
           ),
         ),
         textInputAction: TextInputAction.search,
