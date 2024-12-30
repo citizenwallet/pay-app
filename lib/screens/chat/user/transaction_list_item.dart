@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/transaction.dart';
 import 'package:pay_app/utils/date.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
+import 'package:pay_app/utils/strings.dart';
 
 class TransactionListItem extends StatelessWidget {
   final Transaction transaction;
@@ -39,11 +40,11 @@ class TransactionListItem extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        PaymentMethodBadge(paymentMode: transaction.paymentMode),
-        SizedBox(height: 4),
-        OrderId(orderId: transaction.orderId),
-        SizedBox(height: 4),
+        // PaymentMethodBadge(paymentMode: transaction.paymentMode),
+        // SizedBox(height: 4),
         Description(description: transaction.description),
+        SizedBox(height: 4),
+        TransactionHash(transactionHash: transaction.txHash),
       ],
     );
   }
@@ -85,26 +86,22 @@ class Description extends StatelessWidget {
   }
 }
 
-class OrderId extends StatelessWidget {
-  final int? orderId;
+class TransactionHash extends StatelessWidget {
+  final String transactionHash;
 
-  const OrderId({super.key, this.orderId});
+  const TransactionHash({super.key, required this.transactionHash});
 
   @override
   Widget build(BuildContext context) {
-    if (orderId == null) {
-      return const SizedBox.shrink();
-    }
-
     return Text(
-      '#Order ${orderId!}',
+      'Transaction #${formatLongText(transactionHash)}',
       style: TextStyle(
         fontSize: 10,
         fontWeight: FontWeight.w600,
         color: Color(0xFF8F8A9D),
       ),
       maxLines: 1,
-      overflow: TextOverflow.ellipsis,
+      overflow: TextOverflow.fade,
     );
   }
 }
