@@ -29,6 +29,14 @@ class _FooterState extends State<Footer> {
   bool _showAmountField = true;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.amountFocusNode.requestFocus();
+    });
+  }
+
+  @override
   void dispose() {
     _amountController.dispose();
     _messageController.dispose();

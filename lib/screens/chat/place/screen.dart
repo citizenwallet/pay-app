@@ -232,38 +232,45 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
     ),
   ];
 
+  void _dismissKeyboard() {
+    FocusScope.of(context).unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemBackground,
-      child: SafeArea(
-        child: Column(
-          children: [
-            ChatHeader(
-              onTapLeading: goBack,
-              imageUrl:
-                  'https://plus.unsplash.com/premium_photo-1661883237884-263e8de8869b?q=80&w=2689&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-              placeName: 'Fat Duck',
-              placeDescription: 'Broadwalk, London',
-            ),
-            Expanded(
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                controller: scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                children: [
-                  for (var transaction in transactions)
-                    TransactionListItem(transaction: transaction),
-                ],
+      child: GestureDetector(
+        onTap: _dismissKeyboard,
+        child: SafeArea(
+          child: Column(
+            children: [
+              ChatHeader(
+                onTapLeading: goBack,
+                imageUrl:
+                    'https://plus.unsplash.com/premium_photo-1661883237884-263e8de8869b?q=80&w=2689&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                placeName: 'Fat Duck',
+                placeDescription: 'Broadwalk, London',
               ),
-            ),
-            Footer(
-              onSend: sendMessage,
-              amountFocusNode: amountFocusNode,
-              messageFocusNode: messageFocusNode,
-              hasMenu: true,
-            ),
-          ],
+              Expanded(
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  children: [
+                    for (var transaction in transactions)
+                      TransactionListItem(transaction: transaction),
+                  ],
+                ),
+              ),
+              Footer(
+                onSend: sendMessage,
+                amountFocusNode: amountFocusNode,
+                messageFocusNode: messageFocusNode,
+                hasMenu: false,
+              ),
+            ],
+          ),
         ),
       ),
     );
