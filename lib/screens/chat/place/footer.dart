@@ -134,6 +134,7 @@ class SendButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: () {
@@ -145,7 +146,7 @@ class SendButton extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: Color(0xFF3431C4),
+          color: theme.primaryColor,
           shape: BoxShape.circle,
         ),
         child: const Center(
@@ -173,6 +174,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
     return Row(
       children: [
         Expanded(
@@ -198,10 +200,10 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
             ),
-            child: const Center(
+            child: Center(
               child: Icon(
                 CupertinoIcons.text_bubble,
-                color: Color(0xFF3431C4),
+                color: theme.primaryColor,
               ),
             ),
           ),
@@ -225,6 +227,7 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
     return Row(
       children: [
         Expanded(
@@ -249,10 +252,10 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
             ),
-            child: const Center(
+            child: Center(
               child: Icon(
                 CupertinoIcons.back,
-                color: Color(0xFF3431C4),
+                color: theme.primaryColor,
               ),
             ),
           ),
@@ -305,9 +308,10 @@ class TopUpButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
     return CupertinoButton(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      color: const Color(0xFF4338CA),
+      color: theme.primaryColor,
       borderRadius: BorderRadius.circular(8),
       minSize: 0,
       onPressed: () {

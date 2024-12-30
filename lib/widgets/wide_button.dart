@@ -9,15 +9,17 @@ class WideButton extends StatelessWidget {
     super.key,
     required this.text,
     required this.onPressed,
-    this.color = const Color(0xFF3431C4),
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+
     return SizedBox(
       width: double.infinity,
       child: CupertinoButton(
-        color: color,
+        color: color ?? theme.primaryColor,
         borderRadius: BorderRadius.circular(100),
         padding: const EdgeInsets.symmetric(vertical: 16),
         onPressed: onPressed,

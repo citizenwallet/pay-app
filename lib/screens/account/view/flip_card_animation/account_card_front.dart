@@ -22,6 +22,7 @@ class _AccountCardFrontState extends State<AccountCardFront> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -33,7 +34,7 @@ class _AccountCardFrontState extends State<AccountCardFront> {
             decoration: BoxDecoration(
               color: Color(0xFFF7F7FF),
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Color(0xFF3431C4), width: 2),
+              border: Border.all(color: theme.primaryColor, width: 2),
             ),
             padding: EdgeInsets.all(8),
             child: Column(
@@ -72,7 +73,7 @@ class _AccountCardFrontState extends State<AccountCardFront> {
           child: CupertinoButton(
             padding: EdgeInsets.zero, // Remove default padding
             borderRadius: BorderRadius.circular(30), // Make it circular
-            color: Color(0xFF3431C4), // Background color
+            color: theme.primaryColor, // Background color
             onPressed: widget.onTap,
             child: Container(
               width: 30, // Fixed width

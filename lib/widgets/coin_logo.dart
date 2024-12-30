@@ -16,7 +16,7 @@ class CoinLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = CupertinoTheme.of(context);
-
+    
     Widget? logoWidget;
 
     if (logo == null) {

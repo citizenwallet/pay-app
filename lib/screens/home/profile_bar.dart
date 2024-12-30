@@ -21,6 +21,7 @@ class _ProfileBarState extends State<ProfileBar> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
     return GestureDetector(
       onTap: _goToMyAccount,
       child: Container(
@@ -38,7 +39,7 @@ class _ProfileBarState extends State<ProfileBar> {
                 ProfileCircle(
                   size: 70,
                   borderWidth: 3,
-                  borderColor: Color(0xFF4338CA),
+                  borderColor: theme.primaryColor,
                   imageUrl: 'https://robohash.org/JQQ.png?set=set2',
                 ),
                 const SizedBox(width: 16),
@@ -107,9 +108,11 @@ class TopUpButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+
     return CupertinoButton(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      color: const Color(0xFF4338CA),
+      color: theme.primaryColor,
       borderRadius: BorderRadius.circular(8),
       minSize: 0,
       onPressed: () {
@@ -145,9 +148,11 @@ class RightChevron extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Icon(
+    final theme = CupertinoTheme.of(context);
+
+    return Icon(
       CupertinoIcons.chevron_right,
-      color: Color(0xFF4338CA),
+      color: theme.primaryColor,
       size: 16,
     );
   }

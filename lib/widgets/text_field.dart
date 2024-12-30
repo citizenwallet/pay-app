@@ -121,9 +121,11 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+
     final BoxDecoration defaultDecoration = BoxDecoration(
       border: Border.all(
-        color: isError ? CupertinoColors.systemRed : Color(0xFF3431C4),
+        color: isError ? CupertinoColors.systemRed : theme.primaryColor,
         width: 2,
       ),
       borderRadius: borderRadius ?? defaultBorderRadius,

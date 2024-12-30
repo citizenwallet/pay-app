@@ -187,6 +187,8 @@ class UnreadMessageIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+
     if (!hasUnreadMessages) {
       return const SizedBox.shrink();
     }
@@ -195,7 +197,7 @@ class UnreadMessageIndicator extends StatelessWidget {
       width: 10,
       height: 10,
       decoration: BoxDecoration(
-        color: Color(0xFF3431C4),
+        color: theme.primaryColor,
         shape: BoxShape.circle,
       ),
     );

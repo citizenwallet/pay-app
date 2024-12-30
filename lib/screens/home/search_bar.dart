@@ -14,19 +14,21 @@ class SearchBar extends StatelessWidget {
   final FocusNode focusNode;
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+
     return Container(
       height: 74,
-      color: CupertinoColors.systemBackground,
+      color: theme.barBackgroundColor,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: CustomTextField(
         controller: controller,
         focusNode: focusNode,
         placeholder: 'Search for people or places',
-        suffix: const Padding(
+        suffix: Padding(
           padding: EdgeInsets.only(right: 16.0),
           child: Icon(
             CupertinoIcons.search,
-            color: Color(0xFF4338CA),
+            color: theme.primaryColor,
           ),
         ),
         textInputAction: TextInputAction.search,

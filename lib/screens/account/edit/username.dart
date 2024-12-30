@@ -21,6 +21,7 @@ class _UsernameState extends State<Username> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -38,11 +39,11 @@ class _UsernameState extends State<Username> {
           textInputAction: TextInputAction.next,
           inputFormatters: [usernameFormatter],
           placeholder: 'Enter your username',
-          prefix: const Padding(
-            padding: EdgeInsets.only(left: 16.0),
+          prefix: Padding(
+            padding: const EdgeInsets.only(left: 16.0),
             child: Icon(
               CupertinoIcons.at,
-              color: Color(0xFF3431C4),
+              color: theme.primaryColor,
             ),
           ),
         ),

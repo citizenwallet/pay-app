@@ -31,6 +31,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  
   static const theme = CupertinoThemeData(
     primaryColor: Color(0xFF3431C4),
     brightness: Brightness.light,

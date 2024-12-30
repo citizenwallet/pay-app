@@ -198,6 +198,7 @@ class ItemPrice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
     return Row(
       children: [
         CoinLogo(size: 16),
@@ -206,7 +207,7 @@ class ItemPrice extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF3431C4),
+            color: theme.primaryColor,
           ),
         ),
       ],

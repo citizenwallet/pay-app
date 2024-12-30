@@ -86,11 +86,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     CustomTextField(
                       controller: _emailController,
                       placeholder: 'Enter your email address',
-                      suffix: const Padding(
+                      suffix: Padding(
                         padding: EdgeInsets.only(right: 16.0),
                         child: Icon(
                           CupertinoIcons.mail,
-                          color: Color(0xFF3431C4),
+                          color: theme.primaryColor,
                         ),
                       ),
                       keyboardType: TextInputType.emailAddress,

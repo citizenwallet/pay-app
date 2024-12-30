@@ -34,6 +34,8 @@ class _DescriptionState extends State<Description> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -59,7 +61,7 @@ class _DescriptionState extends State<Description> {
           textAlignVertical: TextAlignVertical.top,
           decoration: BoxDecoration(
             border: Border.all(
-              color: const Color(0xFF3431C4),
+              color: theme.primaryColor,
               width: 2,
             ),
             borderRadius: BorderRadius.circular(16),
