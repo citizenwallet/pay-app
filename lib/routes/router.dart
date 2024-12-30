@@ -92,7 +92,7 @@ GoRouter createRouter(
             ),
             GoRoute(
               name: 'ChatWithUser',
-              path: '/user/:accountAddress',
+              path: '/user/:userId',
               parentNavigatorKey: rootNavigatorKey,
               builder: (context, state) {
                 return const ChatWithUserScreen();

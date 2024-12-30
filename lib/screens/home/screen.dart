@@ -85,8 +85,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void goToChatHistory(Interaction interaction) {
     if (interaction.isPlace && interaction.placeId != null) {
       _goToChatWithPlaceId(interaction.placeId!);
-    } else {
-      _goToChatWithUserId(interaction.accountAddress);
+    } else if (!interaction.isPlace && interaction.userId != null) {
+      _goToChatWithUserId(interaction.userId!);
     }
   }
 
@@ -95,19 +95,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final myUserId = navigator.state?.pathParameters['id'];
 
-    // TODO: replace with full path
-    navigator.pushNamed('ChatWithPlace',
-        pathParameters: {'placeId': placeId.toString(), 'id': myUserId!});
+    navigator.push('/$myUserId/place/$placeId');
   }
 
-  void _goToChatWithUserId(String accountAddress) {
+  void _goToChatWithUserId(int userId) {
     final navigator = GoRouter.of(context);
 
     final myUserId = GoRouter.of(context).state?.pathParameters['id'];
 
-    // TODO: replace with full path
-    navigator.pushNamed('ChatWithUser',
-        pathParameters: {'accountAddress': accountAddress, 'id': myUserId!});
+    navigator.push('/$myUserId/user/$userId');
   }
 
   void _dismissKeyboard() {
@@ -121,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
       imageUrl:
           'https://plus.unsplash.com/premium_photo-1661883237884-263e8de8869b?q=80&w=2689&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       name: 'Fat Duck',
-      accountAddress: '0x1234567890',
+      userId: null,
       isPlace: true,
       hasUnreadMessages: false,
       location: 'Broadwalk, London',
@@ -136,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
       imageUrl:
           'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       name: 'Neptune',
-      accountAddress: '0x1234567891',
+      userId: null,
       isPlace: true,
       hasUnreadMessages: false,
       location: 'Lester, London',
@@ -151,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
       imageUrl:
           'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       name: 'Brew',
-      accountAddress: '0x1234567892',
+      userId: null,
       isPlace: true,
       hasUnreadMessages: true,
       location: 'Mackenzie, London',
@@ -165,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Interaction(
       imageUrl: 'https://i.pravatar.cc/300',
       name: 'John Doe',
-      accountAddress: '0x1234567893',
+      userId: 2,
       isPlace: false,
       hasUnreadMessages: false,
       location: null,
@@ -179,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Interaction(
       imageUrl: 'https://i.pravatar.cc/301',
       name: 'Foo Bar',
-      accountAddress: '0x1234567894',
+      userId: 3,
       isPlace: false,
       hasUnreadMessages: true,
       location: null,
