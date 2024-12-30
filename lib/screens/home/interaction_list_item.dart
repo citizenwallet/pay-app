@@ -24,7 +24,7 @@ class InteractionListItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
           horizontal: 16,
         ),
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
             // Profile/Business image

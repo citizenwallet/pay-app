@@ -109,7 +109,7 @@ class CustomTextField extends StatelessWidget {
     this.inputFormatters,
   });
 
-  final EdgeInsetsGeometry defaultPadding = const EdgeInsets.all(16);
+  final EdgeInsetsGeometry defaultPadding = const EdgeInsets.symmetric(horizontal: 24, vertical: 12);
 
   final defaultBorderRadius = BorderRadius.circular(100);
 

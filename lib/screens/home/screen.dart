@@ -204,7 +204,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 scrollBehavior: const CupertinoScrollBehavior(),
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  // TODO: https://api.flutter.dev/flutter/material/SliverAppBar-class.html
                   SliverPersistentHeader(
                     floating: true,
                     delegate: ProfileBarDelegate(),
@@ -269,7 +268,7 @@ class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  double get maxExtent => 80.0; // Maximum height of header
+  double get maxExtent => 95.0; // Maximum height of header
 
   @override
   double get minExtent => 0; // Minimum height of header
@@ -295,10 +294,10 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  double get maxExtent => 74.0; // Height of your SearchBar
+  double get maxExtent => 57.0; // Height of your SearchBar
 
   @override
-  double get minExtent => 74.0; // Same as maxExtent for fixed height
+  double get minExtent => 57.0; // Same as maxExtent for fixed height
 
   @override
   bool shouldRebuild(covariant SearchBarDelegate oldDelegate) => true;

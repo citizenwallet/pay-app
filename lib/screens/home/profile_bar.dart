@@ -25,14 +25,14 @@ class _ProfileBarState extends State<ProfileBar> {
     return GestureDetector(
       onTap: _goToMyAccount,
       child: Container(
-        height: 80,
+        height: 95,
         color: CupertinoColors.systemBackground,
         padding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 8,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Row(
               children: [
@@ -45,6 +45,8 @@ class _ProfileBarState extends State<ProfileBar> {
                 const SizedBox(width: 16),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Name(),
                     const SizedBox(height: 4),
