@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pay_app/state/community.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/wide_button.dart';
 import 'package:pay_app/widgets/text_field.dart';
+import 'package:provider/provider.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -13,6 +15,22 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final TextEditingController _emailController = TextEditingController();
+  late CommunityState _communityState;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _communityState = context.read<CommunityState>();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      onLoad();
+    });
+  }
+
+  void onLoad() async {
+    await _communityState.fetchCommunity();
+  }
 
   @override
   void dispose() {
@@ -32,6 +50,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = CupertinoTheme.of(context);
+
+    final communityState = context.watch<CommunityState>();
+    final community = communityState.community;
 
     return CupertinoPageScaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -54,9 +75,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       const SizedBox(height: 24),
 
                       // Title
-                      const Text(
-                        'Brussels Pay',
-                        style: TextStyle(
+                      Text(
+                        community?.community.name ?? 'Loading...',
+                        style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF14023F),
@@ -65,9 +86,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       const SizedBox(height: 10),
 
                       // Subtitle
-                      const Text(
-                        'A local and inclusive payment network',
-                        style: TextStyle(
+                      Text(
+                        community?.community.description ?? 'Loading...',
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: Color(0xFF8F8A9D),
