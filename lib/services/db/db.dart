@@ -1,8 +1,8 @@
 import 'dart:io';
-
-import 'package:pay_app/services/db/preference.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:sqflite_common/sqflite.dart';
 
 abstract class DBTable {
   final Database _db;
@@ -33,14 +33,30 @@ abstract class DBService {
   Future<Database> openDB(String path);
 
   Future<void> init(String name) async {
+    if (kIsWeb) {
+      final swOptions = SqfliteFfiWebOptions(
+        sqlite3WasmUri: Uri.parse('sqlite3.wasm'),
+        sharedWorkerUri: Uri.parse('sqflite_sw.js'),
+        indexedDbName: '$name.db',
+      );
+
+      final webContext = defaultTargetPlatform == TargetPlatform.android
+          ? await sqfliteFfiWebLoadSqlite3Wasm(swOptions)
+          : await sqfliteFfiWebStartSharedWorker(swOptions);
+
+      databaseFactory =
+          createDatabaseFactoryFfiWeb(options: webContext.options);
+    }
+
     if (_db != null && _db!.isOpen) {
       await _db!.close();
     }
 
-    databaseFactory = databaseFactoryFfi;
-
     this.name = '$name.db';
-    final dbPath = join(await getDatabasesPath(), this.name);
+    final dbPath =
+        kIsWeb ? this.name : join(await getDatabasesPath(), this.name);
+
+    print('dbPath $name: $dbPath');
     _db = await openDB(dbPath);
   }
 
@@ -74,48 +90,5 @@ abstract class DBService {
 }
 
 Future<String> getDBPath(String name) async {
-  return join(await getDatabasesPath(), '$name.db');
-}
-
-class MainDB extends DBService {
-  static final MainDB _instance = MainDB._internal();
-
-  factory MainDB() {
-    return _instance;
-  }
-
-  MainDB._internal();
-
-  late PreferenceTable preference;
-
-  // open a database, create tables and migrate data
-  @override
-  Future<Database> openDB(String path) async {
-    final options = OpenDatabaseOptions(
-      onConfigure: (db) async {
-        // instantiate tables
-        preference = PreferenceTable(db);
-      },
-      onCreate: (db, version) async {
-        // create tables
-        await preference.create(db);
-
-        return;
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        // migrate data
-        await preference.migrate(db, oldVersion, newVersion);
-
-        return;
-      },
-      version: 3,
-    );
-
-    final db = await databaseFactory.openDatabase(
-      path,
-      options: options,
-    );
-
-    return db;
-  }
+  return kIsWeb ? '$name.db' : join(await getDatabasesPath(), '$name.db');
 }

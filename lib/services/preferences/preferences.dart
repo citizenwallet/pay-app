@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:pay_app/services/db/preference.dart';
 
 class PreferencesService {
@@ -15,17 +17,11 @@ class PreferencesService {
     await _preferences.clear();
   }
 
-  // Future<String?> get lastActiveOrgId => _preferences.get('lastActiveOrgId');
+  Future setConfig(dynamic value) async {
+    await _preferences.set('config', jsonEncode(value));
+  }
 
-  // Future setLastActiveOrgId(String id) async {
-  //   await _preferences.set('lastActiveOrgId', id);
-  // }
-
-  // Future<String?> getOrgThreshold(String id) async {
-  //   return _preferences.get('orgThreshold-$id');
-  // }
-
-  // Future setOrgThreshold(String id, String threshold) async {
-  //   await _preferences.set('orgThreshold-$id', threshold);
-  // }
+  Future<dynamic> getConfig() async {
+    return jsonDecode(await _preferences.get('config') ?? '{}');
+  }
 }
