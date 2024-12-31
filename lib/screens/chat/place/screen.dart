@@ -35,7 +35,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       Future.delayed(
         const Duration(milliseconds: 500),
         () {
-          scrollToBottom();
+          scrollToTop();
         },
       );
     }
@@ -46,15 +46,16 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       Future.delayed(
         const Duration(milliseconds: 500),
         () {
-          scrollToBottom();
+          scrollToTop();
         },
       );
     }
   }
 
-  void scrollToBottom() {
+  // list is shown in reverse order, so we need to scroll to the top
+  void scrollToTop() {
     scrollController.animateTo(
-      scrollController.position.maxScrollExtent,
+      0,
       duration: const Duration(milliseconds: 500),
       curve: Curves.fastOutSlowIn,
     );
@@ -98,7 +99,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
     Future.delayed(
       const Duration(milliseconds: 100),
       () {
-        scrollToBottom();
+        scrollToTop();
       },
     );
   }
@@ -112,7 +113,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       fromAccountAddress: '0xUserWallet123',
       toAccountAddress: '0xPlaceWallet456',
       amount: 12.23,
-      description: 'Coffee and Pastries',
+      description: 'Coffee and Pastries (Now)',
       status: TransactionStatus.success,
       // Place-specific fields
       orderId: 1,
@@ -122,11 +123,11 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       id: 'tx_123456789',
       txHash:
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now(),
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
       fromAccountAddress: '0xUserWallet123',
       toAccountAddress: '0xPlaceWallet456',
       amount: 12.23,
-      description: 'Coffee and Pastries',
+      description: 'Coffee and Pastries (Yesterday)',
       status: TransactionStatus.success,
       // Place-specific fields
       orderId: 2,
@@ -136,11 +137,11 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       id: 'tx_123456789',
       txHash:
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now(),
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
       fromAccountAddress: '0xUserWallet123',
       toAccountAddress: '0xPlaceWallet456',
       amount: 12.23,
-      description: 'Coffee and Pastries',
+      description: 'Coffee and Pastries (2 days ago)',
       status: TransactionStatus.success,
       // Place-specific fields
       orderId: 2,
@@ -150,11 +151,11 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       id: 'tx_123456789',
       txHash:
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now(),
+      createdAt: DateTime.now().subtract(const Duration(days: 3)),
       fromAccountAddress: '0xUserWallet123',
       toAccountAddress: '0xPlaceWallet456',
       amount: 12.23,
-      description: 'Coffee and Pastries',
+      description: 'Coffee and Pastries (3 days ago)',
       status: TransactionStatus.success,
       // Place-specific fields
       orderId: 2,
@@ -164,11 +165,11 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       id: 'tx_123456789',
       txHash:
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now(),
+      createdAt: DateTime.now().subtract(const Duration(days: 4)),
       fromAccountAddress: '0xUserWallet123',
       toAccountAddress: '0xPlaceWallet456',
       amount: 12.23,
-      description: 'Coffee and Pastries',
+      description: 'Coffee and Pastries (4 days ago)  ',
       status: TransactionStatus.success,
       // Place-specific fields
       orderId: 2,
@@ -178,11 +179,39 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       id: 'tx_123456789',
       txHash:
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now(),
+      createdAt: DateTime.now().subtract(const Duration(days: 5)),
       fromAccountAddress: '0xUserWallet123',
       toAccountAddress: '0xPlaceWallet456',
       amount: 12.23,
-      description: 'Coffee and Pastries',
+      description: 'Coffee and Pastries (5 days ago)',
+      status: TransactionStatus.success,
+      // Place-specific fields
+      orderId: 4,
+      paymentMode: PaymentMode.app,
+    ),
+    Transaction(
+      id: 'tx_123456789',
+      txHash:
+          '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+      createdAt: DateTime.now().subtract(const Duration(days: 6)),
+      fromAccountAddress: '0xUserWallet123',
+      toAccountAddress: '0xPlaceWallet456',
+      amount: 12.23,
+      description: 'Coffee and Pastries (6 days ago)',
+      status: TransactionStatus.success,
+      // Place-specific fields
+      orderId: 3,
+      paymentMode: PaymentMode.app,
+    ),
+    Transaction(
+      id: 'tx_123456789',
+      txHash:
+          '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+      createdAt: DateTime.now().subtract(const Duration(days: 7)),
+      fromAccountAddress: '0xUserWallet123',
+      toAccountAddress: '0xPlaceWallet456',
+      amount: 12.23,
+      description: 'Coffee and Pastries (7 days ago)',
       status: TransactionStatus.success,
       // Place-specific fields
       orderId: 2,
@@ -192,45 +221,17 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       id: 'tx_123456789',
       txHash:
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now(),
+      createdAt: DateTime.now().subtract(const Duration(days: 8)),
       fromAccountAddress: '0xUserWallet123',
       toAccountAddress: '0xPlaceWallet456',
       amount: 12.23,
-      description: 'Coffee and Pastries',
+      description: 'Coffee and Pastries (8 days ago)',
       status: TransactionStatus.success,
       // Place-specific fields
-      orderId: 2,
+      orderId: 1,
       paymentMode: PaymentMode.app,
     ),
-    Transaction(
-      id: 'tx_123456789',
-      txHash:
-          '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now(),
-      fromAccountAddress: '0xUserWallet123',
-      toAccountAddress: '0xPlaceWallet456',
-      amount: 12.23,
-      description: 'Coffee and Pastries',
-      status: TransactionStatus.success,
-      // Place-specific fields
-      orderId: 2,
-      paymentMode: PaymentMode.app,
-    ),
-    Transaction(
-      id: 'tx_123456789',
-      txHash:
-          '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now(),
-      fromAccountAddress: '0xUserWallet123',
-      toAccountAddress: '0xPlaceWallet456',
-      amount: 12.23,
-      description: 'Coffee and Pastries',
-      status: TransactionStatus.success,
-      // Place-specific fields
-      orderId: 2,
-      paymentMode: PaymentMode.app,
-    ),
-  ];
+  ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
   void _dismissKeyboard() {
     FocusScope.of(context).unfocus();
@@ -256,6 +257,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   controller: scrollController,
+                  reverse: true,
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   children: [
                     for (var transaction in transactions)
