@@ -27,16 +27,12 @@ class InteractionListItem extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            // Profile/Business image
             ProfileCircle(
               imageUrl: interaction.imageUrl,
               size: 48,
             ),
-
             const SizedBox(width: 12),
-
             Details(interaction: interaction),
-
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -60,8 +56,6 @@ class Details extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool showLocation = interaction.lastMessageAt == null;
-
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,8 +77,8 @@ class Details extends StatelessWidget {
           AmountDescription(
             amount: interaction.amount,
             description: interaction.description,
+            exchangeDirection: interaction.exchangeDirection,
           ),
-          if (showLocation) Location(location: interaction.location),
         ],
       ),
     );
@@ -136,21 +130,19 @@ class Location extends StatelessWidget {
 }
 
 class AmountDescription extends StatelessWidget {
-  final double? amount;
+  final double amount;
   final String? description;
+  final ExchangeDirection exchangeDirection;
 
   const AmountDescription({
     super.key,
-    this.amount,
+    required this.amount,
+    required this.exchangeDirection,
     this.description,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (amount == null) {
-      return const SizedBox.shrink();
-    }
-
     return Row(
       children: [
         CoinLogo(
@@ -158,7 +150,7 @@ class AmountDescription extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         Text(
-          '${amount! >= 0 ? '+' : '-'}${amount!.toStringAsFixed(2)}',
+          '${exchangeDirection == ExchangeDirection.sent ? '-' : '+'}${amount.toStringAsFixed(2)}',
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w600,
@@ -205,18 +197,14 @@ class UnreadMessageIndicator extends StatelessWidget {
 }
 
 class TimeAgo extends StatelessWidget {
-  final DateTime? lastMessageAt;
+  final DateTime lastMessageAt;
 
-  const TimeAgo({super.key, this.lastMessageAt});
+  const TimeAgo({super.key, required this.lastMessageAt});
 
   @override
   Widget build(BuildContext context) {
-    if (lastMessageAt == null) {
-      return const SizedBox.shrink();
-    }
-
     return Text(
-      getTimeAgo(lastMessageAt!),
+      getTimeAgo(lastMessageAt),
       style: const TextStyle(
         fontSize: 10,
         color: Color(0xFF8F8A9D),

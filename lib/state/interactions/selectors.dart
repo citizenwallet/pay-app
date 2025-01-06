@@ -1,6 +1,3 @@
-
-
-
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
 
@@ -12,9 +9,6 @@ import 'package:pay_app/state/interactions/interactions.dart';
     }
     
     // If both have same unread status, sort by date (most recent first)
-    if (a.lastMessageAt == null || b.lastMessageAt == null) {
-      return 0; // Handle null dates if they exist
-    }
-    return b.lastMessageAt!.compareTo(a.lastMessageAt!);
+    return b.lastMessageAt.compareTo(a.lastMessageAt);
   });
 }

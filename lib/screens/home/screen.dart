@@ -100,17 +100,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void goToChatHistory(Interaction interaction) {
-    print(interaction.id);
+    print(interaction);
 
-    
     if (interaction.isPlace && interaction.placeId != null) {
-      _goToChatWithPlaceId(interaction.placeId!);
-    } else if (!interaction.isPlace && interaction.userId != null) {
-      _goToChatWithUserId(interaction.userId!);
+      _goToChatWithPlace(interaction.placeId!);
+    } else if (!interaction.isPlace) {
+      _goToChatWithUser(interaction.withAccount);
     }
   }
 
-  void _goToChatWithPlaceId(int placeId) {
+  void _goToChatWithPlace(int placeId) {
     final navigator = GoRouter.of(context);
 
     final myUserId = navigator.state?.pathParameters['id'];
@@ -118,12 +117,12 @@ class _HomeScreenState extends State<HomeScreen> {
     navigator.push('/$myUserId/place/$placeId');
   }
 
-  void _goToChatWithUserId(int userId) {
+  void _goToChatWithUser(String account) {
     final navigator = GoRouter.of(context);
 
     final myUserId = GoRouter.of(context).state?.pathParameters['id'];
 
-    navigator.push('/$myUserId/user/$userId');
+    navigator.push('/$myUserId/user/$account');
   }
 
   void _dismissKeyboard() {
