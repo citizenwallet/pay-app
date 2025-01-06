@@ -3,11 +3,17 @@ import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:pay_app/models/interaction.dart';
+import 'package:pay_app/state/interactions/interactions.dart';
+import 'package:pay_app/state/interactions/selectors.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
+import 'package:provider/provider.dart';
 
 import 'profile_bar.dart';
 import 'search_bar.dart';
 import 'interaction_list_item.dart';
+
+// TODO: refresh interactions on load
+// TODO: paginate interactions
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,6 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
   double _scrollOffset = 0.0;
   final double _maxScrollOffset = 100.0;
 
+  late InteractionState _interactionState;
+
   @override
   void initState() {
     super.initState();
@@ -33,9 +41,15 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchFocusNode.addListener(_searchListener);
     _scrollController.addListener(_scrollListener);
 
+    _interactionState = context.read<InteractionState>();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // make initial requests here
+      onLoad();
     });
+  }
+
+  void onLoad() async {
+    await _interactionState.getInteractions();
   }
 
   @override
@@ -47,6 +61,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
+
+    _interactionState.dispose();
+
     super.dispose();
   }
 
@@ -83,6 +100,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void goToChatHistory(Interaction interaction) {
+    print(interaction.id);
+
+    
     if (interaction.isPlace && interaction.placeId != null) {
       _goToChatWithPlaceId(interaction.placeId!);
     } else if (!interaction.isPlace && interaction.userId != null) {
@@ -110,85 +130,11 @@ class _HomeScreenState extends State<HomeScreen> {
     FocusScope.of(context).unfocus();
   }
 
-  // TODO: order by descending lastMessageAt
-  final List<Interaction> interactions = [
-    // place with no previous interactions
-    Interaction(
-      imageUrl:
-          'https://plus.unsplash.com/premium_photo-1661883237884-263e8de8869b?q=80&w=2689&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      name: 'Fat Duck',
-      userId: null,
-      isPlace: true,
-      hasUnreadMessages: false,
-      location: 'Broadwalk, London',
-      lastMessageAt: null,
-      placeId: 1,
-      amount: null,
-      description: null,
-    ),
-
-    // place with previous interactions. No unread messages
-    Interaction(
-      imageUrl:
-          'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      name: 'Neptune',
-      userId: null,
-      isPlace: true,
-      hasUnreadMessages: false,
-      location: 'Lester, London',
-      lastMessageAt: DateTime.now().subtract(const Duration(days: 1)),
-      placeId: 2,
-      amount: 12.34,
-      description: 'This is a test description',
-    ),
-
-    // place with previous interactions. With unread messages
-    Interaction(
-      imageUrl:
-          'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      name: 'Brew',
-      userId: null,
-      isPlace: true,
-      hasUnreadMessages: true,
-      location: 'Mackenzie, London',
-      lastMessageAt: DateTime.now().subtract(const Duration(days: 2)),
-      placeId: 3,
-      amount: 12.34,
-      description: 'This is a test description',
-    ),
-
-    // user with previous interactions. No unread messages
-    Interaction(
-      imageUrl: 'https://i.pravatar.cc/300',
-      name: 'John Doe',
-      userId: 2,
-      isPlace: false,
-      hasUnreadMessages: false,
-      location: null,
-      lastMessageAt: DateTime.now().subtract(const Duration(days: 3)),
-      placeId: null,
-      amount: 4.5,
-      description: 'This is a test description',
-    ),
-
-    // user with previous interactions. With unread messages
-    Interaction(
-      imageUrl: 'https://i.pravatar.cc/301',
-      name: 'Foo Bar',
-      userId: 3,
-      isPlace: false,
-      hasUnreadMessages: true,
-      location: null,
-      lastMessageAt: DateTime.now().subtract(const Duration(days: 4)),
-      placeId: null,
-      amount: 4.5,
-      description: 'This is a test description',
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final double heightFactor = 1 - (_scrollOffset / _maxScrollOffset);
+
+    final interactions = context.select(sortByUnreadAndDate);
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemBackground,

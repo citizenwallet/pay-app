@@ -14,6 +14,7 @@ import 'package:pay_app/screens/chat/user/screen.dart';
 
 // state
 import 'package:pay_app/state/checkout.dart';
+import 'package:pay_app/state/interactions/interactions.dart';
 
 GoRouter createRouter(
   GlobalKey<NavigatorState> rootNavigatorKey,
@@ -40,8 +41,14 @@ GoRouter createRouter(
           path: '/:id', // user id from supabase
           parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) {
-            // state.pathParameters['id']!
-            return const HomeScreen();
+            final myUserId = state.pathParameters['id']!;
+            final myAccount = '0x0000000000000000000000000000000000000000'; // FIXME: make dynamic
+
+            return ChangeNotifierProvider(
+              key: Key('interactions-$myAccount'),
+              create: (_) => InteractionState(account: myAccount),
+              child: const HomeScreen(),
+            );
           },
           routes: [
             GoRoute(

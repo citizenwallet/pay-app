@@ -1,5 +1,16 @@
+// TODO: different model for Places listing in home screen
+
+enum ExchangeDirection {
+  sent,
+  received,
+}
+
 class Interaction {
-  final String imageUrl;
+  final String id;
+  final ExchangeDirection exchangeDirection;
+
+  final String withAccount;
+  final String? imageUrl;
   final String name;
 
   // last interaction
@@ -13,9 +24,12 @@ class Interaction {
   final int? userId; // id from supabase
 
   final bool hasUnreadMessages;
-  final DateTime? lastMessageAt;
+  final DateTime? lastMessageAt; // FIXME: remove null
 
   const Interaction({
+    required this.id, 
+    required this.exchangeDirection,  
+    required this.withAccount,
     required this.imageUrl,
     required this.name,
     this.userId,
@@ -30,6 +44,9 @@ class Interaction {
 
   factory Interaction.fromJson(Map<String, dynamic> json) {
     return Interaction(
+      id: json['id'],
+      exchangeDirection: _parseExchangeDirection(json['direction']),
+      withAccount: json['withAccount'],
       imageUrl: json['imageUrl'],
       name: json['name'],
       amount: json['amount'],
@@ -45,6 +62,9 @@ class Interaction {
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
+      'direction': exchangeDirection,
+      'withAccount': withAccount,
       'name': name,
       'imageUrl': imageUrl,
       'amount': amount,
@@ -56,5 +76,16 @@ class Interaction {
       'hasUnreadMessages': hasUnreadMessages,
       'lastMessageAt': lastMessageAt,
     };
+  }
+
+   static ExchangeDirection _parseExchangeDirection(String direction) {
+    switch (direction.toLowerCase()) {
+      case 'sent':
+        return ExchangeDirection.sent;
+      case 'received':
+        return ExchangeDirection.received;
+      default:
+        throw ArgumentError('Unknown exchange direction: $direction');
+    }
   }
 }
