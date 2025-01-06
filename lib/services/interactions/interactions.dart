@@ -1,12 +1,11 @@
-import 'dart:convert';
-
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/services/api/api.dart';
 
 class InteractionService {
   final APIService apiService = APIService(
-      baseURL: 'http://192.168.200.230:3000/api/v1'); // FIXME: make dynamic
+      baseURL: dotenv.env['CHECKOUT_API_BASE_URL'] ?? '');
   String myAccount;
 
   InteractionService({required this.myAccount});
@@ -18,36 +17,34 @@ class InteractionService {
 
       final Map<String, dynamic> data = response;
       final List<dynamic> interactionsApiResponse = data['interactions'];
-      /**
+      /* Example API Response:
        * [
        *   {
-       *     "id": string,
-       *     "account": string, // my account
-       *     "with": string, // account of the other party
+       *     "id": "4faa93a8-134f-403a-838a-66b1e67b52ab",
+       *     "exchange_direction": "sent", 
+       *     "new_interaction": false,
        *     "transaction": {
-       *       "id": string,
-       *       "value": string, // formatted with decimal
-       *       "description": string,
-       *       "from": string,
-       *       "to": string,
-       *       "created_at": "2024-07-11T17:39:40+00:00"
+       *       "id": "0x523f13521497ba4b704f54dc9f395bccbc7610f3589a3540b7e882794f627b0e",
+       *       "to": "0xD80A494164C2Fd356212cb8983d697c41c550673",
+       *       "from": "0x0000000000000000000000000000000000000000",
+       *       "value": "15.0",
+       *       "created_at": "2025-01-06T13:16:55+00:00",
+       *       "description": ""
        *     },
        *     "with_profile": {
-       *       "account": string, // account of the other party
-       *       "username": string,
-       *       "name": string,
-       *       "image": string,
-       *       "description": string
+       *       "account": "0xD80A494164C2Fd356212cb8983d697c41c550673", 
+       *       "username": "@anonymous",
+       *       "name": "Anonymous",
+       *       "description": "This user does not have a profile",
+       *       "image": "https://ipfs.internal.citizenwallet.xyz/QmeuAaXrJBHygzAEHnvw5AKUHfBasuavsX9fU69rdv4mhh"
        *     },
        *     "with_place": {
-       *       "id": int,
-       *       "name": string,
-       *       "slug": string,
-       *       "image": string | null,
-       *       "description": string | null
-       *     } | null,
-       *     "exchange_direction": "sent" | "received",
-       *     "is_new_interaction": boolean
+       *       "id": 28,
+       *       "name": "Vegan Brussels VZW",
+       *       "slug": "vegan-brussels-vzw-K3Pk",
+       *       "image": null,
+       *       "description": null
+       *     } | null
        *   }
        * ]
        */
@@ -61,8 +58,9 @@ class InteractionService {
 
         return {
           'id': i['id'],
-          'direction': i['exchange_direction'],
-          'withAccount': i['with'],
+          'exchange_direction': i['exchange_direction'],
+          'withAccount': i['with_profile']['account'],
+
           'imageUrl':
               withPlace != null ? withPlace['image'] : withProfile['image'],
           'name': withPlace != null ? withPlace['name'] : withProfile['name'],
@@ -70,10 +68,8 @@ class InteractionService {
           'description': transaction['description'],
           'isPlace': withPlace != null,
           'placeId': withPlace?['id'],
-          'location': null, // Not provided in API response
-          'userId': null, // Not provided in API response
-          'hasUnreadMessages': i['is_new_interaction'],
-          'lastMessageAt': DateTime.parse(transaction['created_at']),
+          'hasUnreadMessages': i['new_interaction'],
+          'lastMessageAt': transaction['created_at'],
         };
       }).toList();
 

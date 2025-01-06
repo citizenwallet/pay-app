@@ -37,7 +37,9 @@ class InteractionState with ChangeNotifier {
     try {
       final interactions = await apiService.getInteractions();
       this.interactions = interactions;
-    } catch (e) {
+    } catch (e, s) {
+      debugPrint('Error fetching interactions: $e');
+      debugPrint('Stack trace: $s');
       error = true;
     } finally {
       loading = false;
