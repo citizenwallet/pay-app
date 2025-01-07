@@ -130,6 +130,7 @@ class Checkout {
   }
 
   // Helper method to compare modifications lists
+  // ignore: unused_element
   bool _areModificationsEqual(List<String>? list1, List<String>? list2) {
     if (list1 == null && list2 == null) return true;
     if (list1 == null || list2 == null) return false;

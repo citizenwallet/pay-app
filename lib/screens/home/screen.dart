@@ -100,8 +100,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void goToChatHistory(Interaction interaction) {
-    print(interaction);
-
     if (interaction.isPlace && interaction.placeId != null) {
       _goToChatWithPlace(interaction.placeId!);
     } else if (!interaction.isPlace) {

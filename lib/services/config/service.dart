@@ -21,22 +21,7 @@ class ConfigService {
   static const String communityDebugFileName = 'debug';
   static const int version = 4;
 
-  late APIService _api;
-  late APIService _communityServer;
-
-  void initWeb() {
-    final scheme = Uri.base.scheme.isNotEmpty ? Uri.base.scheme : 'http';
-    final url = kDebugMode || Uri.base.host.contains('localhost')
-        ? 'https://config.internal.citizenwallet.xyz'
-        : '$scheme://${Uri.base.host}:${Uri.base.port}/wallet-config';
-
-    _api = APIService(baseURL: url);
-    _communityServer = APIService(baseURL: '$scheme://${Uri.base.host}');
-  }
-
-  void init(String endpoint) {
-    _api = APIService(baseURL: endpoint);
-  }
+  void init(String endpoint) {}
 
   Future<Config?> getLocalConfig() async {
     try {
@@ -47,7 +32,7 @@ class ConfigService {
 
       return config;
     } catch (e) {
-      print('Error fetching local config: $e');
+      debugPrint('Error fetching local config: $e');
       return null;
     }
   }

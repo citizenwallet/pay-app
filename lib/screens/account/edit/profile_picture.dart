@@ -14,7 +14,7 @@ class _ProfilePictureState extends State<ProfilePicture> {
   Uint8List? editingImage;
 
   void _handleSelectPhoto() {
-    print('select photo');
+    debugPrint('select photo');
   }
 
   String image = 'https://robohash.org/ZZZ.png?set=set2';

@@ -78,7 +78,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
   void sendMessage(double amount, String? message) {
     final last = transactions.last;
 
-    print(last.orderId);
+    debugPrint(last.orderId.toString());
 
     setState(() {
       transactions.add(Transaction(
