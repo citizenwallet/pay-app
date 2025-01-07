@@ -2,11 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/routes/router.dart';
-import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/state/state.dart';
-
-import 'package:pay_app/services/db/app/db.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,13 +12,6 @@ void main() async {
   // await MainDB().init('main');
   // await PreferencesService().init(MainDB().preference);
 
-  final config = ConfigService();
-  config.init(
-    dotenv.get('WALLET_CONFIG_URL'),
-  );
-
-  final AppDBService appDBService = AppDBService();
-  await appDBService.init('app');
 
   runApp(provideAppState(const MyApp()));
 }

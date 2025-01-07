@@ -119,7 +119,7 @@ class TopUpButton extends StatelessWidget {
       minSize: 0,
       onPressed: () {
         // TODO: add a button to navigate to the top up screen
-        print('Top up');
+        debugPrint('Top up');
       },
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

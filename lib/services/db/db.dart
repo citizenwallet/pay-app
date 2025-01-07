@@ -56,7 +56,8 @@ abstract class DBService {
     final dbPath =
         kIsWeb ? this.name : join(await getDatabasesPath(), this.name);
 
-    print('dbPath $name: $dbPath');
+    debugPrint('dbPath $name: $dbPath');
+    
     _db = await openDB(dbPath);
   }
 

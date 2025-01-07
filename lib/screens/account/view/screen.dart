@@ -34,11 +34,11 @@ class _MyAccountState extends State<MyAccount> {
   }
 
   void handleLogout() {
-    print('log out');
+    debugPrint('log out');
   }
 
   void handleDeleteAccount() {
-    print('delete account');
+    debugPrint('delete account');
   }
 
   @override
