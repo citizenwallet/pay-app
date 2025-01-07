@@ -2,12 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/place.dart';
 import 'package:pay_app/services/places/places.dart';
 
+
+// TODO: rename to PlacesState
 class PlaceState with ChangeNotifier {
   List<Place> places = [];
-  PlacesService apiService;
+  PlacesService apiService = PlacesService();
 
-  PlaceState({required String account})
-      : apiService = PlacesService(myAccount: account);
 
   bool loading = false;
   bool error = false;

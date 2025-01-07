@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pay_app/state/place.dart';
 import 'package:provider/provider.dart';
 
 // screens
@@ -46,15 +45,8 @@ GoRouter createRouter(
             final myAccount =
                 '0x0000000000000000000000000000000000000000'; // FIXME: make dynamic
 
-            return MultiProvider(
-              providers: [
-                ChangeNotifierProvider(
-                  create: (_) => InteractionState(account: myAccount),
-                ),
-                ChangeNotifierProvider(
-                  create: (_) => PlaceState(account: myAccount),
-                ),
-              ],
+            return ChangeNotifierProvider(
+              create: (_) => InteractionState(account: myAccount),
               child: const HomeScreen(),
             );
           },
@@ -82,6 +74,10 @@ GoRouter createRouter(
               path: '/place/:placeId',
               parentNavigatorKey: rootNavigatorKey,
               builder: (context, state) {
+                final userId = int.parse(state.pathParameters['id']!);
+                final placeId = int.parse(state.pathParameters['placeId']!);
+                final myAccount = '0x0000000000000000000000000000000000000000';
+
                 return const ChatWithPlaceScreen();
               },
               routes: [
