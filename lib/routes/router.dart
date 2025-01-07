@@ -42,10 +42,10 @@ GoRouter createRouter(
           parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) {
             final myUserId = state.pathParameters['id']!;
-            final myAccount = '0x0000000000000000000000000000000000000000'; // FIXME: make dynamic
+            final myAccount =
+                '0x0000000000000000000000000000000000000000'; // FIXME: make dynamic
 
             return ChangeNotifierProvider(
-              key: Key('interactions-$myAccount'),
               create: (_) => InteractionState(account: myAccount),
               child: const HomeScreen(),
             );
@@ -74,6 +74,10 @@ GoRouter createRouter(
               path: '/place/:placeId',
               parentNavigatorKey: rootNavigatorKey,
               builder: (context, state) {
+                final userId = int.parse(state.pathParameters['id']!);
+                final placeId = int.parse(state.pathParameters['placeId']!);
+                final myAccount = '0x0000000000000000000000000000000000000000';
+
                 return const ChatWithPlaceScreen();
               },
               routes: [

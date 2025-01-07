@@ -52,8 +52,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final theme = CupertinoTheme.of(context);
 
-    final communityState = context.watch<CommunityState>();
-    final community = communityState.community;
+    final community = context.select((CommunityState state) => state.community);
 
     return CupertinoPageScaffold(
       backgroundColor: theme.scaffoldBackgroundColor,

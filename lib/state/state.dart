@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/community.dart';
+import 'package:pay_app/state/place.dart';
 import 'package:provider/provider.dart';
 
 Widget provideAppState(
@@ -14,6 +15,9 @@ Widget provideAppState(
         ),
         ChangeNotifierProvider(
           create: (_) => CommunityState(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => PlaceState(),
         ),
       ],
       builder: builder,
