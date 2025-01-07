@@ -3,14 +3,17 @@ import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:pay_app/models/interaction.dart';
+import 'package:pay_app/models/place.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
 import 'package:pay_app/state/interactions/selectors.dart';
+import 'package:pay_app/state/place.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:provider/provider.dart';
 
 import 'profile_bar.dart';
 import 'search_bar.dart';
 import 'interaction_list_item.dart';
+import 'place_list_item.dart';
 
 // TODO: refresh interactions on load
 // TODO: paginate interactions
@@ -33,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final double _maxScrollOffset = 100.0;
 
   late InteractionState _interactionState;
+  late PlaceState _placeState;
 
   @override
   void initState() {
@@ -42,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _scrollController.addListener(_scrollListener);
 
     _interactionState = context.read<InteractionState>();
+    _placeState = context.read<PlaceState>();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       onLoad();
@@ -50,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void onLoad() async {
     await _interactionState.getInteractions();
+    await _placeState.getAllPlaces();
   }
 
   @override
@@ -61,8 +67,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
-
-    _interactionState.dispose();
 
     super.dispose();
   }
@@ -101,20 +105,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void goToChatHistory(Interaction interaction) {
     if (interaction.isPlace && interaction.placeId != null) {
-      _goToChatWithPlace(interaction.placeId!);
+      final place = Place(
+        id: interaction.placeId!,
+        name: interaction.name,
+        imageUrl: interaction.imageUrl,
+        account: interaction.withAccount,
+      );
+
+      _goToChatWithPlace(place);
     } else if (!interaction.isPlace) {
       _goToChatWithUser(interaction.withAccount);
     }
   }
 
-  void _goToChatWithPlace(int placeId) {
+  void _goToChatWithPlace(Place place) {
     final navigator = GoRouter.of(context);
 
     final myUserId = navigator.state?.pathParameters['id'];
 
-    navigator.push('/$myUserId/place/$placeId');
+    // TODO: pass place as extra parameter
+    navigator.push('/$myUserId/place/${place.id}');
   }
 
+  // TODO: accept a user
   void _goToChatWithUser(String account) {
     final navigator = GoRouter.of(context);
 
@@ -132,6 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final double heightFactor = 1 - (_scrollOffset / _maxScrollOffset);
 
     final interactions = context.select(sortByUnreadAndDate);
+    final places = context.select((PlaceState state) => state.places);
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemBackground,
@@ -164,6 +178,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       (context, index) => InteractionListItem(
                         interaction: interactions[index],
                         onTap: goToChatHistory,
+                      ),
+                    ),
+                  ),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      childCount: places.length,
+                      (context, index) => PlaceListItem(
+                        place: places[index],
+                        onTap: _goToChatWithPlace,
                       ),
                     ),
                   ),
