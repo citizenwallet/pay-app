@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/routes/router.dart';
+import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/state/state.dart';
 
 void main() async {
@@ -12,6 +13,7 @@ void main() async {
   // await MainDB().init('main');
   // await PreferencesService().init(MainDB().preference);
 
+  WalletService();
 
   runApp(provideAppState(const MyApp()));
 }

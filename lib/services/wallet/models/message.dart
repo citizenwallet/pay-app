@@ -1,0 +1,108 @@
+import 'dart:convert';
+
+import 'package:pay_app/services/wallet/utils.dart';
+import 'package:pay_app/utils/base64.dart';
+import 'package:pay_app/utils/uint8.dart';
+import 'package:flutter/foundation.dart';
+import 'package:web3dart/crypto.dart';
+
+const emptyMessage = '';
+
+class MessageAttachment {
+  String type;
+  String url;
+
+  MessageAttachment({required this.type, required this.url});
+
+  MessageAttachment.image({required this.url}) : type = 'image';
+
+  factory MessageAttachment.fromJson(Map<String, dynamic> json) {
+    return MessageAttachment(
+      type: json['type'],
+      url: json['url'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type,
+      'url': url,
+    };
+  }
+
+  @override
+  // to string
+  String toString() {
+    return 'MessageAttachment: $type, $url';
+  }
+}
+
+class Message {
+  final int version;
+  final String message;
+  DateTime date = DateTime.now();
+  final MessageAttachment? attachment;
+
+  Message({
+    this.version = 1,
+    this.message = emptyMessage,
+    DateTime? date,
+    this.attachment,
+  }) {
+    date = date ?? DateTime.now();
+  }
+
+  factory Message.fromJson(Map<String, dynamic> json) {
+    return Message(
+      version: json['version'],
+      message: base64String.decode(json['message']),
+      date: DateTime.parse(json['date']),
+      attachment: json['attachment'] != null
+          ? MessageAttachment.fromJson(json['attachment'])
+          : null,
+    );
+  }
+
+  factory Message.fromBytes(Uint8List bytes) {
+    final json = convertUint8ListToString(bytes);
+
+    return Message.fromJson(jsonDecode(json));
+  }
+
+  factory Message.fromHexString(String hex) {
+    final bytes = hexToBytes(hex);
+
+    return Message.fromBytes(decompressBytes(bytes));
+  }
+
+  Map<String, dynamic> toJson() {
+    if (attachment == null) {
+      return {
+        'version': version,
+        'message': base64String.encode(message),
+        'date': date.toIso8601String(),
+      };
+    }
+
+    return {
+      'version': version,
+      'message': base64String.encode(message),
+      'date': date.toIso8601String(),
+      'attachment': attachment!.toJson(),
+    };
+  }
+
+  String toCompressed() {
+    return compress(jsonEncode(toJson()));
+  }
+
+  Uint8List toBytes() {
+    return compressBytes(convertStringToUint8List(jsonEncode(toJson())));
+  }
+
+  @override
+  // to string
+  String toString() {
+    return 'Version: $version, Date $date Message: $message, Attachment: $attachment';
+  }
+}
