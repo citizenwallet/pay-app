@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/state/community.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/wide_button.dart';
 import 'package:pay_app/widgets/text_field.dart';
@@ -16,12 +17,14 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final TextEditingController _emailController = TextEditingController();
   late CommunityState _communityState;
+  late WalletState _walletState;
 
   @override
   void initState() {
     super.initState();
 
     _communityState = context.read<CommunityState>();
+    _walletState = context.read<WalletState>();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       onLoad();
@@ -35,7 +38,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void dispose() {
     _emailController.dispose();
-    _communityState.dispose();
     super.dispose();
   }
 
@@ -44,9 +46,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void handleConfirm(int userId) async {
+
+    final addressFromCreate = await _walletState.createWallet();
+    final addressFromOpen = await _walletState.openWallet();
+
+    debugPrint('addressFromCreate: $addressFromCreate');
+    debugPrint('addressFromOpen: $addressFromOpen');
+
+
+    // final exists = await _walletState.createAccount();
+
+    // debugPrint('account exists: $exists');
+    // debugPrint('finish');
+
+
     final navigator = GoRouter.of(context);
     navigator.replace('/$userId');
   }
+
+
 
   @override
   Widget build(BuildContext context) {

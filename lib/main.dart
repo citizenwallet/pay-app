@@ -2,7 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/routes/router.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
+import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/state/state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -10,8 +13,9 @@ void main() async {
   await dotenv.load(fileName: '.env');
 
   // await MainDB().init('main');
-  // await PreferencesService().init(MainDB().preference);
+    await PreferencesService().init(await SharedPreferences.getInstance());
 
+  WalletService();
 
   runApp(provideAppState(const MyApp()));
 }

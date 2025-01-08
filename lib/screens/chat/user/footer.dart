@@ -1,6 +1,10 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/state/wallet.dart';
+import 'package:pay_app/utils/formatters.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/text_field.dart';
+import 'package:provider/provider.dart';
+
 class Footer extends StatefulWidget {
   final Function(double, String?) onSend;
   final FocusNode amountFocusNode;
@@ -23,12 +27,20 @@ class _FooterState extends State<Footer> {
 
   bool _showAmountField = true;
 
+  late WalletState _walletState;
+
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.amountFocusNode.requestFocus();
+      _walletState = context.read<WalletState>();
     });
+  }
+
+  Future<void> sendTransaction() async {
+    await _walletState.sendTransaction();
   }
 
   @override
@@ -54,7 +66,7 @@ class _FooterState extends State<Footer> {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 10,
-        vertical: 10,
+        vertical: 20,
       ),
       decoration: BoxDecoration(
         border: Border(
@@ -85,10 +97,7 @@ class _FooterState extends State<Footer> {
               SendButton(
                 amountController: _amountController,
                 messageController: _messageController,
-                onTap: () => widget.onSend(
-                  double.parse(_amountController.text),
-                  _messageController.text,
-                ),
+                onTap: () => sendTransaction(),
               ),
             ],
           ),
@@ -144,8 +153,9 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
   final TextEditingController amountController;
   final FocusNode focusNode;
   final VoidCallback onToggle;
+  final AmountFormatter amountFormatter = AmountFormatter();
 
-  const AmountFieldWithMessageToggle({
+  AmountFieldWithMessageToggle({
     super.key,
     required this.onToggle,
     required this.amountController,
@@ -159,9 +169,19 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
       children: [
         Expanded(
           child: CustomTextField(
+            maxLines: 1,
+            maxLength: 25,
+            autocorrect: false,
+            enableSuggestions: false,
+            keyboardType: TextInputType.numberWithOptions(
+              decimal: true,
+              signed: false,
+            ),
+            inputFormatters: [
+             amountFormatter
+            ],
             focusNode: focusNode,
             controller: amountController,
-            keyboardType: TextInputType.number,
             textInputAction: TextInputAction.done,
             placeholder: 'Enter amount',
             prefix: const Padding(

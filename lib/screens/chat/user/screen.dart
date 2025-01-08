@@ -244,6 +244,7 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
       child: GestureDetector(
         onTap: _dismissKeyboard,
         child: SafeArea(
+          bottom: false,
           child: Column(
             children: [
               ChatHeader(

@@ -50,6 +50,15 @@ dependencies:
   collection: ^1.19.0
   simple_animations: ^5.1.0
   scrollable_positioned_list: ^0.3.8
+  archive: ^3.3.7
+  smartcontracts:
+    git:
+      url: https://github.com/citizenwallet/smartcontracts.git
+      ref: v0.0.106
+  contractforge:
+    git:
+      url: https://github.com/citizenwallet/contractforge.git
+      ref: v0.0.11
 
 
 dev_dependencies:
@@ -94,6 +103,21 @@ flutter:
     - assets/config/v4/communities.json
     - assets/config/v4/communities.test.json
     - assets/config/v4/debug.json
+    - packages/smartcontracts/contracts/accounts/Account.abi.json
+    - packages/smartcontracts/contracts/accounts/AccountFactory.abi.json
+    - packages/smartcontracts/contracts/external/DERC20.abi.json
+    - packages/smartcontracts/contracts/accounts/Account.abi.json
+    - packages/smartcontracts/contracts/external/SimpleAccountFactory.abi.json
+    - packages/smartcontracts/contracts/accounts/TokenEntryPoint.abi.json
+    - packages/smartcontracts/contracts/standards/IAccessControlUpgradeable.abi.json
+    - packages/smartcontracts/contracts/apps/SimpleFaucet.abi.json
+    - packages/smartcontracts/contracts/standards/ERC20.abi.json
+    - packages/smartcontracts/contracts/standards/ERC1155.abi.json
+    - packages/smartcontracts/contracts/apps/Profile.abi.json
+    - packages/smartcontracts/contracts/external/CardFactory.abi.json
+    - packages/contractforge/abi/CardManagerModule.json
+    - packages/contractforge/abi/Safe.json
+    - packages/contractforge/abi/CommunityModule.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

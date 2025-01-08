@@ -147,12 +147,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final interactions = context.select(sortByUnreadAndDate);
     final places = context.select((PlaceState state) => state.places);
 
+    final safeBottomPadding = MediaQuery.of(context).padding.bottom;
+
+
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemBackground,
       child: GestureDetector(
         onTap: _dismissKeyboard,
         behavior: HitTestBehavior.opaque,
         child: SafeArea(
+          bottom: false,
           child: Stack(
             alignment: Alignment.topCenter,
             children: [
@@ -195,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 0,
+                bottom: 10 + safeBottomPadding,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 100),
                   height: isKeyboardVisible ? 0 : (100 * heightFactor),
