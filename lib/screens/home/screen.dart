@@ -116,7 +116,6 @@ class _HomeScreenState extends State<HomeScreen> {
         imageUrl: interaction.imageUrl,
         account: interaction.withAccount,
       );
-
       _goToChatWithPlace(place);
     } else if (!interaction.isPlace) {
       _goToChatWithUser(interaction.withAccount);
@@ -198,7 +197,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       childCount: interactions.length,
                       (context, index) => InteractionListItem(
                         interaction: interactions[index],
-                        onTap: goToChatHistory,
+                        onTap: (interaction) async {
+                          // Navigate first
+                          goToChatHistory(interaction);
+                          // Then mark as read
+                          await _interactionState
+                              .markInteractionAsRead(interaction);
+                        },
                       ),
                     ),
                   ),

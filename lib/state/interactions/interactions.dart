@@ -108,4 +108,22 @@ class InteractionState with ChangeNotifier {
 
     return existingMap.values.toList();
   }
+
+  Future<void> markInteractionAsRead(Interaction interaction) async {
+    if (!interaction.hasUnreadMessages) {
+      return;
+    }
+
+    try {
+      interaction.hasUnreadMessages = false;
+      final upsertedInteractions = _upsertInteractions([interaction]);
+      interactions = upsertedInteractions;
+      safeNotifyListeners();
+
+      apiService.patchInteraction(interaction);
+    } catch (e, s) {
+      debugPrint('Error marking interaction as read: $e');
+      debugPrint('Stack trace: $s');
+    }
+  }
 }

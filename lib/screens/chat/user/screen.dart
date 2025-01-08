@@ -18,6 +18,8 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
 
   ScrollController scrollController = ScrollController();
 
+  
+
   @override
   void initState() {
     super.initState();
