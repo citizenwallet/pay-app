@@ -20,10 +20,10 @@ class Interaction {
   final bool isPlace;
   final int? placeId; // id from supabase
 
-  final bool hasUnreadMessages;
+  bool hasUnreadMessages;
   final DateTime lastMessageAt;
 
-  const Interaction({
+  Interaction({
     required this.id,
     required this.exchangeDirection,
     required this.withAccount,
