@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/transaction.dart';
+import 'package:pay_app/state/transactions_with_user.dart';
+import 'package:provider/provider.dart';
 
 import './header.dart';
 import './transaction_list_item.dart';
@@ -18,7 +20,7 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
 
   ScrollController scrollController = ScrollController();
 
-  
+  late TransactionsWithUserState _transactionsWithUserState;
 
   @override
   void initState() {
@@ -28,8 +30,14 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
     messageFocusNode.addListener(_onMessageFocus);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // make initial requests here
+      _transactionsWithUserState = context.read<TransactionsWithUserState>();
+      onLoad();
     });
+  }
+
+  void onLoad() async {
+    await _transactionsWithUserState.getProfileOfWithUser();
+    // TODO: get transactions
   }
 
   void _onAmountFocus() {
@@ -241,6 +249,9 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final withUser =
+        context.select((TransactionsWithUserState state) => state.withUser);
+
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemBackground,
       child: GestureDetector(
@@ -251,9 +262,9 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
             children: [
               ChatHeader(
                 onTapLeading: goBack,
-                imageUrl: 'https://i.pravatar.cc/330',
-                name: 'Jonas',
-                username: 'jonas_123',
+                imageUrl: withUser.imageUrl,
+                name: withUser.name,
+                username: withUser.username,
               ),
               Expanded(
                 child: ListView(

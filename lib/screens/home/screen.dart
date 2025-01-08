@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/models/place.dart';
+import 'package:pay_app/models/user.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
 import 'package:pay_app/state/interactions/selectors.dart';
 import 'package:pay_app/state/place.dart';
@@ -15,9 +16,6 @@ import 'profile_bar.dart';
 import 'search_bar.dart';
 import 'interaction_list_item.dart';
 import 'place_list_item.dart';
-
-// TODO: refresh interactions on load
-// TODO: paginate interactions
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -118,7 +116,14 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       _goToChatWithPlace(place);
     } else if (!interaction.isPlace) {
-      _goToChatWithUser(interaction.withAccount);
+      final user = User(
+        name: interaction.name,
+        username: '',
+        account: interaction.withAccount,
+        imageUrl: interaction.imageUrl,
+      );
+
+      _goToChatWithUser(user);
     }
   }
 
@@ -138,8 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
         .go('/$myUserId/place/${place.id}', extra: {'myAddress': myAddress});
   }
 
-  // TODO: accept a user
-  void _goToChatWithUser(String account) {
+  void _goToChatWithUser(User user) {
     final myAddress = _walletState.address?.hexEip55;
 
     if (myAddress == null) {
@@ -150,7 +154,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final myUserId = GoRouter.of(context).state?.pathParameters['id'];
 
-    navigator.go('/$myUserId/user/$account', extra: {'myAddress': myAddress});
+    navigator.go('/$myUserId/user/${user.account}',
+        extra: {'myAddress': myAddress, 'user': user});
   }
 
   void _dismissKeyboard() {

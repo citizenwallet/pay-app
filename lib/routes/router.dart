@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pay_app/state/transactions_with_user.dart';
 import 'package:provider/provider.dart';
 
 // screens
@@ -118,12 +119,19 @@ GoRouter createRouter(
               parentNavigatorKey: rootNavigatorKey,
               builder: (context, state) {
                 final extraParams = state.extra as Map<String, dynamic>;
-
                 final myAddress = extraParams['myAddress'];
+                final user = extraParams['user'];
 
                 debugPrint('myAddress: $myAddress');
+                debugPrint('user: ${user.toString()}');
 
-                return const ChatWithUserScreen();
+                return ChangeNotifierProvider(
+                  create: (_) => TransactionsWithUserState(
+                    withUser: user,
+                    myAddress: myAddress,
+                  ),
+                  child: const ChatWithUserScreen(),
+                );
               },
             ),
           ],
