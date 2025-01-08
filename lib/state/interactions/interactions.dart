@@ -3,7 +3,7 @@ import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/services/interactions/interactions.dart';
 
 
-// TODO: upsert into interactions against id and withAccount
+// TODO: upsert into interactions against withAccount
 
 
 class InteractionState with ChangeNotifier {

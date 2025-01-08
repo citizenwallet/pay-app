@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/models/wallet.dart';
 import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/engine/utils.dart';
@@ -18,9 +19,8 @@ class WalletState with ChangeNotifier {
   final PreferencesService _preferencesService = PreferencesService();
 
 // TODO: remove later
-  final String _credentialsAddressHexEip55 =
-      '09c15615b0a381c8f3ee0af78c14a97d8b8df2c469fa4d6eed346a510be3fa68';
-  String get credentialsAddressHexEip55 => _credentialsAddressHexEip55;
+  final String _credentials = dotenv.env['PRIVATE_KEY']!;
+  String get credentials => _credentials;
 
 // TODO: remove later
   EthereumAddress? _address;
@@ -54,17 +54,12 @@ class WalletState with ChangeNotifier {
         throw Exception('Community not found in local asset');
       }
 
+      EthPrivateKey privateKey = EthPrivateKey.fromHex(credentials);
       final accFactory = await accountFactoryServiceFromConfig(config);
-
-      EthPrivateKey privateKey =
-          EthPrivateKey.fromHex(credentialsAddressHexEip55);
-
       final address = await accFactory.getAddress(privateKey.address.hexEip55);
 
       _address = address;
       safeNotifyListeners();
-
-      // final token = config.getPrimaryToken();
 
       await _preferencesService.setLastWallet(address.hexEip55);
       await _preferencesService.setLastAlias(config.community.alias);
@@ -86,21 +81,15 @@ class WalletState with ChangeNotifier {
     safeNotifyListeners();
 
     try {
-
       final config = await _configService.getLocalConfig();
-      final accFactory = await accountFactoryServiceFromConfig(config!);
 
-      EthPrivateKey privateKey =
-          EthPrivateKey.fromHex(credentialsAddressHexEip55);
-
-
-      final address = await accFactory.getAddress(privateKey.address.hexEip55);
-
-  
-      // final config = await _configService.getLocalConfig();
       if (config == null) {
         throw Exception('Community not found in local asset');
       }
+
+      EthPrivateKey privateKey = EthPrivateKey.fromHex(credentials);
+      final accFactory = await accountFactoryServiceFromConfig(config);
+      final address = await accFactory.getAddress(privateKey.address.hexEip55);
 
       final token = config.getPrimaryToken();
 
@@ -110,12 +99,12 @@ class WalletState with ChangeNotifier {
         decimals: token.decimals,
       );
 
-      await _walletService.init(address!, privateKey, nativeCurrency, config,
+      await _walletService.init(address, privateKey, nativeCurrency, config,
           onFinished: (bool success) {
         debugPrint('wallet service init: $success');
       });
 
-      return address!.hexEip55;
+      return address.hexEip55;
     } catch (e, s) {
       error = true;
       safeNotifyListeners();
@@ -217,8 +206,10 @@ class WalletState with ChangeNotifier {
     );
 
 // extraDate: formatting message of a transaction
-  
-    final txHash = await _walletService.submitUserop(userOp, data: eventData, extraData: 'message' != '' ? TransferData('message') : null);
+
+    final txHash = await _walletService.submitUserop(userOp,
+        data: eventData,
+        extraData: 'message' != '' ? TransferData('message') : null);
 
     debugPrint('txHash: $txHash');
   }
