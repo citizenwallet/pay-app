@@ -12,7 +12,7 @@ class InteractionService {
 
   Future<List<Interaction>> getInteractions() async {
     try {
-      final response = await apiService.get(url: '/interactions/$myAccount');
+      final response = await apiService.get(url: '/accounts/$myAccount/interactions');
 
       final Map<String, dynamic> data = response;
       final List<dynamic> interactionsApiResponse = data['interactions'];
@@ -84,7 +84,7 @@ class InteractionService {
   Future<List<Interaction>> getNewInteractions(DateTime fromDate) async {
     try {
       final response = await apiService.get(
-          url: '/interactions/$myAccount/new?from_date=${fromDate.toUtc()}');
+          url: '/accounts/$myAccount/interactions/new?from_date=${fromDate.toUtc()}');
 
       final Map<String, dynamic> data = response;
       final List<dynamic> interactionsApiResponse = data['interactions'];
