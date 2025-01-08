@@ -2,7 +2,7 @@ class Place {
   int id;
   String name;
   String account;
-  String? slug;
+  String slug;
   String? imageUrl;
   String? description;
 
@@ -35,5 +35,10 @@ class Place {
       'imageUrl': imageUrl,
       'description': description,
     };
+  }
+
+  @override
+  String toString() {
+    return 'Place(name: $name, account: $account, slug: $slug, imageUrl: $imageUrl, description: $description)';
   }
 }
