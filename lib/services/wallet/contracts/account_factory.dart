@@ -17,7 +17,6 @@ Future<AccountFactoryService> accountFactoryServiceFromConfig(Config config,
   final url = config.getRpcUrl(primaryAccountFactory.chainId.toString());
   // final wsurl =
   //     config.chains[primaryAccountFactory.chainId.toString()]!.node.wsUrl;
-  print('url: $url');
 
   final client = Client();
 
