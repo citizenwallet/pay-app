@@ -43,7 +43,7 @@ GoRouter createRouter(
           builder: (context, state) {
             final myUserId = state.pathParameters['id']!;
             final myAccount =
-                '0x0000000000000000000000000000000000000000'; // FIXME: make dynamic
+                '0x48262e7f759d3c2BE5f67f81cF5911A777cF83F1'; // FIXME: make dynamic
 
             return ChangeNotifierProvider(
               create: (_) => InteractionState(account: myAccount),
