@@ -48,4 +48,16 @@ class PreferencesService {
   String? getAccountAddress(String key) {
     return _preferences.getString('accountAddress_$key');
   }
+
+  Future setLastAlias(String alias) async {
+    await _preferences.setString('lastAlias', alias);
+  }
+
+  String? get lastAlias => _preferences.getString('lastAlias');
+
+  Future setLastWallet(String address) async {
+    await _preferences.setString('lastWallet', address);
+  }
+
+  String? get lastWallet => _preferences.getString('lastWallet');
 }
