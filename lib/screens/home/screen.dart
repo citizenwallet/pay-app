@@ -7,6 +7,7 @@ import 'package:pay_app/models/place.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
 import 'package:pay_app/state/interactions/selectors.dart';
 import 'package:pay_app/state/place.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:provider/provider.dart';
 
@@ -37,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   late InteractionState _interactionState;
   late PlaceState _placeState;
+  late WalletState _walletState;
 
   @override
   void initState() {
@@ -45,21 +47,24 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchFocusNode.addListener(_searchListener);
     _scrollController.addListener(_scrollListener);
 
-    _interactionState = context.read<InteractionState>();
-    _placeState = context.read<PlaceState>();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _interactionState = context.read<InteractionState>();
+      _placeState = context.read<PlaceState>();
+      _walletState = context.read<WalletState>();
       onLoad();
     });
   }
 
   void onLoad() async {
     await _interactionState.getInteractions();
+    _interactionState.startPolling();
     await _placeState.getAllPlaces();
   }
 
   @override
   void dispose() {
+    _interactionState.stopPolling();
+
     _searchFocusNode.removeListener(_searchListener);
     _searchFocusNode.dispose();
 
@@ -119,21 +124,34 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _goToChatWithPlace(Place place) {
+    final myAddress = _walletState.address?.hexEip55;
+
+    if (myAddress == null) {
+      return;
+    }
+
     final navigator = GoRouter.of(context);
 
     final myUserId = navigator.state?.pathParameters['id'];
 
     // TODO: pass place as extra parameter
-    navigator.push('/$myUserId/place/${place.id}');
+    navigator
+        .go('/$myUserId/place/${place.id}', extra: {'myAddress': myAddress});
   }
 
   // TODO: accept a user
   void _goToChatWithUser(String account) {
+    final myAddress = _walletState.address?.hexEip55;
+
+    if (myAddress == null) {
+      return;
+    }
+
     final navigator = GoRouter.of(context);
 
     final myUserId = GoRouter.of(context).state?.pathParameters['id'];
 
-    navigator.push('/$myUserId/user/$account');
+    navigator.go('/$myUserId/user/$account', extra: {'myAddress': myAddress});
   }
 
   void _dismissKeyboard() {
@@ -148,7 +166,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final places = context.select((PlaceState state) => state.places);
 
     final safeBottomPadding = MediaQuery.of(context).padding.bottom;
-
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemBackground,

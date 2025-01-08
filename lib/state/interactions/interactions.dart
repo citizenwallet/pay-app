@@ -1,14 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/services/interactions/interactions.dart';
 
-
-// TODO: upsert into interactions against withAccount
-
-
 class InteractionState with ChangeNotifier {
   List<Interaction> interactions = [];
   InteractionService apiService;
+  Timer? _pollingTimer;
 
   InteractionState({required String account})
       : apiService = InteractionService(myAccount: account);
@@ -25,6 +24,7 @@ class InteractionState with ChangeNotifier {
 
   @override
   void dispose() {
+    stopPolling();
     _mounted = false;
     super.dispose();
   }
@@ -36,7 +36,12 @@ class InteractionState with ChangeNotifier {
 
     try {
       final interactions = await apiService.getInteractions();
-      this.interactions = interactions;
+
+      if (interactions.isNotEmpty) {
+        final upsertedInteractions = _upsertInteractions(interactions);
+        this.interactions = upsertedInteractions;
+        safeNotifyListeners();
+      }
     } catch (e, s) {
       debugPrint('Error fetching interactions: $e');
       debugPrint('Stack trace: $s');
@@ -45,5 +50,62 @@ class InteractionState with ChangeNotifier {
       loading = false;
       safeNotifyListeners();
     }
+  }
+
+  void startPolling() {
+    // Cancel any existing timer first
+    stopPolling();
+
+    // Create new timer
+    _pollingTimer = Timer.periodic(
+      const Duration(milliseconds: pollingInterval),
+      (_) {
+        interactionsFromDate = DateTime.now();
+        _pollInteractions();
+      },
+    );
+  }
+
+  void stopPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
+    debugPrint('stopPolling');
+  }
+
+  static const pollingInterval = 3000; // ms
+  DateTime interactionsFromDate = DateTime.now();
+  Future<void> _pollInteractions() async {
+    try {
+      final newInteractions =
+          await apiService.getNewInteractions(interactionsFromDate);
+
+      if (newInteractions.isNotEmpty) {
+        final upsertedInteractions = _upsertInteractions(newInteractions);
+        interactions = upsertedInteractions;
+        safeNotifyListeners();
+      }
+    } catch (e, s) {
+      debugPrint('Error polling interactions: $e');
+      debugPrint('Stack trace: $s');
+    }
+  }
+
+  List<Interaction> _upsertInteractions(List<Interaction> newInteractions) {
+    final existingList = interactions;
+    final existingMap = {for (var i in existingList) i.id: i};
+
+    for (final newInteraction in newInteractions) {
+      if (existingMap.containsKey(newInteraction.id)) {
+        // Update existing interaction
+        final existing = existingMap[newInteraction.id]!;
+        existingMap[newInteraction.id] =
+            Interaction.upsert(existing, newInteraction);
+      } else {
+        // Add new interaction
+        existingMap[newInteraction.id] = newInteraction;
+      }
+    }
+
+    return existingMap.values.toList();
   }
 }

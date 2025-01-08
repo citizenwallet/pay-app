@@ -45,11 +45,11 @@ GoRouter createRouter(
 
             final myAddress = extraParams['myAddress'];
 
-               if (myAddress == null || myAddress is! String) {
+            if (myAddress == null || myAddress is! String) {
               throw Exception(
                   'Navigation error: myAddress is required and must be a String');
             }
-    
+
             return ChangeNotifierProvider(
               create: (_) => InteractionState(account: myAddress),
               child: const HomeScreen(),
@@ -79,6 +79,12 @@ GoRouter createRouter(
               path: '/place/:placeId',
               parentNavigatorKey: rootNavigatorKey,
               builder: (context, state) {
+                final extraParams = state.extra as Map<String, dynamic>;
+
+                final myAddress = extraParams['myAddress'];
+
+                debugPrint('myAddress: $myAddress');
+
                 final userId = int.parse(state.pathParameters['id']!);
                 final placeId = int.parse(state.pathParameters['placeId']!);
                 final myAccount = '0x0000000000000000000000000000000000000000';
@@ -111,6 +117,12 @@ GoRouter createRouter(
               path: '/user/:account',
               parentNavigatorKey: rootNavigatorKey,
               builder: (context, state) {
+                final extraParams = state.extra as Map<String, dynamic>;
+
+                final myAddress = extraParams['myAddress'];
+
+                debugPrint('myAddress: $myAddress');
+
                 return const ChatWithUserScreen();
               },
             ),
