@@ -41,12 +41,17 @@ GoRouter createRouter(
           path: '/:id', // user id from supabase
           parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) {
-            final myUserId = state.pathParameters['id']!;
-            final myAccount =
-                '0x48262e7f759d3c2BE5f67f81cF5911A777cF83F1'; // FIXME: make dynamic
+            final extraParams = state.extra as Map<String, dynamic>;
 
+            final myAddress = extraParams['myAddress'];
+
+               if (myAddress == null || myAddress is! String) {
+              throw Exception(
+                  'Navigation error: myAddress is required and must be a String');
+            }
+    
             return ChangeNotifierProvider(
-              create: (_) => InteractionState(account: myAccount),
+              create: (_) => InteractionState(account: myAddress),
               child: const HomeScreen(),
             );
           },

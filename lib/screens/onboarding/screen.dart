@@ -23,10 +23,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void initState() {
     super.initState();
 
-    _communityState = context.read<CommunityState>();
-    _walletState = context.read<WalletState>();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _communityState = context.read<CommunityState>();
+      _walletState = context.read<WalletState>();
       onLoad();
     });
   }
@@ -45,33 +44,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     FocusScope.of(context).unfocus();
   }
 
-  void handleConfirm(int userId) async {
-
+  void handleConfirm() async {
     final addressFromCreate = await _walletState.createWallet();
     final addressFromOpen = await _walletState.openWallet();
 
     debugPrint('addressFromCreate: $addressFromCreate');
     debugPrint('addressFromOpen: $addressFromOpen');
 
-
     // final exists = await _walletState.createAccount();
 
     // debugPrint('account exists: $exists');
     // debugPrint('finish');
 
+    if (!mounted) return;
 
+    final userId = '123';
     final navigator = GoRouter.of(context);
-    navigator.replace('/$userId');
+    navigator.replace('/$userId', extra: {'myAddress': addressFromOpen});
   }
-
-
 
   @override
   Widget build(BuildContext context) {
     final theme = CupertinoTheme.of(context);
 
     final community = context.select((CommunityState state) => state.community);
-
+    
     return CupertinoPageScaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       child: GestureDetector(
@@ -139,7 +136,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     // Confirm Button
                     WideButton(
                       text: 'Confirm',
-                      onPressed: () => handleConfirm(1),
+                      onPressed: () => handleConfirm(),
                     ),
                     const SizedBox(height: 16),
                   ],
