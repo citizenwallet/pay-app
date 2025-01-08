@@ -29,6 +29,7 @@ class InteractionState with ChangeNotifier {
     super.dispose();
   }
 
+  // TODO: paginate interactions
   Future<void> getInteractions() async {
     loading = true;
     error = false;
@@ -81,6 +82,7 @@ class InteractionState with ChangeNotifier {
       if (newInteractions.isNotEmpty) {
         final upsertedInteractions = _upsertInteractions(newInteractions);
         interactions = upsertedInteractions;
+        interactionsFromDate = DateTime.now();
         safeNotifyListeners();
       }
     } catch (e, s) {
