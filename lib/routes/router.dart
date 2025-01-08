@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pay_app/state/transactions_with_user.dart';
+import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:provider/provider.dart';
 
 // screens

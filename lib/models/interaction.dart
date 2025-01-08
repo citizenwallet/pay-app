@@ -38,7 +38,7 @@ class Interaction {
   factory Interaction.fromJson(Map<String, dynamic> json) {
     return Interaction(
       id: json['id'],
-      exchangeDirection: _parseExchangeDirection(json['exchange_direction']),
+      exchangeDirection: parseExchangeDirection(json['exchange_direction']),
       withAccount: json['withAccount'],
       imageUrl: json['imageUrl'] == null || json['imageUrl'] == ''
           ? null
@@ -120,7 +120,7 @@ class Interaction {
     return 'Interaction(id: $id, exchangeDirection: $exchangeDirection, withAccount: $withAccount, imageUrl: $imageUrl, name: $name, amount: $amount, description: $description, isPlace: $isPlace, placeId: $placeId, hasUnreadMessages: $hasUnreadMessages, lastMessageAt: $lastMessageAt)';
   }
 
-  static ExchangeDirection _parseExchangeDirection(String direction) {
+  static ExchangeDirection parseExchangeDirection(String direction) {
     switch (direction.toLowerCase()) {
       case 'sent':
         return ExchangeDirection.sent;

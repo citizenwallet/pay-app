@@ -1,15 +1,15 @@
 import 'package:flutter/cupertino.dart';
 
-import 'package:pay_app/models/transaction.dart';
+import 'package:pay_app/models/order.dart';
 import 'package:pay_app/utils/date.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 
-class TransactionListItem extends StatelessWidget {
-  final Transaction transaction;
+class OrderListItem extends StatelessWidget {
+  final Order order;
 
-  const TransactionListItem({
+  const OrderListItem({
     super.key,
-    required this.transaction,
+    required this.order,
   });
 
   @override
@@ -39,11 +39,11 @@ class TransactionListItem extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        PaymentMethodBadge(paymentMode: transaction.paymentMode),
+        PaymentMethodBadge(paymentMode: order.paymentMode),
         SizedBox(height: 4),
-        OrderId(orderId: transaction.orderId),
+        OrderId(orderId: order.orderId),
         SizedBox(height: 4),
-        Description(description: transaction.description),
+        Description(description: order.description),
       ],
     );
   }
@@ -53,9 +53,9 @@ class TransactionListItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Amount(amount: transaction.amount),
+        Amount(amount: order.amount),
         SizedBox(height: 4),
-        TimeAgo(createdAt: transaction.createdAt),
+        TimeAgo(createdAt: order.createdAt),
       ],
     );
   }

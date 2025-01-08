@@ -1,8 +1,9 @@
 import 'package:flutter/cupertino.dart';
 
+import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/transaction.dart';
 import './header.dart';
-import './transaction_list_item.dart';
+import 'order_list_item.dart';
 import './footer.dart';
 
 class ChatWithPlaceScreen extends StatefulWidget {
@@ -76,12 +77,12 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
   }
 
   void sendMessage(double amount, String? message) {
-    final last = transactions.last;
+    final last = orders.last;
 
     debugPrint(last.orderId.toString());
 
     setState(() {
-      transactions.add(Transaction(
+      orders.add(Order(
         paymentMode: PaymentMode.app,
         orderId: last.orderId ?? 0 + 1,
         id: 'tx_123456789',
@@ -104,8 +105,8 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
     );
   }
 
-  final List<Transaction> transactions = [
-    Transaction(
+  final List<Order> orders = [
+    Order(
       id: 'tx_123456789',
       txHash:
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -119,7 +120,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       orderId: 1,
       paymentMode: PaymentMode.app,
     ),
-    Transaction(
+    Order(
       id: 'tx_123456789',
       txHash:
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -133,7 +134,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       orderId: 2,
       paymentMode: PaymentMode.app,
     ),
-    Transaction(
+    Order(
       id: 'tx_123456789',
       txHash:
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -147,7 +148,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       orderId: 2,
       paymentMode: PaymentMode.app,
     ),
-    Transaction(
+    Order(
       id: 'tx_123456789',
       txHash:
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -161,7 +162,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       orderId: 2,
       paymentMode: PaymentMode.app,
     ),
-    Transaction(
+    Order(
       id: 'tx_123456789',
       txHash:
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -175,7 +176,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       orderId: 2,
       paymentMode: PaymentMode.app,
     ),
-    Transaction(
+    Order(
       id: 'tx_123456789',
       txHash:
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -189,7 +190,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       orderId: 4,
       paymentMode: PaymentMode.app,
     ),
-    Transaction(
+    Order(
       id: 'tx_123456789',
       txHash:
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -203,7 +204,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       orderId: 3,
       paymentMode: PaymentMode.app,
     ),
-    Transaction(
+    Order(
       id: 'tx_123456789',
       txHash:
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -217,7 +218,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
       orderId: 2,
       paymentMode: PaymentMode.app,
     ),
-    Transaction(
+    Order(
       id: 'tx_123456789',
       txHash:
           '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
@@ -260,8 +261,8 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
                   reverse: true,
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   children: [
-                    for (var transaction in transactions)
-                      TransactionListItem(transaction: transaction),
+                    for (var order in orders)
+                      OrderListItem(order: order),
                   ],
                 ),
               ),
