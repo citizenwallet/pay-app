@@ -55,14 +55,13 @@ class InteractionState with ChangeNotifier {
   void startPolling() {
     // Cancel any existing timer first
     stopPolling();
+    
+    interactionsFromDate = DateTime.now();
 
     // Create new timer
     _pollingTimer = Timer.periodic(
       const Duration(milliseconds: pollingInterval),
-      (_) {
-        interactionsFromDate = DateTime.now();
-        _pollInteractions();
-      },
+      (_) => _pollInteractions(),
     );
   }
 
