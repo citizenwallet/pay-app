@@ -28,7 +28,7 @@ class CommunityState with ChangeNotifier {
       loading = true;
       safeNotifyListeners();
 
-      // Get community from local database
+      // Get community from local asset file
       final config = await _configService.getLocalConfig();
 
       if (config == null) {
