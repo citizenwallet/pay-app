@@ -117,13 +117,12 @@ class WalletService {
       }
 
       // TODO: figure out why the returned balance is sometimes out of bounds
-      // _pref.setBalance(_account.hexEip55, b.toString());
+      _pref.setBalance(_account.hexEip55, b.toString());
 
       return b.toString();
     } catch (_) {}
 
-    // return _pref.getBalance(_account.hexEip55) ?? '0';
-    return '0';
+    return _pref.getBalance(_account.hexEip55) ?? '0';
   }
 
   String get standard => _tokenStandard;
@@ -209,10 +208,12 @@ class WalletService {
       redirect: dotenv.get('ORIGIN_HEADER'),
     );
 
-    // final cachedChainId = _pref.getChainIdForAlias(config.community.alias);
-    _chainId = await _ethClient.getChainId();
-    // await _pref.setChainIdForAlias(
-    //     config.community.alias, _chainId!.toString());
+    final cachedChainId = _pref.getChainIdForAlias(config.community.alias);
+    _chainId = cachedChainId != null
+        ? BigInt.parse(cachedChainId)
+        : await _ethClient.getChainId();
+    await _pref.setChainIdForAlias(
+        config.community.alias, _chainId!.toString());
 
     this.currency = currency;
 
@@ -268,7 +269,6 @@ class WalletService {
     return _cardManager!.getCardAddress(hash);
   }
 
-  
   /// Initializes the Ethereum smart contracts used by the wallet.
   ///
   /// [account] The account address
@@ -288,6 +288,7 @@ class WalletService {
     // Get the Ethereum address for the current account.
     // _account = EthereumAddress.fromHex(account);
     _account = account;
+
     await _pref.setAccountAddress(
       _credentials.address.hexEip55,
       address.hexEip55,
@@ -682,7 +683,10 @@ class WalletService {
       }
 
       return true;
-    } catch (_) {}
+    } catch (e, s) {
+      debugPrint('error: $e');
+      debugPrint('stack trace: $s');
+    }
 
     return false;
   }
@@ -946,7 +950,10 @@ class WalletService {
       final response = await _requestBundler(body);
 
       return (response.result as String, null);
-    } catch (exception) {
+    } catch (exception, s) {
+      debugPrint('error: $exception');
+      debugPrint('stack trace: $s');
+
       final strerr = exception.toString();
 
       if (strerr.contains(gasFeeErrorMessage)) {
@@ -1247,7 +1254,9 @@ class WalletService {
       }
 
       return txHash;
-    } catch (_) {
+    } catch (e, s) {
+      debugPrint('error: $e');
+      debugPrint('stack trace: $s');
       rethrow;
     }
   }
