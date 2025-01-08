@@ -1,5 +1,3 @@
-// TODO: different model for Places listing in home screen
-
 enum ExchangeDirection {
   sent,
   received,
