@@ -105,8 +105,6 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
     final transactionState = context.watch<TransactionsWithUserState>();
     final withUser = transactionState.withUser;
 
-    final sendingQueue = transactionState.sendingQueue;
-
     final transactions = selectUserTransactions(transactionState);
 
     return CupertinoPageScaffold(
