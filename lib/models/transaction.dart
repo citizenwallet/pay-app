@@ -37,13 +37,13 @@ class Transaction {
   factory Transaction.fromJson(Map<String, dynamic> json) {
     return Transaction(
       id: json['id'],
-      txHash: json['txHash'],
-      createdAt: DateTime.parse(json['createdAt']),
-      fromAccount: json['fromAccount'],
-      toAccount: json['toAccount'],
-      amount: json['amount'],
+      txHash: json['hash'],
+      createdAt: DateTime.parse(json['created_at']),
+      fromAccount: json['from'],
+      toAccount: json['to'],
+      amount: double.parse(json['value']),
       exchangeDirection:
-          Interaction.parseExchangeDirection(json['exchangeDirection']),
+          Interaction.parseExchangeDirection(json['exchange_direction']),
       description: json['description'] == '' ? null : json['description'],
       status: parseTransactionStatus(json['status']),
     );

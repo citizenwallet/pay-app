@@ -9,12 +9,14 @@ class TransactionsService {
   String firstAccount;
   String secondAccount;
 
-  TransactionsService({required this.firstAccount, required this.secondAccount});
+  TransactionsService(
+      {required this.firstAccount, required this.secondAccount});
 
   Future<List<Transaction>> getTransactionsWithUser() async {
     try {
-
-      final response = await apiService.get(url: '/accounts/$firstAccount/transactions/with-account/$secondAccount');
+      final response = await apiService.get(
+          url:
+              '/accounts/$firstAccount/transactions/with-account/$secondAccount');
 
       final Map<String, dynamic> data = response;
       final List<dynamic> transactionsApiResponse = data['transactions'];
@@ -38,22 +40,7 @@ class TransactionsService {
        * }
        */
 
-      // Transform the API response into the format expected by Transaction.fromJson
-      final List<Map<String, dynamic>> transformedTransactions = transactionsApiResponse.map((t) {
-        return {
-          'id': t['id'],
-          'txHash': t['hash'],
-          'createdAt': t['created_at'],
-          'fromAccount': t['from'],
-          'toAccount': t['to'],
-          'amount': double.tryParse(t['value']),
-          'description': t['description'],
-          'status': t['status'],
-          'exchangeDirection': t['exchange_direction'],
-        };
-      }).toList();
-
-      return transformedTransactions
+      return transactionsApiResponse
           .map((t) => Transaction.fromJson(t))
           .toList();
     } catch (e, s) {
@@ -63,8 +50,8 @@ class TransactionsService {
     }
   }
 
-
-  Future<List<Transaction>> getNewTransactionsWithUser(DateTime fromDate) async {
+  Future<List<Transaction>> getNewTransactionsWithUser(
+      DateTime fromDate) async {
     try {
       final response = await apiService.get(
           url:
@@ -92,23 +79,7 @@ class TransactionsService {
        * }
        */
 
-      // Transform the API response into the format expected by Transaction.fromJson
-      final List<Map<String, dynamic>> transformedTransactions =
-          transactionsApiResponse.map((t) {
-        return {
-          'id': t['id'],
-          'txHash': t['hash'],
-          'createdAt': t['created_at'],
-          'fromAccount': t['from'],
-          'toAccount': t['to'],
-          'amount': double.tryParse(t['value']),
-          'description': t['description'],
-          'status': t['status'],
-          'exchangeDirection': t['exchange_direction'],
-        };
-      }).toList();
-
-      return transformedTransactions
+      return transactionsApiResponse
           .map((t) => Transaction.fromJson(t))
           .toList();
     } catch (e, s) {
