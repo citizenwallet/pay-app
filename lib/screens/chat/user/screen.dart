@@ -107,7 +107,7 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
 
     final sendingQueue = transactionState.sendingQueue;
 
-    final transactions = reverseChronologicalOrder(transactionState);
+    final transactions = selectUserTransactions(transactionState);
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemBackground,
@@ -124,14 +124,31 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
                 username: withUser.username,
               ),
               Expanded(
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                child: CustomScrollView(
                   controller: scrollController,
+                  scrollBehavior: const CupertinoScrollBehavior(),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  scrollDirection: Axis.vertical,
                   reverse: true,
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
-                  children: [
-                    for (var transaction in transactions)
-                      TransactionListItem(transaction: transaction),
+                  slivers: [
+                    const SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: 10,
+                      ),
+                    ),
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        childCount: transactions.length,
+                        (context, index) {
+                          final transaction = transactions[index];
+
+                          return TransactionListItem(
+                            key: Key(transaction.id),
+                            transaction: transaction,
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
               ),
