@@ -378,6 +378,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
   @override
   Widget build(BuildContext context) {
     final checkoutState = context.watch<CheckoutState>();
+    final place = checkoutState.place;
     final checkout = checkoutState.checkout;
     final checkoutTotal = checkout.total;
 
@@ -387,10 +388,9 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         child: Column(
           children: [
             ChatHeader(
-              imageUrl:
-                  'https://plus.unsplash.com/premium_photo-1661883237884-263e8de8869b?q=80&w=2689&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-              placeName: 'Fat Duck',
-              placeDescription: 'Broadwalk, London',
+              imageUrl: place.imageUrl,
+              placeName: place.name,
+              placeDescription: place.description,
               onTapLeading: goBack,
             ),
 

@@ -56,6 +56,7 @@ class ChatHeader extends StatelessWidget {
                     width: 16,
                     height: 16,
                   ),
+                  const SizedBox(width: 10),
                   Text(
                     placeName ?? '',
                     style: TextStyle(

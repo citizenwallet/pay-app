@@ -1,15 +1,18 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/models/menu_item.dart';
+import 'package:pay_app/models/place.dart';
 
 class CheckoutState with ChangeNotifier {
   Checkout checkout;
+  final Place place;
   final int _userId;
   final int _placeId;
 
   CheckoutState({
     required userId,
     required placeId,
+    required this.place,
   })  : _userId = userId,
         _placeId = placeId,
         checkout = Checkout(items: []);

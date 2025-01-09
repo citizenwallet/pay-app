@@ -168,7 +168,7 @@ class TransactionsWithUserState with ChangeNotifier {
       if (newTransactions.isNotEmpty) {
         final upsertedTransactions = _upsertTransactions(newTransactions);
         transactions = upsertedTransactions;
-        // transactionsFromDate = DateTime.now();
+        transactionsFromDate = DateTime.now();
         safeNotifyListeners();
       }
     } catch (e, s) {

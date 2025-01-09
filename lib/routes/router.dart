@@ -103,11 +103,15 @@ GoRouter createRouter(
                     final userId = int.parse(state.pathParameters['id']!);
                     final placeId = int.parse(state.pathParameters['placeId']!);
 
+                    final extraParams = state.extra as Map<String, dynamic>;
+                    final place = extraParams['place'];
+
                     return ChangeNotifierProvider(
                       key: Key('menu-$userId-$placeId'),
                       create: (_) => CheckoutState(
                         userId: userId,
                         placeId: placeId,
+                        place: place,
                       ),
                       child: const PlaceMenuScreen(),
                     );

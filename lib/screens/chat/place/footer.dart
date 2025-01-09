@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pay_app/models/place.dart';
 import 'package:pay_app/utils/formatters.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/text_field.dart';
@@ -9,6 +10,7 @@ class Footer extends StatefulWidget {
   final Function(double, String?) onSend;
   final FocusNode amountFocusNode;
   final FocusNode messageFocusNode;
+  final Place place;
   final bool hasMenu;
 
   const Footer({
@@ -16,6 +18,7 @@ class Footer extends StatefulWidget {
     required this.onSend,
     required this.amountFocusNode,
     required this.messageFocusNode,
+    required this.place,
     this.hasMenu = false,
   });
 
@@ -61,7 +64,7 @@ class _FooterState extends State<Footer> {
     final myUserId = navigator.state?.pathParameters['id'];
     final placeId = navigator.state?.pathParameters['placeId'];
 
-    navigator.push('/$myUserId/place/$placeId/menu');
+    navigator.push('/$myUserId/place/$placeId/menu', extra: {'place': widget.place});
   }
 
   @override
