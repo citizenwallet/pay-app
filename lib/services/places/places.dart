@@ -28,24 +28,7 @@ class PlacesService {
         ]
         */
 
-      // Transform the API response into the format expected by Place.fromJson
-      final List<Map<String, dynamic>> transformedPlaces =
-          placesApiResponse.map((place) {
-        final accounts = place['accounts'] as List<dynamic>;
-        final account = accounts.first;
-
-        return {
-          'id': place['id'],
-          'name': place['name'],
-          'slug': place['slug'],
-          'account': account,
-          'imageUrl': place['image'],
-          'description': place['description'],
-          'hasMenu': true,
-        };
-      }).toList();
-
-      return transformedPlaces.map((i) => Place.fromJson(i)).toList();
+      return placesApiResponse.map((json) => Place.fromJson(json)).toList();
     } catch (e, s) {
       debugPrint('Error getting places: ${e.toString()}');
       debugPrint('Stack trace: ${s.toString()}');
@@ -102,6 +85,8 @@ class PlacesService {
     final Map<String, dynamic> placeData = data['place'];
     final Map<String, dynamic> profileData = data['profile'];
     final List<dynamic> itemsData = data['items'];
+
+    print(response);
 
     return Place.fromJson(response);
   }

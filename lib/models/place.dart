@@ -18,13 +18,15 @@ class Place {
   });
 
   factory Place.fromJson(Map<String, dynamic> json) {
+    final accounts = json['accounts'] as List<dynamic>;
+    final account = accounts.first;
+
     return Place(
       id: json['id'],
       name: json['name'],
       slug: json['slug'],
-      account: json['account'],
-      hasMenu: json['hasMenu'] ?? false,
-      imageUrl: json['imageUrl'] == '' ? null : json['imageUrl'],
+      account: account,
+      imageUrl: json['image'] == '' ? null : json['image'],
       description: json['description'] == '' ? null : json['description'],
     );
   }
@@ -36,7 +38,7 @@ class Place {
       'slug': slug,
       'account': account,
       'hasMenu': hasMenu,
-      'imageUrl': imageUrl,
+      'image': imageUrl,
       'description': description,
     };
   }
