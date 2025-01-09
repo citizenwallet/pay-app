@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/transaction.dart';
 import 'package:pay_app/models/user.dart';
@@ -8,6 +10,7 @@ class TransactionsWithUserState with ChangeNotifier {
   User withUser;
   String myAddress;
   List<Transaction> transactions = [];
+   Timer? _pollingTimer;
 
   ProfileService myProfileService;
   ProfileService withUserProfileService;
@@ -32,7 +35,47 @@ class TransactionsWithUserState with ChangeNotifier {
   @override
   void dispose() {
     _mounted = false;
+    stopPolling();
     super.dispose();
+  }
+
+    void startPolling() {
+    // Cancel any existing timer first
+    stopPolling();
+
+    transactionsFromDate = DateTime.now();
+
+    // Create new timer
+    _pollingTimer = Timer.periodic(
+      const Duration(milliseconds: pollingInterval),
+      (_) => _pollTransactions(),
+    );
+  }
+
+  void stopPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
+    debugPrint('stopPolling');
+  }
+
+   static const pollingInterval = 3000; // ms
+  DateTime transactionsFromDate = DateTime.now();
+  Future<void> _pollTransactions() async {
+    try {
+      debugPrint('polling transactions');
+      final newTransactions =
+          await transactionsWithUserService.getNewTransactionsWithUser(transactionsFromDate);
+
+      if (newTransactions.isNotEmpty) {
+        final upsertedTransactions = _upsertTransactions(newTransactions);
+        transactions = upsertedTransactions;
+        transactionsFromDate = DateTime.now();
+        safeNotifyListeners();
+      }
+    } catch (e, s) {
+      debugPrint('Error polling transactions: $e');
+      debugPrint('Stack trace: $s');
+    }
   }
 
   Future<void> getProfileOfWithUser() async {

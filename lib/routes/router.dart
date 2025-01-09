@@ -122,9 +122,6 @@ GoRouter createRouter(
                 final myAddress = extraParams['myAddress'];
                 final user = extraParams['user'];
 
-                debugPrint('myAddress: $myAddress');
-                debugPrint('user: ${user.toString()}');
-
                 return ChangeNotifierProvider(
                   create: (_) => TransactionsWithUserState(
                     withUser: user,

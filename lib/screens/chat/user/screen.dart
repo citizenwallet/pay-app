@@ -38,6 +38,7 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
   void onLoad() async {
     await _transactionsWithUserState.getProfileOfWithUser();
     await _transactionsWithUserState.getTransactionsWithUser();
+    _transactionsWithUserState.startPolling();
   }
 
   void _onAmountFocus() {
@@ -78,6 +79,7 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
     amountFocusNode.dispose();
     messageFocusNode.dispose();
     scrollController.dispose();
+    _transactionsWithUserState.stopPolling();
     super.dispose();
   }
 
