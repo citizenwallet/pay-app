@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/utils/formatters.dart';
@@ -42,6 +43,8 @@ class _FooterState extends State<Footer> {
   }
 
   Future<void> sendTransaction() async {
+    HapticFeedback.heavyImpact();
+
     widget.amountFocusNode.unfocus();
     widget.messageFocusNode.unfocus();
 
