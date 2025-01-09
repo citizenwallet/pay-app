@@ -1,3 +1,5 @@
+import './interaction.dart';
+
 enum TransactionStatus {
   sending,
   pending,
@@ -5,37 +7,29 @@ enum TransactionStatus {
   fail,
 }
 
-enum PaymentMode {
-  terminal,
-  qrCode,
-  app,
-}
-
 class Transaction {
   String id; // id from supabase
   String txHash; // hash of the transaction
 
-  int? orderId; // id of the order (for places only)
-  PaymentMode? paymentMode; // payment mode (for places only)
-
-  String fromAccountAddress; // address of the sender
-  String toAccountAddress; // address of the receiver
+  String fromAccount; // address of the sender
+  String toAccount; // address of the receiver
   double amount; // amount of the transaction
   String? description; // description of the transaction
   TransactionStatus status; // status of the transaction
   DateTime createdAt; // date of the transaction
 
+  final ExchangeDirection exchangeDirection;
+
   Transaction({
     required this.id,
     required this.txHash,
     required this.createdAt,
-    required this.fromAccountAddress,
-    required this.toAccountAddress,
+    required this.fromAccount,
+    required this.toAccount,
     required this.amount,
-    this.description,
+    required this.exchangeDirection,
     required this.status,
-    this.orderId,
-    this.paymentMode,
+    this.description,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
@@ -43,13 +37,13 @@ class Transaction {
       id: json['id'],
       txHash: json['txHash'],
       createdAt: DateTime.parse(json['createdAt']),
-      fromAccountAddress: json['fromAccountAddress'],
-      toAccountAddress: json['toAccountAddress'],
+      fromAccount: json['fromAccount'],
+      toAccount: json['toAccount'],
       amount: json['amount'],
-      description: json['description'],
-      status: _parseTransactionStatus(json['status']),
-      orderId: json['orderId'],
-      paymentMode: _parsePaymentMode(json['paymentMode']),
+      exchangeDirection:
+          Interaction.parseExchangeDirection(json['exchangeDirection']),
+      description: json['description'] == '' ? null : json['description'],
+      status: parseTransactionStatus(json['status']),
     );
   }
 
@@ -58,17 +52,19 @@ class Transaction {
       'id': id,
       'txHash': txHash,
       'createdAt': createdAt.toIso8601String(),
-      'fromAccountAddress': fromAccountAddress,
-      'toAccountAddress': toAccountAddress,
+      'fromAccount': fromAccount,
+      'toAccount': toAccount,
       'amount': amount,
+      'direction': exchangeDirection
+          .toString()
+          .split('.')
+          .last, // converts enum to string
       'description': description,
       'status': status.name.toUpperCase(),
-      'orderId': orderId,
-      'paymentMode': paymentMode?.name.toUpperCase(),
     };
   }
 
-  static TransactionStatus _parseTransactionStatus(dynamic value) {
+  static TransactionStatus parseTransactionStatus(dynamic value) {
     if (value is TransactionStatus) return value;
     if (value is String) {
       try {
@@ -80,16 +76,8 @@ class Transaction {
     return TransactionStatus.pending; // Default value
   }
 
-  static PaymentMode? _parsePaymentMode(dynamic value) {
-    if (value == null) return null;
-    if (value is PaymentMode) return value;
-    if (value is String) {
-      try {
-        return PaymentMode.values.byName(value.toLowerCase());
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
+  @override
+  String toString() {
+    return 'Transaction(id: $id, txHash: $txHash, createdAt: $createdAt, fromAccount: $fromAccount, toAccount: $toAccount, amount: $amount, exchangeDirection: $exchangeDirection, description: $description, status: $status)';
   }
 }

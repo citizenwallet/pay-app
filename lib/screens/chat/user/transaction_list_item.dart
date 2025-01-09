@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/models/interaction.dart';
 
 import 'package:pay_app/models/transaction.dart';
 import 'package:pay_app/utils/date.dart';
@@ -54,7 +55,10 @@ class TransactionListItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Amount(amount: transaction.amount),
+        Amount(
+          amount: transaction.amount,
+          exchangeDirection: transaction.exchangeDirection,
+        ),
         SizedBox(height: 4),
         TimeAgo(createdAt: transaction.createdAt),
       ],
@@ -106,120 +110,14 @@ class TransactionHash extends StatelessWidget {
   }
 }
 
-class PaymentMethodBadge extends StatelessWidget {
-  final PaymentMode? paymentMode;
-
-  const PaymentMethodBadge({super.key, this.paymentMode});
-
-  @override
-  Widget build(BuildContext context) {
-    if (paymentMode == null) {
-      return const SizedBox.shrink();
-    }
-
-    return _paymentBadge(paymentMode!);
-  }
-
-  Widget _qrPaymentBadge() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Color(0xFFD9D9D9),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Image.asset(
-            'assets/icons/qr-code.png',
-            width: 16,
-            height: 16,
-          ),
-          SizedBox(width: 4),
-          Text(
-            'QR code',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _terminalPaymentBadge() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Color(0xFFD9D9D9),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Image.asset(
-            'assets/icons/card.png',
-            width: 16,
-            height: 16,
-          ),
-          SizedBox(width: 4),
-          Text(
-            'terminal',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _appPaymentBadge() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Color(0xFFD9D9D9),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Image.asset(
-            'assets/icons/app.png',
-            width: 16,
-            height: 16,
-          ),
-          SizedBox(width: 4),
-          Text(
-            'app',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF4D4D4D),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _paymentBadge(PaymentMode paymentMode) {
-    switch (paymentMode) {
-      case PaymentMode.terminal:
-        return _terminalPaymentBadge();
-      case PaymentMode.qrCode:
-        return _qrPaymentBadge();
-      case PaymentMode.app:
-        return _appPaymentBadge();
-    }
-  }
-}
-
 class Amount extends StatelessWidget {
   final double amount;
+  final ExchangeDirection exchangeDirection;
 
   const Amount({
     super.key,
     required this.amount,
+    required this.exchangeDirection,
   });
 
   @override
@@ -232,7 +130,7 @@ class Amount extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         Text(
-          '${amount >= 0 ? '+' : '-'}${amount.toStringAsFixed(2)}',
+          '${exchangeDirection == ExchangeDirection.sent ? '-' : '+'} ${amount.toStringAsFixed(2)}',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,

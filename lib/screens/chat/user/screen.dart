@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
-import 'package:pay_app/models/transaction.dart';
-import 'package:pay_app/state/transactions_with_user.dart';
+import 'package:pay_app/state/transactions_with_user/selector.dart';
+import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:provider/provider.dart';
 
 import './header.dart';
@@ -37,7 +37,8 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
 
   void onLoad() async {
     await _transactionsWithUserState.getProfileOfWithUser();
-    // TODO: get transactions
+    await _transactionsWithUserState.getTransactionsWithUser();
+    _transactionsWithUserState.startPolling();
   }
 
   void _onAmountFocus() {
@@ -78,6 +79,7 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
     amountFocusNode.dispose();
     messageFocusNode.dispose();
     scrollController.dispose();
+    _transactionsWithUserState.stopPolling();
     super.dispose();
   }
 
@@ -86,25 +88,7 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
   }
 
   void sendMessage(double amount, String? message) {
-    final last = transactions.last;
-
-    debugPrint(last.orderId.toString());
-
-    setState(() {
-      transactions.add(Transaction(
-        paymentMode: PaymentMode.app,
-        orderId: last.orderId ?? 0 + 1,
-        id: 'tx_123456789',
-        txHash:
-            '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-        createdAt: DateTime.now(),
-        fromAccountAddress: '0xUserWallet123',
-        toAccountAddress: '0xPlaceWallet456',
-        amount: amount,
-        description: message,
-        status: TransactionStatus.success,
-      ));
-    });
+    
 
     Future.delayed(
       const Duration(milliseconds: 100),
@@ -114,134 +98,7 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
     );
   }
 
-  final List<Transaction> transactions = [
-    Transaction(
-      id: 'tx_123456789',
-      txHash:
-          '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now(),
-      fromAccountAddress: '0xUserWallet123',
-      toAccountAddress: '0xPlaceWallet456',
-      amount: 12.23,
-      description: 'Coffee and Pastries (Now)',
-      status: TransactionStatus.success,
-      // Place-specific fields
-      orderId: 1,
-      paymentMode: PaymentMode.app,
-    ),
-    Transaction(
-      id: 'tx_123456789',
-      txHash:
-          '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      fromAccountAddress: '0xUserWallet123',
-      toAccountAddress: '0xPlaceWallet456',
-      amount: 12.23,
-      description: 'Coffee and Pastries (Yesterday)',
-      status: TransactionStatus.success,
-      // Place-specific fields
-      orderId: 2,
-      paymentMode: PaymentMode.app,
-    ),
-    Transaction(
-      id: 'tx_123456789',
-      txHash:
-          '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
-      fromAccountAddress: '0xUserWallet123',
-      toAccountAddress: '0xPlaceWallet456',
-      amount: 12.23,
-      description: 'Coffee and Pastries (2 days ago)',
-      status: TransactionStatus.success,
-      // Place-specific fields
-      orderId: 2,
-      paymentMode: PaymentMode.app,
-    ),
-    Transaction(
-      id: 'tx_123456789',
-      txHash:
-          '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now().subtract(const Duration(days: 3)),
-      fromAccountAddress: '0xUserWallet123',
-      toAccountAddress: '0xPlaceWallet456',
-      amount: 12.23,
-      description: 'Coffee and Pastries (3 days ago)',
-      status: TransactionStatus.success,
-      // Place-specific fields
-      orderId: 2,
-      paymentMode: PaymentMode.app,
-    ),
-    Transaction(
-      id: 'tx_123456789',
-      txHash:
-          '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now().subtract(const Duration(days: 4)),
-      fromAccountAddress: '0xUserWallet123',
-      toAccountAddress: '0xPlaceWallet456',
-      amount: 12.23,
-      description: 'Coffee and Pastries (4 days ago)  ',
-      status: TransactionStatus.success,
-      // Place-specific fields
-      orderId: 2,
-      paymentMode: PaymentMode.app,
-    ),
-    Transaction(
-      id: 'tx_123456789',
-      txHash:
-          '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now().subtract(const Duration(days: 5)),
-      fromAccountAddress: '0xUserWallet123',
-      toAccountAddress: '0xPlaceWallet456',
-      amount: 12.23,
-      description: 'Coffee and Pastries (5 days ago)',
-      status: TransactionStatus.success,
-      // Place-specific fields
-      orderId: 4,
-      paymentMode: PaymentMode.app,
-    ),
-    Transaction(
-      id: 'tx_123456789',
-      txHash:
-          '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now().subtract(const Duration(days: 6)),
-      fromAccountAddress: '0xUserWallet123',
-      toAccountAddress: '0xPlaceWallet456',
-      amount: 12.23,
-      description: 'Coffee and Pastries (6 days ago)',
-      status: TransactionStatus.success,
-      // Place-specific fields
-      orderId: 3,
-      paymentMode: PaymentMode.app,
-    ),
-    Transaction(
-      id: 'tx_123456789',
-      txHash:
-          '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now().subtract(const Duration(days: 7)),
-      fromAccountAddress: '0xUserWallet123',
-      toAccountAddress: '0xPlaceWallet456',
-      amount: 12.23,
-      description: 'Coffee and Pastries (7 days ago)',
-      status: TransactionStatus.success,
-      // Place-specific fields
-      orderId: 2,
-      paymentMode: PaymentMode.app,
-    ),
-    Transaction(
-      id: 'tx_123456789',
-      txHash:
-          '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      createdAt: DateTime.now().subtract(const Duration(days: 8)),
-      fromAccountAddress: '0xUserWallet123',
-      toAccountAddress: '0xPlaceWallet456',
-      amount: 12.23,
-      description: 'Coffee and Pastries (8 days ago)',
-      status: TransactionStatus.success,
-      // Place-specific fields
-      orderId: 1,
-      paymentMode: PaymentMode.app,
-    ),
-  ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  
 
   void _dismissKeyboard() {
     FocusScope.of(context).unfocus();
@@ -251,6 +108,9 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
   Widget build(BuildContext context) {
     final withUser =
         context.select((TransactionsWithUserState state) => state.withUser);
+
+
+    final transactions = context.select(reverseChronologicalOrder);
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemBackground,
