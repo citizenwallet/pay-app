@@ -88,8 +88,6 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
   }
 
   void sendMessage(double amount, String? message) {
-    
-
     Future.delayed(
       const Duration(milliseconds: 100),
       () {
@@ -98,19 +96,18 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
     );
   }
 
-  
-
   void _dismissKeyboard() {
     FocusScope.of(context).unfocus();
   }
 
   @override
   Widget build(BuildContext context) {
-    final withUser =
-        context.select((TransactionsWithUserState state) => state.withUser);
+    final transactionState = context.watch<TransactionsWithUserState>();
+    final withUser = transactionState.withUser;
 
+    final sendingQueue = transactionState.sendingQueue;
 
-    final transactions = context.select(reverseChronologicalOrder);
+    final transactions = reverseChronologicalOrder(transactionState);
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemBackground,

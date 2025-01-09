@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/models/transaction.dart';
@@ -11,11 +13,15 @@ import 'package:pay_app/services/wallet/contracts/erc20.dart';
 import 'package:pay_app/services/wallet/utils.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/state/wallet.dart';
+import 'package:pay_app/utils/random.dart';
 
 class TransactionsWithUserState with ChangeNotifier {
   User withUser;
   String myAddress;
+
   List<Transaction> transactions = [];
+  List<Transaction> sendingQueue = [];
+
   WalletState walletState;
   Timer? _pollingTimer;
 
@@ -35,8 +41,7 @@ class TransactionsWithUserState with ChangeNotifier {
     required this.withUser,
     required this.myAddress,
     required this.walletState,
-  })
-      : myProfileService = ProfileService(account: myAddress),
+  })  : myProfileService = ProfileService(account: myAddress),
         withUserProfileService = ProfileService(account: withUser.account),
         transactionsWithUserService = TransactionsService(
             firstAccount: myAddress, secondAccount: withUser.account);
@@ -80,6 +85,22 @@ class TransactionsWithUserState with ChangeNotifier {
       final toAddress = withUser.account;
       final fromAddress = myAddress;
 
+      final tempId = '${pendingTransactionId}_${generateRandomId()}';
+      final sendingTransaction = Transaction(
+        id: tempId,
+        txHash: '',
+        createdAt: DateTime.now(),
+        fromAccount: myAddress,
+        toAccount: toAddress,
+        amount: parsedAmount /
+            BigInt.from(pow(10, _walletService.currency.decimals)),
+        exchangeDirection: ExchangeDirection.sent,
+        status: TransactionStatus.sending,
+        description: toSendMessage.trim(),
+      );
+      sendingQueue.add(sendingTransaction);
+      safeNotifyListeners();
+
       final calldata =
           _walletService.tokenTransferCallData(toAddress, parsedAmount);
 
@@ -112,24 +133,18 @@ class TransactionsWithUserState with ChangeNotifier {
           extraData:
               toSendMessage != '' ? TransferData(toSendMessage.trim()) : null);
 
-      if (txHash != null) {
-        final newTransaction = Transaction(
-          id: txHash,
-          txHash: txHash,
-          createdAt: DateTime.now(),
-          fromAccount: myAddress,
-          toAccount: toAddress,
-          amount: double.parse(fromUnit(parsedAmount,
-              decimals: _walletService.currency.decimals)),
-          exchangeDirection: ExchangeDirection.sent,
-          status: TransactionStatus.success,
-          description: toSendMessage.trim(),
-        );
+      if (txHash == null) return null;
 
-        final upsertedTransactions = _upsertTransactions([newTransaction]);
-        transactions = upsertedTransactions;
-        safeNotifyListeners();
-      }
+      final index = sendingQueue.indexWhere((tx) => tx.id == tempId);
+
+      if (index == -1) return null;
+
+      sendingQueue[index] = sendingQueue[index].copyWith(
+        txHash: txHash,
+        status: TransactionStatus.success,
+      );
+
+      safeNotifyListeners();
 
       debugPrint('txHash: $txHash');
       return txHash;
@@ -174,7 +189,7 @@ class TransactionsWithUserState with ChangeNotifier {
       if (newTransactions.isNotEmpty) {
         final upsertedTransactions = _upsertTransactions(newTransactions);
         transactions = upsertedTransactions;
-        transactionsFromDate = DateTime.now();
+        // transactionsFromDate = DateTime.now();
         safeNotifyListeners();
         walletState.updateBalance();
       }
@@ -228,13 +243,16 @@ class TransactionsWithUserState with ChangeNotifier {
   }
 
   List<Transaction> _upsertTransactions(List<Transaction> newTransactions) {
-    final existingList = transactions;
+    final existingList = [...transactions, ...sendingQueue];
     final existingMap = {for (var i in existingList) i.txHash: i};
 
     for (final newTransaction in newTransactions) {
       if (existingMap.containsKey(newTransaction.txHash)) {
         // Update existing transaction
         existingMap[newTransaction.txHash] = newTransaction;
+
+        sendingQueue
+            .removeWhere((element) => element.txHash == newTransaction.txHash);
       } else {
         // Add new interaction
         existingMap[newTransaction.txHash] = newTransaction;

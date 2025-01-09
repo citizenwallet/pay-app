@@ -66,6 +66,48 @@ class Transaction {
     };
   }
 
+  Transaction copyWith({
+    String? id,
+    String? txHash,
+    DateTime? createdAt,
+    String? fromAccount,
+    String? toAccount,
+    double? amount,
+    ExchangeDirection? exchangeDirection,
+    TransactionStatus? status,
+    String? description,
+  }) {
+    return Transaction(
+      id: id ?? this.id,
+      txHash: txHash ?? this.txHash,
+      createdAt: createdAt ?? this.createdAt,
+      fromAccount: fromAccount ?? this.fromAccount,
+      toAccount: toAccount ?? this.toAccount,
+      amount: amount ?? this.amount,
+      exchangeDirection: exchangeDirection ?? this.exchangeDirection,
+      status: status ?? this.status,
+      description: description ?? this.description,
+    );
+  }
+
+  static Transaction upsert(Transaction existing, Transaction updated) {
+    if (existing.id != updated.id) {
+      throw ArgumentError('Cannot upsert transactions with different IDs');
+    }
+
+    return existing.copyWith(
+      id: updated.id,
+      txHash: updated.txHash,
+      createdAt: updated.createdAt,
+      fromAccount: updated.fromAccount,
+      toAccount: updated.toAccount,
+      amount: updated.amount,
+      exchangeDirection: updated.exchangeDirection,
+      status: updated.status,
+      description: updated.description,
+    );
+  }
+
   static TransactionStatus parseTransactionStatus(dynamic value) {
     if (value is TransactionStatus) return value;
     if (value is String) {

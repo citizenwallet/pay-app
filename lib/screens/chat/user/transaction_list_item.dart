@@ -45,7 +45,8 @@ class TransactionListItem extends StatelessWidget {
         // SizedBox(height: 4),
         Description(description: transaction.description),
         SizedBox(height: 4),
-        TransactionHash(transactionHash: transaction.txHash),
+        if (transaction.txHash != '')
+          TransactionHash(transactionHash: transaction.txHash),
       ],
     );
   }
@@ -60,7 +61,20 @@ class TransactionListItem extends StatelessWidget {
           exchangeDirection: transaction.exchangeDirection,
         ),
         SizedBox(height: 4),
-        TimeAgo(createdAt: transaction.createdAt),
+        if (transaction.exchangeDirection == ExchangeDirection.sent &&
+            transaction.status == TransactionStatus.sending)
+          const Text(
+            'Sending...',
+            style: TextStyle(
+              fontSize: 10,
+              color: Color(0xFF8F8A9D),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        if (transaction.exchangeDirection == ExchangeDirection.received ||
+            (transaction.exchangeDirection == ExchangeDirection.sent &&
+                transaction.status == TransactionStatus.success))
+          TimeAgo(createdAt: transaction.createdAt),
       ],
     );
   }

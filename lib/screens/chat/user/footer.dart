@@ -27,7 +27,6 @@ class _FooterState extends State<Footer> {
   final TextEditingController _messageController = TextEditingController();
 
   bool _showAmountField = true;
-  bool _isSending = false;
 
   late TransactionsWithUserState _transactionsWithUserState;
   late WalletState _walletState;
@@ -43,22 +42,17 @@ class _FooterState extends State<Footer> {
   }
 
   Future<void> sendTransaction() async {
-    widget.amountFocusNode.requestFocus();
+    
+   
 
-    setState(() {
-      _isSending = true;
-    });
+    _transactionsWithUserState.sendTransaction();
+    _amountController.clear();
+    _messageController.clear();
 
-    final txHash = await _transactionsWithUserState.sendTransaction();
 
-    setState(() {
-      _isSending = false;
-    });
+   
 
-    if (txHash != null) {
-      _amountController.clear();
-      _messageController.clear();
-    }
+   
   }
 
   updateAmount(double amount) {
@@ -116,14 +110,12 @@ class _FooterState extends State<Footer> {
                         amountController: _amountController,
                         focusNode: widget.amountFocusNode,
                         onChange: updateAmount,
-                        isSending: _isSending,
                       )
                     : MessageFieldWithAmountToggle(
                         onToggle: _toggleField,
                         messageController: _messageController,
                         focusNode: widget.messageFocusNode,
                         onChange: updateMessage,
-                        isSending: _isSending,
                       ),
               ),
               SizedBox(width: 10),
@@ -219,12 +211,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
             textInputAction: TextInputAction.done,
             prefix: Padding(
               padding: EdgeInsets.only(left: 11.0),
-              child: isSending
-                  ? CupertinoActivityIndicator(
-                      color: theme.primaryColor,
-                      radius: 12,
-                    )
-                  : CoinLogo(size: 33),
+              child: CoinLogo(size: 33) ,
             ),
             onChanged: (value) {
               if (value.isEmpty) {

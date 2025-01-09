@@ -209,12 +209,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
             textInputAction: TextInputAction.done,
             prefix: Padding(
               padding: EdgeInsets.only(left: 11.0),
-              child: isSending
-                  ? CupertinoActivityIndicator(
-                      color: theme.primaryColor,
-                      radius: 12,
-                    )
-                  : CoinLogo(size: 33),
+              child: CoinLogo(size: 33) ,
             ),
             // TODO: onChanged
           ),
