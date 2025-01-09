@@ -19,7 +19,7 @@
       "chain_id": 100
     },
     "primary_account_factory": {
-      "address": "0xBABCf159c4e3186cf48e4a48bC0AeC17CF9d90FE",
+      "address": "0x940Cbb155161dc0C4aade27a4826a16Ed8ca0cb2",
       "chain_id": 100
     },
     "primary_card_manager": {
@@ -42,13 +42,6 @@
     "name": "Gnosis Explorer"
   },
   "accounts": {
-    "100:0xBABCf159c4e3186cf48e4a48bC0AeC17CF9d90FE": {
-      "chain_id": 100,
-      "entrypoint_address": "0xAAEb9DC18aDadae9b3aE7ec2b47842565A81113f",
-      "paymaster_address": "0xcA1B9EC1117340818C1c1fdd1B48Ea79E57C140F",
-      "account_factory_address": "0xBABCf159c4e3186cf48e4a48bC0AeC17CF9d90FE",
-      "paymaster_type": "cw"
-    },
     "100:0x940Cbb155161dc0C4aade27a4826a16Ed8ca0cb2": {
       "chain_id": 100,
       "entrypoint_address": "0x7079253c0358eF9Fd87E16488299Ef6e06F403B6",
