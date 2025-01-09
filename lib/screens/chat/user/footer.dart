@@ -42,17 +42,12 @@ class _FooterState extends State<Footer> {
   }
 
   Future<void> sendTransaction() async {
-    
-   
+    widget.amountFocusNode.unfocus();
+    widget.messageFocusNode.unfocus();
 
     _transactionsWithUserState.sendTransaction();
     _amountController.clear();
     _messageController.clear();
-
-
-   
-
-   
   }
 
   updateAmount(double amount) {
@@ -211,7 +206,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
             textInputAction: TextInputAction.done,
             prefix: Padding(
               padding: EdgeInsets.only(left: 11.0),
-              child: CoinLogo(size: 33) ,
+              child: CoinLogo(size: 33),
             ),
             onChanged: (value) {
               if (value.isEmpty) {
@@ -359,21 +354,29 @@ class TopUpButton extends StatelessWidget {
     final theme = CupertinoTheme.of(context);
     return CupertinoButton(
       padding: EdgeInsets.zero,
-      color: theme.primaryColor,
+      color: theme.barBackgroundColor,
       borderRadius: BorderRadius.circular(8),
       minSize: 0,
       onPressed: () {
         // TODO: add a button to navigate to the top up screen
         debugPrint('Top up');
       },
-      child: SizedBox(
+      child: Container(
         width: 60,
         height: 28,
+        decoration: BoxDecoration(
+          color: theme.barBackgroundColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: theme.primaryColor,
+            width: 1,
+          ),
+        ),
         child: Center(
           child: Text(
             '+ add',
             style: TextStyle(
-              color: Color(0xFFFFFFFF),
+              color: theme.primaryColor,
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
