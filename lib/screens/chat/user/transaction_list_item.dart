@@ -8,10 +8,12 @@ import 'package:pay_app/utils/strings.dart';
 
 class TransactionListItem extends StatelessWidget {
   final Transaction transaction;
+  final bool isSending;
 
   const TransactionListItem({
     super.key,
     required this.transaction,
+    this.isSending = false,
   });
 
   @override
@@ -21,7 +23,7 @@ class TransactionListItem extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(
+          top: BorderSide(
             color: Color(0xFFF0E9F4),
           ),
         ),
@@ -61,19 +63,19 @@ class TransactionListItem extends StatelessWidget {
           exchangeDirection: transaction.exchangeDirection,
         ),
         SizedBox(height: 4),
-        if (transaction.exchangeDirection == ExchangeDirection.sent &&
-            transaction.status == TransactionStatus.sending)
-          const Text(
-            'Sending...',
+        if (transaction.status == TransactionStatus.sending)
+          Text(
+            transaction.exchangeDirection == ExchangeDirection.sent
+                ? 'Sending...'
+                : 'Receiving...',
             style: TextStyle(
               fontSize: 10,
               color: Color(0xFF8F8A9D),
               fontWeight: FontWeight.w600,
             ),
           ),
-        if (transaction.exchangeDirection == ExchangeDirection.received ||
-            (transaction.exchangeDirection == ExchangeDirection.sent &&
-                transaction.status == TransactionStatus.success))
+        if (transaction.status == TransactionStatus.pending ||
+            transaction.status == TransactionStatus.success)
           TimeAgo(createdAt: transaction.createdAt),
       ],
     );
