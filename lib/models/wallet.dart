@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CWWallet {
@@ -9,7 +11,7 @@ class CWWallet {
   final String currencyName;
   final String symbol;
   final String currencyLogo;
-  final int decimalDigits = 2;
+  final int decimalDigits;
 
   CWWallet(
     this._balance, {
@@ -20,6 +22,7 @@ class CWWallet {
     required this.currencyName,
     required this.symbol,
     required this.currencyLogo,
+    this.decimalDigits = 2,
   });
 
   // copy
@@ -46,8 +49,12 @@ class CWWallet {
 
   String get balance => _balance;
   double get doubleBalance => double.tryParse(_balance) ?? 0.0;
+  double get formattedBalance => doubleBalance / pow(10, decimalDigits);
 
-  // convert to Wallet object from JSON
+
+  
+
+  /// Converts a JSON map to a CWWallet object
   CWWallet.fromJson(Map<String, dynamic> json)
       : name = json['name'],
         address = json['address'],
@@ -56,7 +63,8 @@ class CWWallet {
         _balance = json['balance'],
         currencyName = json['currencyName'],
         symbol = json['symbol'],
-        currencyLogo = json['currencyLogo'];
+        currencyLogo = json['currencyLogo'],
+        decimalDigits = json['decimalDigits'] ?? 2;
 
   // Convert a Conversation object into a Map object.
   // The keys must correspond to the names of the columns in the database.

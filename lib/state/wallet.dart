@@ -9,7 +9,7 @@ import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:web3dart/web3dart.dart';
 
 class WalletState with ChangeNotifier {
-  CWWallet? _wallet;
+  CWWallet? wallet;
 
   final ConfigService _configService = ConfigService();
   final WalletService _walletService = WalletService();
@@ -55,8 +55,22 @@ class WalletState with ChangeNotifier {
       final accFactory = await accountFactoryServiceFromConfig(config);
       final address = await accFactory.getAddress(privateKey.address.hexEip55);
 
+      final token = config.getPrimaryToken();
+
       _address = address;
       safeNotifyListeners();
+
+      wallet = CWWallet(
+        '0.0',
+        name: 'New ${token.symbol} Account',
+        address: address.hexEip55,
+        alias: config.community.alias,
+        account: address.hexEip55,
+        currencyName: token.name,
+        symbol: token.symbol,
+        currencyLogo: config.community.logo,
+        decimalDigits: token.decimals,
+      );
 
       await _preferencesService.setLastWallet(address.hexEip55);
       await _preferencesService.setLastAlias(config.community.alias);
@@ -100,6 +114,20 @@ class WalletState with ChangeNotifier {
           onFinished: (bool success) {
         debugPrint('wallet service init: $success');
       });
+
+      wallet = CWWallet(
+        '0.0',
+        name: '${config.community.alias} Wallet',
+        address: address.hexEip55,
+        alias: config.community.alias,
+        account: address.hexEip55,
+        currencyName: token.name,
+        symbol: token.symbol,
+        currencyLogo: config.community.logo,
+        decimalDigits: nativeCurrency.decimals,
+      );
+
+      updateBalance();
 
       return address.hexEip55;
     } catch (e, s) {
@@ -167,5 +195,11 @@ class WalletState with ChangeNotifier {
       safeNotifyListeners();
     }
     return false;
+  }
+
+  Future<void> updateBalance() async {
+    final balance = await _walletService.getBalance();
+    wallet?.setBalance(balance);
+    safeNotifyListeners();
   }
 }

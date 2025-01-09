@@ -41,6 +41,13 @@ class _ProfileBarState extends State<ProfileBar> {
   @override
   Widget build(BuildContext context) {
     final theme = CupertinoTheme.of(context);
+
+    final walletState = context.watch<WalletState>();
+
+    final balance = walletState.wallet?.formattedBalance.toString();
+
+    debugPrint('balance: $balance');
+
     return GestureDetector(
       onTap: _goToMyAccount,
       child: Container(
@@ -71,7 +78,7 @@ class _ProfileBarState extends State<ProfileBar> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Balance(),
+                        Balance(balance: balance ?? '0.00'),
                         const SizedBox(width: 16),
                         TopUpButton(),
                       ],
@@ -104,7 +111,9 @@ class Name extends StatelessWidget {
 }
 
 class Balance extends StatelessWidget {
-  const Balance({super.key});
+  final String balance;
+
+  const Balance({super.key, required this.balance});
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +122,7 @@ class Balance extends StatelessWidget {
         CoinLogo(size: 33),
         SizedBox(width: 4),
         Text(
-          '12.00',
+          balance,
           style: TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.w600,

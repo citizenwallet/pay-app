@@ -15,6 +15,7 @@ import 'package:pay_app/screens/chat/user/screen.dart';
 // state
 import 'package:pay_app/state/checkout.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 
@@ -52,8 +53,13 @@ GoRouter createRouter(
                   'Navigation error: myAddress is required and must be a String');
             }
 
+            final walletState = context.read<WalletState>();
+
             return ChangeNotifierProvider(
-              create: (_) => InteractionState(account: myAddress),
+              create: (_) => InteractionState(
+                account: myAddress,
+                walletState: walletState,
+              ),
               child: const HomeScreen(),
             );
           },
