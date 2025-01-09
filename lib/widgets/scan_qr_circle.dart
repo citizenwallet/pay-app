@@ -15,6 +15,8 @@ class ScanQrCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+
     return GestureDetector(
       onTap: handleQRScan,
       child: Container(
@@ -24,7 +26,7 @@ class ScanQrCircle extends StatelessWidget {
           shape: BoxShape.circle,
           color: Color(0xFFFFFFFF),
           border: Border.all(
-            color: Color(0xFF4a90e2),
+            color: theme.primaryColor,
             width: 3,
           ),
         ),
@@ -33,7 +35,7 @@ class ScanQrCircle extends StatelessWidget {
           child: Icon(
             CupertinoIcons.qrcode_viewfinder,
             size: 60 * heightFactor,
-            color: Color(0xFF4a90e2),
+            color: theme.primaryColor,
           ),
         ),
       ),

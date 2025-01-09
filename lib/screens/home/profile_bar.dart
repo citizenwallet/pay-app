@@ -43,10 +43,7 @@ class _ProfileBarState extends State<ProfileBar> {
     final theme = CupertinoTheme.of(context);
 
     final walletState = context.watch<WalletState>();
-
     final balance = walletState.wallet?.formattedBalance.toString();
-
-    debugPrint('balance: $balance');
 
     return GestureDetector(
       onTap: _goToMyAccount,
@@ -66,7 +63,6 @@ class _ProfileBarState extends State<ProfileBar> {
                   size: 70,
                   borderWidth: 3,
                   borderColor: theme.primaryColor,
-                  imageUrl: 'https://robohash.org/JQQ.png?set=set2',
                 ),
                 const SizedBox(width: 16),
                 Column(
