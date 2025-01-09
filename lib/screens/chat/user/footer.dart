@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/utils/formatters.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/text_field.dart';
@@ -29,6 +30,7 @@ class _FooterState extends State<Footer> {
   bool _isSending = false;
 
   late TransactionsWithUserState _transactionsWithUserState;
+  late WalletState _walletState;
 
   @override
   void initState() {
@@ -87,6 +89,9 @@ class _FooterState extends State<Footer> {
 
   @override
   Widget build(BuildContext context) {
+    _walletState = context.watch<WalletState>();
+    final balance = _walletState.wallet?.formattedBalance ?? 0.00;
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 10,
@@ -128,7 +133,7 @@ class _FooterState extends State<Footer> {
             ],
           ),
           SizedBox(height: 10),
-          CurrentBalance(),
+          CurrentBalance(balance: balance),
         ],
       ),
     );
@@ -321,7 +326,8 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
 }
 
 class CurrentBalance extends StatelessWidget {
-  const CurrentBalance({super.key});
+  final double balance;
+  const CurrentBalance({super.key, required this.balance});
 
   @override
   Widget build(BuildContext context) {
@@ -343,7 +349,7 @@ class CurrentBalance extends StatelessWidget {
           CoinLogo(size: 22),
           SizedBox(width: 4),
           Text(
-            '12.00',
+            balance.toString(),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,

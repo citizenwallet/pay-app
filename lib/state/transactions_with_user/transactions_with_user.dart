@@ -10,11 +10,13 @@ import 'package:pay_app/services/transactions/transactions_with_user.dart';
 import 'package:pay_app/services/wallet/contracts/erc20.dart';
 import 'package:pay_app/services/wallet/utils.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
+import 'package:pay_app/state/wallet.dart';
 
 class TransactionsWithUserState with ChangeNotifier {
   User withUser;
   String myAddress;
   List<Transaction> transactions = [];
+  WalletState walletState;
   Timer? _pollingTimer;
 
   double toSendAmount = 0.0;
@@ -29,7 +31,11 @@ class TransactionsWithUserState with ChangeNotifier {
   bool loading = false;
   bool error = false;
 
-  TransactionsWithUserState({required this.withUser, required this.myAddress})
+  TransactionsWithUserState({
+    required this.withUser,
+    required this.myAddress,
+    required this.walletState,
+  })
       : myProfileService = ProfileService(account: myAddress),
         withUserProfileService = ProfileService(account: withUser.account),
         transactionsWithUserService = TransactionsService(
@@ -170,6 +176,7 @@ class TransactionsWithUserState with ChangeNotifier {
         transactions = upsertedTransactions;
         transactionsFromDate = DateTime.now();
         safeNotifyListeners();
+        walletState.updateBalance();
       }
     } catch (e, s) {
       debugPrint('Error polling transactions: $e');

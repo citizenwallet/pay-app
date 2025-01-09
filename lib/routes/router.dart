@@ -134,10 +134,13 @@ GoRouter createRouter(
                 final myAddress = extraParams['myAddress'];
                 final user = extraParams['user'];
 
+                final walletState = context.read<WalletState>();
+
                 return ChangeNotifierProvider(
                   create: (_) => TransactionsWithUserState(
                     withUser: user,
                     myAddress: myAddress,
+                    walletState: walletState,
                   ),
                   child: const ChatWithUserScreen(),
                 );
