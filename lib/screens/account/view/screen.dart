@@ -43,6 +43,8 @@ class _MyAccountState extends State<MyAccount> {
 
   @override
   Widget build(BuildContext context) {
+    final safeAreaBottom = MediaQuery.of(context).padding.bottom;
+
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         leading: CupertinoButton(
@@ -57,6 +59,7 @@ class _MyAccountState extends State<MyAccount> {
       ),
       backgroundColor: CupertinoColors.systemBackground,
       child: SafeArea(
+        bottom: false,
         child: Stack(
           alignment: Alignment.topCenter,
           children: [
@@ -97,6 +100,7 @@ class _MyAccountState extends State<MyAccount> {
                   text: 'Delete account',
                   onPressed: handleDeleteAccount,
                 ),
+                SizedBox(height: safeAreaBottom),
               ],
             ),
           ],

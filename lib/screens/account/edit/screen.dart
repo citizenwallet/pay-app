@@ -39,6 +39,8 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final safeAreaBottom = MediaQuery.of(context).padding.bottom;
+
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         leading: CupertinoButton(
@@ -56,6 +58,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
         onTap: _dismissKeyboard,
         behavior: HitTestBehavior.opaque,
         child: SafeArea(
+          bottom: false,
           child: Stack(
             alignment: Alignment.topCenter,
             children: [
@@ -75,6 +78,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                     onPressed: () {},
                     text: 'Save',
                   ),
+                  SizedBox(height: safeAreaBottom),
                 ],
               ),
             ],
