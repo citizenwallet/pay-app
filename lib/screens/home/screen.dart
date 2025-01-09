@@ -138,10 +138,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final myUserId = navigator.state?.pathParameters['id'];
 
-  
-    navigator
-        .go('/$myUserId/place/${place.id}',
-            extra: {'myAddress': myAddress, 'place': place});
+    navigator.go('/$myUserId/place/${place.id}',
+        extra: {'myAddress': myAddress, 'place': place});
   }
 
   void _goToChatWithUser(User user) {
@@ -198,6 +196,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       focusNode: _searchFocusNode,
                     ),
                   ),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 10,
+                    ),
+                  ),
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       childCount: interactions.length,
@@ -220,6 +223,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         place: places[index],
                         onTap: _goToChatWithPlace,
                       ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 10,
                     ),
                   ),
                 ],

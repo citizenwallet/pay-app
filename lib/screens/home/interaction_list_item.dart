@@ -18,7 +18,7 @@ class InteractionListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoButton(
-      padding: EdgeInsets.zero,
+      padding: EdgeInsets.symmetric(vertical: 4),
       onPressed: () => onTap(interaction),
       child: Container(
         padding: const EdgeInsets.symmetric(
@@ -78,6 +78,7 @@ class Details extends StatelessWidget {
             amount: interaction.amount,
             description: interaction.description,
             exchangeDirection: interaction.exchangeDirection,
+            isPlace: interaction.isPlace,
           ),
         ],
       ),
@@ -133,12 +134,14 @@ class AmountDescription extends StatelessWidget {
   final double amount;
   final String? description;
   final ExchangeDirection exchangeDirection;
+  final bool isPlace;
 
   const AmountDescription({
     super.key,
     required this.amount,
     required this.exchangeDirection,
     this.description,
+    this.isPlace = false,
   });
 
   @override
@@ -159,7 +162,7 @@ class AmountDescription extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         Text(
-          description ?? '',
+          description ?? (isPlace ? '1000 Brussels' : ''),
           style: const TextStyle(
             fontSize: 10,
             color: Color(0xFF8F8A9D),

@@ -16,7 +16,7 @@ class PlaceListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoButton(
-      padding: EdgeInsets.zero,
+      padding: EdgeInsets.symmetric(vertical: 4),
       onPressed: () => onTap(place),
       child: Container(
         padding: const EdgeInsets.symmetric(
@@ -62,6 +62,7 @@ class Details extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
+          Location(location: place.description),
         ],
       ),
     );
@@ -95,12 +96,8 @@ class Location extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (location == null) {
-      return const SizedBox.shrink();
-    }
-
     return Text(
-      location!,
+      location ?? '1000 Brussels',
       style: const TextStyle(
         fontSize: 10,
         fontWeight: FontWeight.w600,
