@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/utils/formatters.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
@@ -26,8 +27,10 @@ class _FooterState extends State<Footer> {
   final TextEditingController _messageController = TextEditingController();
 
   bool _showAmountField = true;
+  bool _isSending = false;
 
   late WalletState _walletState;
+  late TransactionsWithUserState _transactionsWithUserState;
 
   @override
   void initState() {
@@ -36,11 +39,35 @@ class _FooterState extends State<Footer> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.amountFocusNode.requestFocus();
       _walletState = context.read<WalletState>();
+      _transactionsWithUserState = context.read<TransactionsWithUserState>();
     });
   }
 
   Future<void> sendTransaction() async {
-    await _walletState.sendTransaction();
+    widget.amountFocusNode.requestFocus();
+
+    setState(() {
+      _isSending = true;
+    });
+
+    final txHash = await _transactionsWithUserState.sendTransaction();
+
+    setState(() {
+      _isSending = false;
+    });
+
+    if (txHash != null) {
+      _amountController.clear();
+      _messageController.clear();
+    }
+  }
+
+  updateAmount(double amount) {
+    _transactionsWithUserState.updateAmount(amount);
+  }
+
+  updateMessage(String message) {
+    _transactionsWithUserState.updateMessage(message);
   }
 
   @override
@@ -86,17 +113,19 @@ class _FooterState extends State<Footer> {
                         onToggle: _toggleField,
                         amountController: _amountController,
                         focusNode: widget.amountFocusNode,
+                        onChange: updateAmount,
+                        isSending: _isSending,
                       )
                     : MessageFieldWithAmountToggle(
                         onToggle: _toggleField,
                         messageController: _messageController,
                         focusNode: widget.messageFocusNode,
+                        onChange: updateMessage,
+                        isSending: _isSending,
                       ),
               ),
               SizedBox(width: 10),
               SendButton(
-                amountController: _amountController,
-                messageController: _messageController,
                 onTap: () => sendTransaction(),
               ),
             ],
@@ -111,14 +140,10 @@ class _FooterState extends State<Footer> {
 
 class SendButton extends StatelessWidget {
   final VoidCallback onTap;
-  final TextEditingController amountController;
-  final TextEditingController messageController;
 
   const SendButton({
     super.key,
     required this.onTap,
-    required this.amountController,
-    required this.messageController,
   });
 
   @override
@@ -126,11 +151,7 @@ class SendButton extends StatelessWidget {
     final theme = CupertinoTheme.of(context);
     return CupertinoButton(
       padding: EdgeInsets.zero,
-      onPressed: () {
-        onTap();
-        amountController.clear();
-        messageController.clear();
-      },
+      onPressed: onTap,
       child: Container(
         width: 44,
         height: 44,
@@ -142,6 +163,7 @@ class SendButton extends StatelessWidget {
           child: Icon(
             CupertinoIcons.arrow_up,
             color: CupertinoColors.white,
+            size: 35,
           ),
         ),
       ),
@@ -154,12 +176,16 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
   final FocusNode focusNode;
   final VoidCallback onToggle;
   final AmountFormatter amountFormatter = AmountFormatter();
+  final Function(double) onChange;
+  final bool isSending;
 
   AmountFieldWithMessageToggle({
     super.key,
     required this.onToggle,
     required this.amountController,
     required this.focusNode,
+    required this.onChange,
+    this.isSending = false,
   });
 
   @override
@@ -169,6 +195,15 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
       children: [
         Expanded(
           child: CustomTextField(
+            controller: amountController,
+            enabled: !isSending,
+            placeholder: 'Enter amount',
+            placeholderStyle: TextStyle(
+              color: Color(0xFFB7ADC4),
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 11.0, vertical: 12.0),
             maxLines: 1,
             maxLength: 25,
             autocorrect: false,
@@ -177,17 +212,25 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
               decimal: true,
               signed: false,
             ),
-            inputFormatters: [
-             amountFormatter
-            ],
+            inputFormatters: [amountFormatter],
             focusNode: focusNode,
-            controller: amountController,
             textInputAction: TextInputAction.done,
-            placeholder: 'Enter amount',
-            prefix: const Padding(
-              padding: EdgeInsets.only(left: 16.0),
-              child: CoinLogo(size: 33),
+            prefix: Padding(
+              padding: EdgeInsets.only(left: 11.0),
+              child: isSending
+                  ? CupertinoActivityIndicator(
+                      color: theme.primaryColor,
+                      radius: 12,
+                    )
+                  : CoinLogo(size: 33),
             ),
+            onChanged: (value) {
+              if (value.isEmpty) {
+                onChange(0);
+                return;
+              }
+              onChange(double.tryParse(value) ?? 0);
+            },
           ),
         ),
         SizedBox(width: 10),
@@ -204,6 +247,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
               child: Icon(
                 CupertinoIcons.text_bubble,
                 color: theme.primaryColor,
+                size: 35,
               ),
             ),
           ),
@@ -217,12 +261,16 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
   final VoidCallback onToggle;
   final TextEditingController messageController;
   final FocusNode focusNode;
+  final Function(String) onChange;
+  final bool isSending;
 
   const MessageFieldWithAmountToggle({
     super.key,
     required this.onToggle,
     required this.messageController,
     required this.focusNode,
+    required this.onChange,
+    this.isSending = false,
   });
 
   @override
@@ -232,14 +280,19 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
       children: [
         Expanded(
           child: CustomTextField(
-            focusNode: focusNode,
-            autocorrect: false,
-            enableSuggestions: false,
-            textCapitalization: TextCapitalization.sentences,
             controller: messageController,
-            keyboardType: TextInputType.text,
-            textInputAction: TextInputAction.done,
+            enabled: !isSending,
             placeholder: 'Add a message',
+            maxLines: 1,
+            maxLength: 200,
+            textCapitalization: TextCapitalization.sentences,
+            textInputAction: TextInputAction.newline,
+            textAlignVertical: TextAlignVertical.top,
+            focusNode: focusNode,
+            autocorrect: true,
+            enableSuggestions: true,
+            keyboardType: TextInputType.multiline,
+            onChanged: onChange,
           ),
         ),
         SizedBox(width: 10),
@@ -310,7 +363,7 @@ class TopUpButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = CupertinoTheme.of(context);
     return CupertinoButton(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.zero,
       color: theme.primaryColor,
       borderRadius: BorderRadius.circular(8),
       minSize: 0,
@@ -318,25 +371,19 @@ class TopUpButton extends StatelessWidget {
         // TODO: add a button to navigate to the top up screen
         debugPrint('Top up');
       },
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Icon(
-            CupertinoIcons.plus,
-            color: Color(0xFFFFFFFF),
-            size: 16,
-          ),
-          const SizedBox(width: 4),
-          const Text(
-            'Top up',
+      child: SizedBox(
+        width: 60,
+        height: 28,
+        child: Center(
+          child: Text(
+            '+ add',
             style: TextStyle(
+              color: Color(0xFFFFFFFF),
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Color(0xFFFFFFFF),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

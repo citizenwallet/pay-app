@@ -7,6 +7,8 @@ enum TransactionStatus {
   fail,
 }
 
+const String pendingTransactionId = 'TEMP_HASH';
+
 class Transaction {
   String id; // id from supabase
   String txHash; // hash of the transaction

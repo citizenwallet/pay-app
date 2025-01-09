@@ -2,12 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/models/wallet.dart';
 import 'package:pay_app/services/config/service.dart';
-import 'package:pay_app/services/engine/utils.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/wallet/contracts/account_factory.dart';
-import 'package:pay_app/services/wallet/contracts/erc20.dart';
 import 'package:pay_app/services/wallet/models/chain.dart';
-import 'package:pay_app/services/wallet/utils.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -170,47 +167,5 @@ class WalletState with ChangeNotifier {
       safeNotifyListeners();
     }
     return false;
-  }
-
-  Future<void> sendTransaction() async {
-    final doubleAmount = '0.10'.replaceAll(',', '.');
-    final parsedAmount = toUnit(
-      doubleAmount,
-      decimals: _walletService.currency.decimals,
-    );
-
-    final calldata = _walletService.tokenTransferCallData(
-        '0x20eC5EAF89C0e06243eE39674844BF77edB43fCc', parsedAmount);
-
-    final (_, userOp) = await _walletService.prepareUserop(
-      [_walletService.tokenAddress],
-      [calldata],
-    );
-
-    final args = {
-      'from': _walletService.account.hexEip55,
-      'to': '0x20eC5EAF89C0e06243eE39674844BF77edB43fCc',
-    };
-    if (_walletService.standard == 'erc1155') {
-      args['operator'] = _walletService.account.hexEip55;
-      args['id'] = '0';
-      args['amount'] = parsedAmount.toString();
-    } else {
-      args['value'] = parsedAmount.toString();
-    }
-
-    final eventData = createEventData(
-      stringSignature: _walletService.transferEventStringSignature,
-      topic: _walletService.transferEventSignature,
-      args: args,
-    );
-
-// extraDate: formatting message of a transaction
-
-    final txHash = await _walletService.submitUserop(userOp,
-        data: eventData,
-        extraData: 'message' != '' ? TransferData('message') : null);
-
-    debugPrint('txHash: $txHash');
   }
 }
