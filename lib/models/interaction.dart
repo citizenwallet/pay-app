@@ -3,6 +3,8 @@ enum ExchangeDirection {
   received,
 }
 
+
+// TODO: interaction with place, has menu item
 class Interaction {
   final String id; // id from supabase
   final ExchangeDirection exchangeDirection;
@@ -17,7 +19,7 @@ class Interaction {
 
   final bool isPlace;
   final int? placeId; // id from supabase
-
+  final bool hasMenuItem;
   bool hasUnreadMessages;
   final DateTime lastMessageAt;
 
@@ -31,6 +33,7 @@ class Interaction {
     required this.amount,
     this.isPlace = false,
     this.hasUnreadMessages = false,
+    this.hasMenuItem = false,
     this.description,
     this.placeId,
   });
@@ -52,6 +55,7 @@ class Interaction {
       placeId: json['placeId'],
       hasUnreadMessages: json['hasUnreadMessages'],
       lastMessageAt: DateTime.parse(json['lastMessageAt']),
+      hasMenuItem: json['hasMenuItem'] ?? false,
     );
   }
 
@@ -71,6 +75,7 @@ class Interaction {
       'placeId': placeId,
       'hasUnreadMessages': hasUnreadMessages,
       'lastMessageAt': lastMessageAt.toIso8601String(),
+      'hasMenuItem': hasMenuItem,
     };
   }
 
@@ -83,6 +88,7 @@ class Interaction {
     String? description,
     bool? hasUnreadMessages,
     DateTime? lastMessageAt,
+    bool? hasMenuItem,
   }) {
     return Interaction(
       id: id,
@@ -96,6 +102,7 @@ class Interaction {
       placeId: placeId,
       hasUnreadMessages: hasUnreadMessages ?? this.hasUnreadMessages,
       lastMessageAt: lastMessageAt ?? this.lastMessageAt,
+      hasMenuItem: hasMenuItem ?? this.hasMenuItem,
     );
   }
 
@@ -112,6 +119,7 @@ class Interaction {
       description: updated.description,
       hasUnreadMessages: updated.hasUnreadMessages,
       lastMessageAt: updated.lastMessageAt,
+      hasMenuItem: updated.hasMenuItem,
     );
   }
 

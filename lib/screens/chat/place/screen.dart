@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/transaction.dart';
+import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
+import 'package:provider/provider.dart';
 import './header.dart';
 import 'order_list_item.dart';
 import './footer.dart';
@@ -19,6 +21,8 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
 
   ScrollController scrollController = ScrollController();
 
+  late OrdersWithPlaceState _ordersWithPlaceState;
+
   @override
   void initState() {
     super.initState();
@@ -27,7 +31,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
     messageFocusNode.addListener(_onMessageFocus);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // make initial requests here
+      _ordersWithPlaceState = context.read<OrdersWithPlaceState>();
     });
   }
 
@@ -240,6 +244,8 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final place = context.select((OrdersWithPlaceState state) => state.place);
+
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemBackground,
       child: GestureDetector(
@@ -249,10 +255,9 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
             children: [
               ChatHeader(
                 onTapLeading: goBack,
-                imageUrl:
-                    'https://plus.unsplash.com/premium_photo-1661883237884-263e8de8869b?q=80&w=2689&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-                placeName: 'Fat Duck',
-                placeDescription: 'Broadwalk, London',
+                imageUrl: place.imageUrl,
+                placeName: place.name,
+                placeDescription: place.description,
               ),
               Expanded(
                 child: ListView(
@@ -261,8 +266,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
                   reverse: true,
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   children: [
-                    for (var order in orders)
-                      OrderListItem(order: order),
+                    for (var order in orders) OrderListItem(order: order),
                   ],
                 ),
               ),
@@ -270,7 +274,7 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
                 onSend: sendMessage,
                 amountFocusNode: amountFocusNode,
                 messageFocusNode: messageFocusNode,
-                hasMenu: false,
+                hasMenu: place.hasMenu,
               ),
             ],
           ),

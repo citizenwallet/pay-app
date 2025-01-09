@@ -43,7 +43,7 @@ class _UsernameState extends State<Username> {
             padding: const EdgeInsets.only(left: 16.0),
             child: Icon(
               CupertinoIcons.at,
-              color: theme.primaryColor,
+              color: Color(0xFF4D4D4D),
             ),
           ),
         ),

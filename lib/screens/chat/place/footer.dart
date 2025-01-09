@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pay_app/utils/formatters.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/text_field.dart';
 import 'package:pay_app/widgets/wide_button.dart';
@@ -153,6 +154,7 @@ class SendButton extends StatelessWidget {
           child: Icon(
             CupertinoIcons.arrow_up,
             color: CupertinoColors.white,
+            size: 35,
           ),
         ),
       ),
@@ -164,12 +166,15 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
   final TextEditingController amountController;
   final FocusNode focusNode;
   final VoidCallback onToggle;
+  final AmountFormatter amountFormatter = AmountFormatter();
+  final bool isSending;
 
-  const AmountFieldWithMessageToggle({
+  AmountFieldWithMessageToggle({
     super.key,
     required this.onToggle,
     required this.amountController,
     required this.focusNode,
+    this.isSending = false,
   });
 
   @override
@@ -179,15 +184,36 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
       children: [
         Expanded(
           child: CustomTextField(
-            focusNode: focusNode,
             controller: amountController,
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.done,
+            enabled: !isSending,
             placeholder: 'Enter amount',
-            prefix: const Padding(
-              padding: EdgeInsets.only(left: 16.0),
-              child: CoinLogo(size: 33),
+            placeholderStyle: TextStyle(
+              color: Color(0xFFB7ADC4),
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
             ),
+            padding: EdgeInsets.symmetric(horizontal: 11.0, vertical: 12.0),
+            maxLines: 1,
+            maxLength: 25,
+            autocorrect: false,
+            enableSuggestions: false,
+            keyboardType: TextInputType.numberWithOptions(
+              decimal: true,
+              signed: false,
+            ),
+            inputFormatters: [amountFormatter],
+            focusNode: focusNode,
+            textInputAction: TextInputAction.done,
+            prefix: Padding(
+              padding: EdgeInsets.only(left: 11.0),
+              child: isSending
+                  ? CupertinoActivityIndicator(
+                      color: theme.primaryColor,
+                      radius: 12,
+                    )
+                  : CoinLogo(size: 33),
+            ),
+            // TODO: onChanged
           ),
         ),
         SizedBox(width: 10),
@@ -204,6 +230,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
               child: Icon(
                 CupertinoIcons.text_bubble,
                 color: theme.primaryColor,
+                size: 35,
               ),
             ),
           ),
@@ -217,12 +244,14 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
   final VoidCallback onToggle;
   final TextEditingController messageController;
   final FocusNode focusNode;
+  final bool isSending;
 
-  const MessageFieldWithAmountToggle({
+  MessageFieldWithAmountToggle({
     super.key,
     required this.onToggle,
     required this.messageController,
     required this.focusNode,
+    this.isSending = false,
   });
 
   @override
@@ -232,14 +261,24 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
       children: [
         Expanded(
           child: CustomTextField(
-            focusNode: focusNode,
-            autocorrect: false,
-            enableSuggestions: false,
-            textCapitalization: TextCapitalization.sentences,
             controller: messageController,
-            keyboardType: TextInputType.text,
-            textInputAction: TextInputAction.done,
+            enabled: !isSending,
             placeholder: 'Add a message',
+             placeholderStyle: TextStyle(
+              color: Color(0xFFB7ADC4),
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+            maxLength: 200,
+            textCapitalization: TextCapitalization.sentences,
+            textInputAction: TextInputAction.newline,
+            textAlignVertical: TextAlignVertical.top,
+            focusNode: focusNode,
+            autocorrect: true,
+            enableSuggestions: true,
+            keyboardType: TextInputType.multiline,
+            // TODO: onChanged
           ),
         ),
         SizedBox(width: 10),
@@ -318,25 +357,19 @@ class TopUpButton extends StatelessWidget {
         // TODO: add a button to navigate to the top up screen
         print('Top up');
       },
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Icon(
-            CupertinoIcons.plus,
-            color: Color(0xFFFFFFFF),
-            size: 16,
-          ),
-          const SizedBox(width: 4),
-          const Text(
-            'Top up',
+      child: SizedBox(
+        width: 60,
+        height: 28,
+        child: Center(
+          child: Text(
+            '+ add',
             style: TextStyle(
+              color: Color(0xFFFFFFFF),
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Color(0xFFFFFFFF),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

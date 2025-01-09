@@ -3,8 +3,7 @@ import 'package:pay_app/models/place.dart';
 import 'package:pay_app/services/places/places.dart';
 
 
-// TODO: rename to PlacesState
-class PlaceState with ChangeNotifier {
+class PlacesState with ChangeNotifier {
   List<Place> places = [];
   PlacesService apiService = PlacesService();
 

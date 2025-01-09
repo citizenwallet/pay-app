@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
+import 'package:provider/provider.dart';
 
 class AccountCardFront extends StatefulWidget {
   final void Function() onTap;
@@ -12,12 +14,29 @@ class AccountCardFront extends StatefulWidget {
 }
 
 class _AccountCardFrontState extends State<AccountCardFront> {
+  late WalletState _walletState;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _walletState = context.read<WalletState>();
+    });
+  }
+
   void _navigateToEditAccount() {
+    final myAddress = _walletState.address?.hexEip55;
+
+    if (myAddress == null) {
+      return;
+    }
+
     final navigator = GoRouter.of(context);
 
-    final userId = navigator.state?.pathParameters['id'];
+    final myUserId = navigator.state?.pathParameters['id'];
 
-    navigator.go('/$userId/my-account/edit');
+    navigator.go('/$myUserId/my-account/edit', extra: {'myAddress': myAddress});
   }
 
   @override
@@ -64,26 +83,6 @@ class _AccountCardFrontState extends State<AccountCardFront> {
                   ),
                 ),
               ],
-            ),
-          ),
-        ),
-        Positioned(
-          right: 0,
-          top: 0,
-          child: CupertinoButton(
-            padding: EdgeInsets.zero, // Remove default padding
-            borderRadius: BorderRadius.circular(30), // Make it circular
-            color: theme.primaryColor, // Background color
-            onPressed: widget.onTap,
-            child: Container(
-              width: 30, // Fixed width
-              height: 30, // Fixed height (same as width for perfect circle)
-              alignment: Alignment.center,
-              child: const Icon(
-                CupertinoIcons.qrcode, // Your icon
-                color: CupertinoColors.white,
-                size: 24,
-              ),
             ),
           ),
         ),

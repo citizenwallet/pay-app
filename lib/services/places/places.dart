@@ -41,6 +41,7 @@ class PlacesService {
           'account': account,
           'imageUrl': place['image'],
           'description': place['description'],
+          'hasMenu': true,
         };
       }).toList();
 

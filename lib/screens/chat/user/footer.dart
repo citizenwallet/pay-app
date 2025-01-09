@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
-import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/utils/formatters.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/text_field.dart';
@@ -29,7 +28,6 @@ class _FooterState extends State<Footer> {
   bool _showAmountField = true;
   bool _isSending = false;
 
-  late WalletState _walletState;
   late TransactionsWithUserState _transactionsWithUserState;
 
   @override
@@ -38,7 +36,6 @@ class _FooterState extends State<Footer> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.amountFocusNode.requestFocus();
-      _walletState = context.read<WalletState>();
       _transactionsWithUserState = context.read<TransactionsWithUserState>();
     });
   }
@@ -283,6 +280,11 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
             controller: messageController,
             enabled: !isSending,
             placeholder: 'Add a message',
+            placeholderStyle: TextStyle(
+              color: Color(0xFFB7ADC4),
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+            ),
             maxLines: 1,
             maxLength: 200,
             textCapitalization: TextCapitalization.sentences,

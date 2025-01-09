@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:provider/provider.dart';
 
 // screens
@@ -15,7 +14,9 @@ import 'package:pay_app/screens/chat/user/screen.dart';
 
 // state
 import 'package:pay_app/state/checkout.dart';
+import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
+import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 
 GoRouter createRouter(
   GlobalKey<NavigatorState> rootNavigatorKey,
@@ -83,14 +84,15 @@ GoRouter createRouter(
                 final extraParams = state.extra as Map<String, dynamic>;
 
                 final myAddress = extraParams['myAddress'];
+                final place = extraParams['place'];
 
-                debugPrint('myAddress: $myAddress');
-
-                final userId = int.parse(state.pathParameters['id']!);
-                final placeId = int.parse(state.pathParameters['placeId']!);
-                final myAccount = '0x0000000000000000000000000000000000000000';
-
-                return const ChatWithPlaceScreen();
+                return ChangeNotifierProvider(
+                  create: (_) => OrdersWithPlaceState(
+                    place: place,
+                    myAddress: myAddress,
+                  ),
+                  child: const ChatWithPlaceScreen(),
+                );
               },
               routes: [
                 GoRoute(

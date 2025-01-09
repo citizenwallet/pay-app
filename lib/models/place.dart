@@ -3,6 +3,7 @@ class Place {
   String name;
   String account;
   String slug;
+  bool hasMenu;
   String? imageUrl;
   String? description;
 
@@ -10,6 +11,7 @@ class Place {
     required this.id,
     required this.name,
     required this.account,
+    this.hasMenu = false,
     this.slug = '',
     this.imageUrl,
     this.description,
@@ -21,6 +23,7 @@ class Place {
       name: json['name'],
       slug: json['slug'],
       account: json['account'],
+      hasMenu: json['hasMenu'] ?? false,
       imageUrl: json['imageUrl'] == '' ? null : json['imageUrl'],
       description: json['description'] == '' ? null : json['description'],
     );
@@ -32,6 +35,7 @@ class Place {
       'name': name,
       'slug': slug,
       'account': account,
+      'hasMenu': hasMenu,
       'imageUrl': imageUrl,
       'description': description,
     };
@@ -39,6 +43,6 @@ class Place {
 
   @override
   String toString() {
-    return 'Place(name: $name, account: $account, slug: $slug, imageUrl: $imageUrl, description: $description)';
+    return 'Place(name: $name, account: $account, slug: $slug, hasMenu: $hasMenu, imageUrl: $imageUrl, description: $description)';
   }
 }

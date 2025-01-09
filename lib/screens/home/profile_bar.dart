@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class ProfileBar extends StatefulWidget {
   const ProfileBar({super.key});
@@ -11,12 +13,29 @@ class ProfileBar extends StatefulWidget {
 }
 
 class _ProfileBarState extends State<ProfileBar> {
+  late WalletState _walletState;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _walletState = context.read<WalletState>();
+    });
+  }
+
   void _goToMyAccount() async {
+    final myAddress = _walletState.address?.hexEip55;
+
+    if (myAddress == null) {
+      return;
+    }
+
     final navigator = GoRouter.of(context);
 
-    final userId = navigator.state?.pathParameters['id'];
+    final myUserId = navigator.state?.pathParameters['id'];
 
-    navigator.go('/$userId/my-account');
+    navigator.push('/$myUserId/my-account', extra: {'myAddress': myAddress});
   }
 
   @override
@@ -113,7 +132,7 @@ class TopUpButton extends StatelessWidget {
     final theme = CupertinoTheme.of(context);
 
     return CupertinoButton(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.zero,
       color: theme.primaryColor,
       borderRadius: BorderRadius.circular(8),
       minSize: 0,
@@ -121,25 +140,19 @@ class TopUpButton extends StatelessWidget {
         // TODO: add a button to navigate to the top up screen
         debugPrint('Top up');
       },
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Icon(
-            CupertinoIcons.plus,
-            color: Color(0xFFFFFFFF),
-            size: 16,
-          ),
-          const SizedBox(width: 4),
-          const Text(
-            'Top up',
+      child: SizedBox(
+        width: 60,
+        height: 28,
+        child: Center(
+          child: Text(
+            '+ add',
             style: TextStyle(
+              color: Color(0xFFFFFFFF),
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Color(0xFFFFFFFF),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

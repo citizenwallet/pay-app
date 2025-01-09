@@ -7,7 +7,7 @@ import 'package:pay_app/models/place.dart';
 import 'package:pay_app/models/user.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
 import 'package:pay_app/state/interactions/selectors.dart';
-import 'package:pay_app/state/place.dart';
+import 'package:pay_app/state/places.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:provider/provider.dart';
@@ -35,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final double _maxScrollOffset = 100.0;
 
   late InteractionState _interactionState;
-  late PlaceState _placeState;
+  late PlacesState _placesState;
   late WalletState _walletState;
 
   @override
@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _interactionState = context.read<InteractionState>();
-      _placeState = context.read<PlaceState>();
+      _placesState = context.read<PlacesState>();
       _walletState = context.read<WalletState>();
       onLoad();
     });
@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void onLoad() async {
     await _interactionState.getInteractions();
     _interactionState.startPolling();
-    await _placeState.getAllPlaces();
+    await _placesState.getAllPlaces();
   }
 
   @override
@@ -138,9 +138,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final myUserId = navigator.state?.pathParameters['id'];
 
-    // TODO: pass place as extra parameter
+  
     navigator
-        .go('/$myUserId/place/${place.id}', extra: {'myAddress': myAddress});
+        .go('/$myUserId/place/${place.id}',
+            extra: {'myAddress': myAddress, 'place': place});
   }
 
   void _goToChatWithUser(User user) {
@@ -167,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final double heightFactor = 1 - (_scrollOffset / _maxScrollOffset);
 
     final interactions = context.select(sortByUnreadAndDate);
-    final places = context.select((PlaceState state) => state.places);
+    final places = context.select((PlacesState state) => state.places);
 
     final safeBottomPadding = MediaQuery.of(context).padding.bottom;
 
