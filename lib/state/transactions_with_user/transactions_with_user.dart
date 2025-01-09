@@ -20,6 +20,7 @@ class TransactionsWithUserState with ChangeNotifier {
   String myAddress;
 
   List<Transaction> transactions = [];
+  List<Transaction> newTransactions = [];
   List<Transaction> sendingQueue = [];
 
   WalletState walletState;
@@ -137,14 +138,14 @@ class TransactionsWithUserState with ChangeNotifier {
 
       final index = sendingQueue.indexWhere((tx) => tx.id == tempId);
 
-      if (index == -1) return null;
+      if (index != -1) {
+        sendingQueue[index] = sendingQueue[index].copyWith(
+          txHash: txHash,
+          status: TransactionStatus.success,
+        );
 
-      sendingQueue[index] = sendingQueue[index].copyWith(
-        txHash: txHash,
-        status: TransactionStatus.success,
-      );
-
-      safeNotifyListeners();
+        safeNotifyListeners();
+      }
 
       debugPrint('txHash: $txHash');
       return txHash;
@@ -187,9 +188,8 @@ class TransactionsWithUserState with ChangeNotifier {
           .getNewTransactionsWithUser(transactionsFromDate);
 
       if (newTransactions.isNotEmpty) {
-        final upsertedTransactions = _upsertTransactions(newTransactions);
-        transactions = upsertedTransactions;
-        // transactionsFromDate = DateTime.now();
+        _upsertNewTransactions(newTransactions);
+
         safeNotifyListeners();
         walletState.updateBalance();
       }
@@ -218,6 +218,7 @@ class TransactionsWithUserState with ChangeNotifier {
   }
 
   Future<void> getTransactionsWithUser() async {
+    debugPrint('get transactions');
     loading = true;
     error = false;
     safeNotifyListeners();
@@ -227,8 +228,7 @@ class TransactionsWithUserState with ChangeNotifier {
           await transactionsWithUserService.getTransactionsWithUser();
 
       if (transactions.isNotEmpty) {
-        final upsertedTransactions = _upsertTransactions(transactions);
-        this.transactions = upsertedTransactions;
+        _upsertTransactions(transactions);
         safeNotifyListeners();
       }
     } catch (e, s) {
@@ -242,23 +242,45 @@ class TransactionsWithUserState with ChangeNotifier {
     }
   }
 
-  List<Transaction> _upsertTransactions(List<Transaction> newTransactions) {
-    final existingList = [...transactions, ...sendingQueue];
-    final existingMap = {for (var i in existingList) i.txHash: i};
+  void _upsertTransactions(List<Transaction> newTransactions) {
+    final existingList = [...transactions];
 
     for (final newTransaction in newTransactions) {
-      if (existingMap.containsKey(newTransaction.txHash)) {
-        // Update existing transaction
-        existingMap[newTransaction.txHash] = newTransaction;
+      sendingQueue.removeWhere((element) =>
+          element.id == newTransaction.id ||
+          element.txHash == newTransaction.txHash);
 
-        sendingQueue
-            .removeWhere((element) => element.txHash == newTransaction.txHash);
+      final index =
+          existingList.indexWhere((element) => element.id == newTransaction.id);
+
+      if (index != -1) {
+        existingList[index] = newTransaction;
       } else {
-        // Add new interaction
-        existingMap[newTransaction.txHash] = newTransaction;
+        existingList.add(newTransaction);
       }
     }
 
-    return existingMap.values.toList();
+    transactions = [...existingList];
+  }
+
+  void _upsertNewTransactions(List<Transaction> newTransactions) {
+    final existingList = [...this.newTransactions];
+
+    for (final newTransaction in newTransactions) {
+      sendingQueue.removeWhere((element) =>
+          element.id == newTransaction.id ||
+          element.txHash == newTransaction.txHash);
+
+      final index =
+          existingList.indexWhere((element) => element.id == newTransaction.id);
+
+      if (index != -1) {
+        existingList[index] = newTransaction;
+      } else {
+        existingList.insert(0, newTransaction);
+      }
+    }
+
+    this.newTransactions = [...existingList];
   }
 }
