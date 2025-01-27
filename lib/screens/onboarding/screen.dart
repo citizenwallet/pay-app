@@ -1,7 +1,10 @@
+import 'package:country_flags/country_flags.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/state/community.dart';
+import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/wallet.dart';
+import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/wide_button.dart';
 import 'package:pay_app/widgets/text_field.dart';
@@ -15,7 +18,7 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final TextEditingController _emailController = TextEditingController();
+  late OnboardingState _onboardingState;
   late CommunityState _communityState;
   late WalletState _walletState;
 
@@ -24,6 +27,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _onboardingState = context.read<OnboardingState>();
       _communityState = context.read<CommunityState>();
       _walletState = context.read<WalletState>();
       onLoad();
@@ -36,7 +40,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
     super.dispose();
   }
 
@@ -58,9 +61,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     if (!mounted) return;
 
-    final userId = '123';
     final navigator = GoRouter.of(context);
-    navigator.replace('/$userId', extra: {'myAddress': addressFromOpen});
+    navigator.replace('/$addressFromOpen');
+  }
+
+  void handlePhoneNumberChange(String phoneNumber) {
+    _onboardingState.formatPhoneNumber(phoneNumber);
   }
 
   @override
@@ -68,7 +74,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final theme = CupertinoTheme.of(context);
 
     final community = context.select((CommunityState state) => state.community);
-    
+
+    final phoneNumberController =
+        context.read<OnboardingState>().phoneNumberController;
+
+    final touched = context.select((OnboardingState state) => state.touched);
+    final regionCode =
+        context.select((OnboardingState state) => state.regionCode);
+
     return CupertinoPageScaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       child: GestureDetector(
@@ -95,7 +108,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF14023F),
+                          color: textColor,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -106,7 +119,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: Color(0xFF8F8A9D),
+                          color: textMutedColor,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -120,23 +133,59 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   children: [
                     // Email Input
                     CustomTextField(
-                      controller: _emailController,
-                      placeholder: 'Enter your email address',
-                      suffix: Padding(
-                        padding: EdgeInsets.only(right: 16.0),
-                        child: Icon(
-                          CupertinoIcons.mail,
-                          color: Color(0xFF4D4D4D),
+                      controller: phoneNumberController,
+                      placeholder: '+32 475 123 456',
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: !touched
+                              ? mutedColor
+                              : touched && regionCode != null
+                                  ? primaryColor
+                                  : warningColor,
                         ),
                       ),
-                      keyboardType: TextInputType.emailAddress,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: touched && regionCode != null
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        letterSpacing: 2,
+                      ),
+                      prefix: Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: regionCode != null
+                            ? CountryFlag.fromCountryCode(
+                                regionCode,
+                                shape: const Circle(),
+                                height: 40,
+                                width: 40,
+                              )
+                            : SizedBox(
+                                height: 40,
+                                width: 40,
+                                child: Icon(
+                                  CupertinoIcons.phone,
+                                  color: iconColor,
+                                ),
+                              ),
+                      ),
+                      suffix: const SizedBox(
+                        height: 40,
+                        width: 40,
+                      ),
+                      keyboardType: TextInputType.phone,
+                      onChanged: handlePhoneNumberChange,
                     ),
                     const SizedBox(height: 16),
 
                     // Confirm Button
                     WideButton(
                       text: 'Confirm',
-                      onPressed: () => handleConfirm(),
+                      disabled: regionCode == null,
+                      onPressed:
+                          regionCode != null ? () => handleConfirm() : null,
                     ),
                     const SizedBox(height: 16),
                   ],
