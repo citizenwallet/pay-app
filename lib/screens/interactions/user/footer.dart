@@ -51,6 +51,9 @@ class _FooterState extends State<Footer> {
     _transactionsWithUserState.sendTransaction();
     _amountController.clear();
     _messageController.clear();
+    setState(() {
+      _showAmountField = true;
+    });
   }
 
   updateAmount(double amount) {

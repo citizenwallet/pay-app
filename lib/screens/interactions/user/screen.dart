@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/state/transactions_with_user/selector.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
+import 'package:pay_app/theme/colors.dart';
 import 'package:provider/provider.dart';
 
 import 'header.dart';
@@ -27,8 +28,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
   void initState() {
     super.initState();
 
-    amountFocusNode.addListener(_onAmountFocus);
-    messageFocusNode.addListener(_onMessageFocus);
+    scrollController.addListener(_scrollListener);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _transactionsWithUserState = context.read<TransactionsWithUserState>();
@@ -42,25 +42,13 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
     _transactionsWithUserState.startPolling();
   }
 
-  void _onAmountFocus() {
+  void _scrollListener() {
     if (amountFocusNode.hasFocus) {
-      Future.delayed(
-        const Duration(milliseconds: 500),
-        () {
-          scrollToTop();
-        },
-      );
+      amountFocusNode.unfocus();
     }
-  }
 
-  void _onMessageFocus() {
     if (messageFocusNode.hasFocus) {
-      Future.delayed(
-        const Duration(milliseconds: 500),
-        () {
-          scrollToTop();
-        },
-      );
+      messageFocusNode.unfocus();
     }
   }
 
@@ -75,8 +63,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
 
   @override
   void dispose() {
-    amountFocusNode.removeListener(_onAmountFocus);
-    messageFocusNode.removeListener(_onMessageFocus);
+    scrollController.removeListener(_scrollListener);
     amountFocusNode.dispose();
     messageFocusNode.dispose();
     scrollController.dispose();
@@ -109,7 +96,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
     final transactions = selectUserTransactions(transactionState);
 
     return CupertinoPageScaffold(
-      backgroundColor: CupertinoColors.systemBackground,
+      backgroundColor: whiteColor,
       child: GestureDetector(
         onTap: _dismissKeyboard,
         child: SafeArea(
@@ -123,32 +110,35 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
                 username: withUser?.username ?? '',
               ),
               Expanded(
-                child: CustomScrollView(
-                  controller: scrollController,
-                  scrollBehavior: const CupertinoScrollBehavior(),
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  scrollDirection: Axis.vertical,
-                  reverse: true,
-                  slivers: [
-                    const SliverToBoxAdapter(
-                      child: SizedBox(
-                        height: 10,
+                child: Container(
+                  color: backgroundColor,
+                  child: CustomScrollView(
+                    controller: scrollController,
+                    scrollBehavior: const CupertinoScrollBehavior(),
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    scrollDirection: Axis.vertical,
+                    reverse: true,
+                    slivers: [
+                      const SliverToBoxAdapter(
+                        child: SizedBox(
+                          height: 10,
+                        ),
                       ),
-                    ),
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        childCount: transactions.length,
-                        (context, index) {
-                          final transaction = transactions[index];
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          childCount: transactions.length,
+                          (context, index) {
+                            final transaction = transactions[index];
 
-                          return TransactionListItem(
-                            key: Key(transaction.id),
-                            transaction: transaction,
-                          );
-                        },
+                            return TransactionListItem(
+                              key: Key(transaction.id),
+                              transaction: transaction,
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               Footer(
