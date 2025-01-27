@@ -50,7 +50,7 @@ dependencies:
   collection: ^1.19.0
   simple_animations: ^5.1.0
   scrollable_positioned_list: ^0.3.8
-  archive: ^3.3.7
+  archive: ^4.0.2
   smartcontracts:
     git:
       url: https://github.com/citizenwallet/smartcontracts.git
@@ -59,6 +59,8 @@ dependencies:
     git:
       url: https://github.com/citizenwallet/contractforge.git
       ref: v0.0.11
+  flutter_libphonenumber: ^2.5.0
+  country_flags: ^3.2.0
 
 
 dev_dependencies:
