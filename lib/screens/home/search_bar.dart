@@ -4,11 +4,13 @@ import 'package:pay_app/widgets/search_bar.dart';
 class SearchBar extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
+  final Function(String) onSearch;
 
   const SearchBar({
     super.key,
     required this.controller,
     required this.focusNode,
+    required this.onSearch,
   });
 
   @override
@@ -23,6 +25,7 @@ class SearchBar extends StatelessWidget {
         controller: controller,
         focusNode: focusNode,
         placeholder: 'Search for people or places',
+        onChanged: onSearch,
       ),
     );
   }

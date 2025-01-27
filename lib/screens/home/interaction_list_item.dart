@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
+import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -27,10 +28,19 @@ class InteractionListItem extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            ProfileCircle(
-              imageUrl: interaction.imageUrl,
-              size: 48,
-            ),
+            if (interaction.isPlace)
+              ProfileCircle(
+                imageUrl: interaction.imageUrl ?? 'assets/icons/shop.png',
+                size: 48,
+                padding: 2,
+                fit: BoxFit.contain,
+              ),
+            if (!interaction.isPlace)
+              ProfileCircle(
+                imageUrl: interaction.imageUrl,
+                size: 48,
+                padding: 2,
+              ),
             const SizedBox(width: 12),
             Details(interaction: interaction),
             Column(
@@ -42,6 +52,15 @@ class InteractionListItem extends StatelessWidget {
                 TimeAgo(lastMessageAt: interaction.lastMessageAt),
               ],
             ),
+            const SizedBox(width: 12),
+            Column(
+              children: [
+                Icon(
+                  CupertinoIcons.chevron_right,
+                  color: iconColor,
+                )
+              ],
+            )
           ],
         ),
       ),

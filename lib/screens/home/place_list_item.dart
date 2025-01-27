@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/place.dart';
+import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -26,11 +27,21 @@ class PlaceListItem extends StatelessWidget {
         child: Row(
           children: [
             ProfileCircle(
-              imageUrl: place.imageUrl,
+              imageUrl: place.imageUrl ?? 'assets/icons/shop.png',
               size: 48,
+              padding: 2,
+              fit: BoxFit.cover,
             ),
             const SizedBox(width: 12),
             Details(place: place),
+            Column(
+              children: [
+                Icon(
+                  CupertinoIcons.chevron_right,
+                  color: iconColor,
+                )
+              ],
+            )
           ],
         ),
       ),

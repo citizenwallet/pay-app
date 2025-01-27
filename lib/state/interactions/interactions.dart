@@ -6,6 +6,7 @@ import 'package:pay_app/services/interactions/interactions.dart';
 import 'package:pay_app/state/wallet.dart';
 
 class InteractionState with ChangeNotifier {
+  String searchQuery = '';
   List<Interaction> interactions = [];
   InteractionService apiService;
   final WalletState walletState;
@@ -29,6 +30,11 @@ class InteractionState with ChangeNotifier {
     stopPolling();
     _mounted = false;
     super.dispose();
+  }
+
+  void setSearchQuery(String query) {
+    searchQuery = query;
+    safeNotifyListeners();
   }
 
   // TODO: paginate interactions
@@ -58,7 +64,7 @@ class InteractionState with ChangeNotifier {
   void startPolling() {
     // Cancel any existing timer first
     stopPolling();
-    
+
     interactionsFromDate = DateTime.now();
 
     // Create new timer

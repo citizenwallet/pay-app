@@ -36,8 +36,6 @@ class CustomSearchBar extends StatelessWidget {
       color: Color(0xFF1D1D1D),
     );
 
-
-
     final defaultBorderRadius = BorderRadius.circular(100);
 
     final EdgeInsetsGeometry defaultPadding =
@@ -69,14 +67,12 @@ class CustomSearchBar extends StatelessWidget {
         color: Color(0xFF4D4D4D),
       ),
       suffixMode: OverlayVisibilityMode.always,
-
       prefixIcon: const Icon(
         CupertinoIcons.search,
         color: Color(0xFF4D4D4D),
         size: 0,
       ),
-      prefixInsets: EdgeInsets.only(left: 16),
-
+      prefixInsets: EdgeInsets.only(left: 2),
       style: defaultTextStyle,
     );
   }

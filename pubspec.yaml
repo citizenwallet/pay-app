@@ -62,7 +62,6 @@ dependencies:
   flutter_libphonenumber: ^2.5.0
   country_flags: ^3.2.0
 
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -94,6 +93,7 @@ flutter:
     - assets/icons/profile.png
     - assets/icons/profile.jpg
     - assets/icons/shop.svg
+    - assets/icons/shop.png
     - assets/icons/notification_bell.svg
     - assets/icons/term-and-condition.svg
     - assets/icons/menu-item-placeholder.svg

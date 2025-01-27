@@ -7,7 +7,8 @@ import 'package:pay_app/models/place.dart';
 import 'package:pay_app/models/user.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
 import 'package:pay_app/state/interactions/selectors.dart';
-import 'package:pay_app/state/places.dart';
+import 'package:pay_app/state/places/places.dart';
+import 'package:pay_app/state/places/selectors.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:provider/provider.dart';
@@ -148,6 +149,11 @@ class _HomeScreenState extends State<HomeScreen> {
     navigator.go('/$myAddress/user/${user.account}');
   }
 
+  void handleSearch(String query) {
+    _interactionState.setSearchQuery(query);
+    _placesState.setSearchQuery(query);
+  }
+
   void _dismissKeyboard() {
     FocusScope.of(context).unfocus();
   }
@@ -157,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final double heightFactor = 1 - (_scrollOffset / _maxScrollOffset);
 
     final interactions = context.select(sortByUnreadAndDate);
-    final places = context.select((PlacesState state) => state.places);
+    final places = context.select(selectFilteredPlaces);
 
     final myAddress =
         context.select((WalletState state) => state.address?.hexEip55);
@@ -188,6 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     delegate: SearchBarDelegate(
                       controller: _searchController,
                       focusNode: _searchFocusNode,
+                      onSearch: handleSearch,
                     ),
                   ),
                   CupertinoSliverRefreshControl(
@@ -285,8 +292,13 @@ class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
 class SearchBarDelegate extends SliverPersistentHeaderDelegate {
   final TextEditingController controller;
   final FocusNode focusNode;
+  final Function(String) onSearch;
 
-  SearchBarDelegate({required this.controller, required this.focusNode});
+  SearchBarDelegate({
+    required this.controller,
+    required this.focusNode,
+    required this.onSearch,
+  });
 
   @override
   Widget build(
@@ -294,6 +306,7 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
     return SearchBar(
       controller: controller,
       focusNode: focusNode,
+      onSearch: onSearch,
     );
   }
 
