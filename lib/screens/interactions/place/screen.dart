@@ -282,7 +282,7 @@ class _InteractionWithPlaceScreenState
                 onSend: sendMessage,
                 amountFocusNode: amountFocusNode,
                 messageFocusNode: messageFocusNode,
-                hasMenu: place?.place.hasMenu ?? false,
+                display: place?.place.display,
                 place: place?.place,
               ),
             ],

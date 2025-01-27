@@ -30,8 +30,6 @@ class PlaceWithMenu {
       return MenuItem.fromJson(itemJson);
     }).toList();
 
-    place.hasMenu = items.isNotEmpty;
-
     return PlaceWithMenu(
       place: place,
       profile: profile,

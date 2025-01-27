@@ -1,20 +1,28 @@
+import 'package:collection/collection.dart';
+
+enum Display {
+  amount,
+  menu,
+  amountAndMenu,
+}
+
 class Place {
   int id;
   String name;
   String account;
   String slug;
-  bool hasMenu;
   String? imageUrl;
   String? description;
+  Display display;
 
   Place({
     required this.id,
     required this.name,
     required this.account,
-    this.hasMenu = false,
     this.slug = '',
     this.imageUrl,
     this.description,
+    this.display = Display.amount,
   });
 
   factory Place.fromJson(Map<String, dynamic> json) {
@@ -28,6 +36,9 @@ class Place {
       account: account,
       imageUrl: json['image'] == '' ? null : json['image'],
       description: json['description'] == '' ? null : json['description'],
+      display:
+          Display.values.firstWhereOrNull((e) => e.name == json['display']) ??
+              Display.amount,
     );
   }
 
@@ -37,14 +48,14 @@ class Place {
       'name': name,
       'slug': slug,
       'account': account,
-      'hasMenu': hasMenu,
       'image': imageUrl,
       'description': description,
+      'display': display.name,
     };
   }
 
   @override
   String toString() {
-    return 'Place(name: $name, account: $account, slug: $slug, hasMenu: $hasMenu, imageUrl: $imageUrl, description: $description)';
+    return 'Place(name: $name, account: $account, slug: $slug, display: $display, imageUrl: $imageUrl, description: $description)';
   }
 }

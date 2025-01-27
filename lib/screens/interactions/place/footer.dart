@@ -11,7 +11,7 @@ class Footer extends StatefulWidget {
   final FocusNode amountFocusNode;
   final FocusNode messageFocusNode;
   final Place? place;
-  final bool hasMenu;
+  final Display? display;
 
   const Footer({
     super.key,
@@ -19,7 +19,7 @@ class Footer extends StatefulWidget {
     required this.amountFocusNode,
     required this.messageFocusNode,
     this.place,
-    this.hasMenu = false,
+    this.display,
   });
 
   @override
@@ -84,12 +84,19 @@ class _FooterState extends State<Footer> {
       ),
       child: Column(
         children: [
-          if (widget.hasMenu)
+          if (widget.display == null)
+            SizedBox(
+              height: 50,
+              child: Center(
+                child: CupertinoActivityIndicator(),
+              ),
+            ),
+          if (widget.display == Display.menu)
             WideButton(
               text: 'Menu',
               onPressed: _onMenuPressed,
             ),
-          if (!widget.hasMenu)
+          if (widget.display == Display.amount)
             Row(
               children: [
                 Expanded(
