@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/models/place.dart';
 import 'package:pay_app/services/api/api.dart';
+import 'package:pay_app/models/place_with_menu.dart';
 
 class PlacesService {
   final APIService apiService =
@@ -36,8 +37,9 @@ class PlacesService {
     }
   }
 
-  Future<Place> getPlaceAndMenu(String account) async {
-    final response = await apiService.get(url: '/places/$account/menu');
+  Future<PlaceWithMenu> getPlaceAndMenu(String slug) async {
+    final response = await apiService.get(url: '/places/$slug/menu');
+
     /*
     {
         "place": {
@@ -81,13 +83,10 @@ class PlacesService {
         ]
     }
     */
-    final Map<String, dynamic> data = response;
-    final Map<String, dynamic> placeData = data['place'];
-    final Map<String, dynamic> profileData = data['profile'];
-    final List<dynamic> itemsData = data['items'];
 
     print(response);
 
-    return Place.fromJson(response);
+    final Map<String, dynamic> data = response;
+    return PlaceWithMenu.fromJson(data);
   }
 }

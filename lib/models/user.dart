@@ -22,7 +22,7 @@ class User {
       username: json['username'],
       name: json['name'],
       description: json['description'] == '' ? null : json['description'],
-      imageUrl: json['imageUrl'] == '' ? null : json['imageUrl'],
+      imageUrl: json['image'] == '' ? null : json['image'],
       placeId: json['place_id'],
     );
   }

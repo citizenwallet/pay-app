@@ -8,7 +8,7 @@ class MenuItem {
   final String category;
   final int vat; // in percent
   final String? emoji;
-  final double orderId;
+  final double order;
 
   double get formattedPrice => price / 100 * (1 + vat / 100);
 
@@ -24,21 +24,21 @@ class MenuItem {
     required this.category,
     required this.vat,
     this.emoji,
-    required this.orderId,
+    required this.order,
   });
 
   factory MenuItem.fromJson(Map<String, dynamic> json) {
     return MenuItem(
       id: json['id'],
-      placeId: json['placeId'],
-      imageUrl: json['imageUrl'],
+      placeId: json['place_id'],
+      imageUrl: json['image'],
       price: json['price'],
       name: json['name'],
       description: json['description'],
       category: json['category'],
       vat: json['vat'],
       emoji: json['emoji'],
-      orderId: (json['orderId'] as num).toDouble(),
+      order: (json['order'] as num).toDouble(),
     );
   }
 
@@ -46,15 +46,14 @@ class MenuItem {
     return {
       'id': id,
       'placeId': placeId,
-      'imageUrl': imageUrl,
+      'image': imageUrl,
       'price': price,
       'name': name,
       'description': description,
       'category': category,
       'vat': vat,
       'emoji': emoji,
-      'orderId': orderId,
+      'order': order,
     };
   }
-  
 }

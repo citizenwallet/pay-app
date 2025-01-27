@@ -1,13 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/order.dart';
-import 'package:pay_app/models/place.dart';
+import 'package:pay_app/models/place_with_menu.dart';
+import 'package:pay_app/services/places/places.dart';
 
 class OrdersWithPlaceState with ChangeNotifier {
-  Place place;
+  final PlacesService placesService = PlacesService();
+
+  String slug;
+  PlaceWithMenu? place;
   String myAddress;
   List<Order> orders = [];
 
-  OrdersWithPlaceState({required this.place, required this.myAddress});
+  OrdersWithPlaceState({required this.slug, required this.myAddress});
 
   bool loading = false;
   bool error = false;
@@ -16,6 +20,18 @@ class OrdersWithPlaceState with ChangeNotifier {
   void safeNotifyListeners() {
     if (_mounted) {
       notifyListeners();
+    }
+  }
+
+  Future<void> fetchPlaceAndMenu() async {
+    try {
+      final placeWithMenu = await placesService.getPlaceAndMenu(slug);
+      place = placeWithMenu;
+
+      safeNotifyListeners();
+    } catch (e) {
+      error = true;
+      safeNotifyListeners();
     }
   }
 
