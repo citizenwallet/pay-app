@@ -134,7 +134,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     // Email Input
                     CustomTextField(
                       controller: phoneNumberController,
-                      placeholder: '+32 475 123 456',
+                      placeholder: '+32475123456',
+                      autofocus: true,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(
@@ -151,6 +152,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         fontWeight: touched && regionCode != null
                             ? FontWeight.w700
                             : FontWeight.w500,
+                        letterSpacing: 2,
+                      ),
+                      placeholderStyle: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w500,
+                        color: textMutedColor,
                         letterSpacing: 2,
                       ),
                       prefix: Padding(

@@ -1,11 +1,14 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 
 class OnboardingState with ChangeNotifier {
   // instantiate services here
 
   // private variables here
-  final TextEditingController _phoneNumberController = TextEditingController();
+  final TextEditingController _phoneNumberController = TextEditingController(
+    text: dotenv.get('DEFAULT_PHONE_COUNTRY_CODE'),
+  );
 
   TextEditingController get phoneNumberController => _phoneNumberController;
 
