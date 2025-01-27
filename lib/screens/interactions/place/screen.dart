@@ -4,18 +4,20 @@ import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/transaction.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:provider/provider.dart';
-import './header.dart';
+import 'header.dart';
 import 'order_list_item.dart';
-import './footer.dart';
+import 'footer.dart';
 
-class ChatWithPlaceScreen extends StatefulWidget {
-  const ChatWithPlaceScreen({super.key});
+class InteractionWithPlaceScreen extends StatefulWidget {
+  const InteractionWithPlaceScreen({super.key});
 
   @override
-  State<ChatWithPlaceScreen> createState() => _ChatWithPlaceScreenState();
+  State<InteractionWithPlaceScreen> createState() =>
+      _InteractionWithPlaceScreenState();
 }
 
-class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
+class _InteractionWithPlaceScreenState
+    extends State<InteractionWithPlaceScreen> {
   FocusNode amountFocusNode = FocusNode();
   FocusNode messageFocusNode = FocusNode();
 
@@ -32,7 +34,13 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ordersWithPlaceState = context.read<OrdersWithPlaceState>();
+
+      onLoad();
     });
+  }
+
+  void onLoad() async {
+    _ordersWithPlaceState.fetchPlaceAndMenu();
   }
 
   void _onAmountFocus() {
@@ -255,9 +263,9 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
             children: [
               ChatHeader(
                 onTapLeading: goBack,
-                imageUrl: place.imageUrl,
-                placeName: place.name,
-                placeDescription: place.description,
+                imageUrl: place?.profile.imageUrl ?? place?.place.imageUrl,
+                placeName: place?.place.name ?? '',
+                placeDescription: place?.place.description ?? '',
               ),
               Expanded(
                 child: ListView(
@@ -274,8 +282,8 @@ class _ChatWithPlaceScreenState extends State<ChatWithPlaceScreen> {
                 onSend: sendMessage,
                 amountFocusNode: amountFocusNode,
                 messageFocusNode: messageFocusNode,
-                hasMenu: place.hasMenu,
-                place: place,
+                hasMenu: place?.place.hasMenu ?? false,
+                place: place?.place,
               ),
             ],
           ),

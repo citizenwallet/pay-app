@@ -4,15 +4,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
 import 'package:pay_app/models/menu_item.dart';
 import 'package:pay_app/models/place_menu.dart';
-import 'package:pay_app/screens/chat/place/header.dart';
+import 'package:pay_app/screens/interactions/place/header.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import 'package:pay_app/state/checkout.dart';
 
-import './footer.dart';
-import './menu_list_item.dart';
-import './catergory_scroll.dart';
+import 'footer.dart';
+import 'menu_list_item.dart';
+import 'catergory_scroll.dart';
 
 // reference: https://github.com/AmirBayat0/flutter_scroll_animation
 
@@ -62,7 +62,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Pizza',
         vat: 21,
         emoji: null,
-        orderId: 2,
+        order: 2,
       ),
 
       MenuItem(
@@ -76,7 +76,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Drinks',
         vat: 6,
         emoji: null,
-        orderId: 4,
+        order: 4,
       ),
       MenuItem(
         id: 11,
@@ -89,7 +89,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Drinks',
         vat: 21,
         emoji: null,
-        orderId: 0,
+        order: 0,
       ),
       MenuItem(
         id: 12,
@@ -102,7 +102,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Drinks',
         vat: 21,
         emoji: null,
-        orderId: 1,
+        order: 1,
       ),
       // Starters
       MenuItem(
@@ -115,7 +115,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Starters',
         vat: 21,
         emoji: '🍅',
-        orderId: 0,
+        order: 0,
       ),
       MenuItem(
         id: 2,
@@ -127,7 +127,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Starters',
         vat: 21,
         emoji: '🦑',
-        orderId: 0,
+        order: 0,
       ),
 
       // Pizza (existing items plus new ones)
@@ -141,7 +141,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Pizza',
         vat: 21,
         emoji: '🌶️',
-        orderId: 0,
+        order: 0,
       ),
       MenuItem(
         id: 6,
@@ -153,7 +153,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Pizza',
         vat: 21,
         emoji: '🍕',
-        orderId: 0,
+        order: 0,
       ),
 
       // Pasta
@@ -167,7 +167,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Pasta',
         vat: 21,
         emoji: '🍝',
-        orderId: 0,
+        order: 0,
       ),
       MenuItem(
         id: 16,
@@ -179,7 +179,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Pasta',
         vat: 21,
         emoji: '🌿',
-        orderId: 0,
+        order: 0,
       ),
 
       // Main Courses
@@ -193,7 +193,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Main Courses',
         vat: 21,
         emoji: '🥩',
-        orderId: 0,
+        order: 0,
       ),
       MenuItem(
         id: 21,
@@ -205,7 +205,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Main Courses',
         vat: 21,
         emoji: '🐟',
-        orderId: 0,
+        order: 0,
       ),
 
       // Drinks (existing plus new ones)
@@ -219,7 +219,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Drinks',
         vat: 6,
         emoji: '💧',
-        orderId: 0,
+        order: 0,
       ),
       MenuItem(
         id: 25,
@@ -231,7 +231,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Cocktails',
         vat: 21,
         emoji: '🍸',
-        orderId: 0,
+        order: 0,
       ),
 
       // Desserts
@@ -245,7 +245,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Desserts',
         vat: 21,
         emoji: '🍰',
-        orderId: 0,
+        order: 0,
       ),
       MenuItem(
         id: 31,
@@ -257,7 +257,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Desserts',
         vat: 21,
         emoji: '🍪',
-        orderId: 0,
+        order: 0,
       ),
 
       // Sides
@@ -271,7 +271,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Sides',
         vat: 21,
         emoji: '🥗',
-        orderId: 0,
+        order: 0,
       ),
       MenuItem(
         id: 36,
@@ -283,7 +283,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         category: 'Sides',
         vat: 21,
         emoji: '🍟',
-        orderId: 0,
+        order: 0,
       ),
     ]);
 
@@ -388,9 +388,9 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         child: Column(
           children: [
             ChatHeader(
-              imageUrl: place.imageUrl,
-              placeName: place.name,
-              placeDescription: place.description,
+              imageUrl: place?.imageUrl ?? '',
+              placeName: place?.name ?? '',
+              placeDescription: place?.description ?? '',
               onTapLeading: goBack,
             ),
 

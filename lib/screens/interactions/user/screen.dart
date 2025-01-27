@@ -3,18 +3,19 @@ import 'package:pay_app/state/transactions_with_user/selector.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:provider/provider.dart';
 
-import './header.dart';
-import './transaction_list_item.dart';
-import './footer.dart';
+import 'header.dart';
+import 'transaction_list_item.dart';
+import 'footer.dart';
 
-class ChatWithUserScreen extends StatefulWidget {
-  const ChatWithUserScreen({super.key});
+class InteractionWithUserScreen extends StatefulWidget {
+  const InteractionWithUserScreen({super.key});
 
   @override
-  State<ChatWithUserScreen> createState() => _ChatWithUserScreenState();
+  State<InteractionWithUserScreen> createState() =>
+      _InteractionWithUserScreenState();
 }
 
-class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
+class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
   FocusNode amountFocusNode = FocusNode();
   FocusNode messageFocusNode = FocusNode();
 
@@ -117,9 +118,9 @@ class _ChatWithUserScreenState extends State<ChatWithUserScreen> {
             children: [
               ChatHeader(
                 onTapLeading: goBack,
-                imageUrl: withUser.imageUrl,
-                name: withUser.name,
-                username: withUser.username,
+                imageUrl: withUser?.imageUrl,
+                name: withUser?.name,
+                username: withUser?.username ?? '',
               ),
               Expanded(
                 child: CustomScrollView(

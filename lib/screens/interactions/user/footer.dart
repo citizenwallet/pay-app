@@ -1,25 +1,22 @@
 import 'package:flutter/cupertino.dart';
-import 'package:go_router/go_router.dart';
-import 'package:pay_app/models/place.dart';
+import 'package:flutter/services.dart';
+import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/utils/formatters.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/text_field.dart';
-import 'package:pay_app/widgets/wide_button.dart';
+import 'package:provider/provider.dart';
 
 class Footer extends StatefulWidget {
   final Function(double, String?) onSend;
   final FocusNode amountFocusNode;
   final FocusNode messageFocusNode;
-  final Place place;
-  final bool hasMenu;
 
   const Footer({
     super.key,
     required this.onSend,
     required this.amountFocusNode,
     required this.messageFocusNode,
-    required this.place,
-    this.hasMenu = false,
   });
 
   @override
@@ -32,12 +29,36 @@ class _FooterState extends State<Footer> {
 
   bool _showAmountField = true;
 
+  late TransactionsWithUserState _transactionsWithUserState;
+  late WalletState _walletState;
+
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.amountFocusNode.requestFocus();
+      _transactionsWithUserState = context.read<TransactionsWithUserState>();
     });
+  }
+
+  Future<void> sendTransaction() async {
+    HapticFeedback.heavyImpact();
+
+    widget.amountFocusNode.unfocus();
+    widget.messageFocusNode.unfocus();
+
+    _transactionsWithUserState.sendTransaction();
+    _amountController.clear();
+    _messageController.clear();
+  }
+
+  updateAmount(double amount) {
+    _transactionsWithUserState.updateAmount(amount);
+  }
+
+  updateMessage(String message) {
+    _transactionsWithUserState.updateMessage(message);
   }
 
   @override
@@ -58,21 +79,15 @@ class _FooterState extends State<Footer> {
     });
   }
 
-  void _onMenuPressed() {
-    final navigator = GoRouter.of(context);
-
-    final myUserId = navigator.state?.pathParameters['id'];
-    final placeId = navigator.state?.pathParameters['placeId'];
-
-    navigator.push('/$myUserId/place/$placeId/menu', extra: {'place': widget.place});
-  }
-
   @override
   Widget build(BuildContext context) {
+    _walletState = context.watch<WalletState>();
+    final balance = _walletState.wallet?.formattedBalance ?? 0.00;
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 10,
-        vertical: 10,
+        vertical: 20,
       ),
       decoration: BoxDecoration(
         border: Border(
@@ -84,40 +99,31 @@ class _FooterState extends State<Footer> {
       ),
       child: Column(
         children: [
-          if (widget.hasMenu)
-            WideButton(
-              text: 'Menu',
-              onPressed: _onMenuPressed,
-            ),
-          if (!widget.hasMenu)
-            Row(
-              children: [
-                Expanded(
-                  child: _showAmountField
-                      ? AmountFieldWithMessageToggle(
-                          onToggle: _toggleField,
-                          amountController: _amountController,
-                          focusNode: widget.amountFocusNode,
-                        )
-                      : MessageFieldWithAmountToggle(
-                          onToggle: _toggleField,
-                          messageController: _messageController,
-                          focusNode: widget.messageFocusNode,
-                        ),
-                ),
-                SizedBox(width: 10),
-                SendButton(
-                  amountController: _amountController,
-                  messageController: _messageController,
-                  onTap: () => widget.onSend(
-                    double.parse(_amountController.text),
-                    _messageController.text,
-                  ),
-                ),
-              ],
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: _showAmountField
+                    ? AmountFieldWithMessageToggle(
+                        onToggle: _toggleField,
+                        amountController: _amountController,
+                        focusNode: widget.amountFocusNode,
+                        onChange: updateAmount,
+                      )
+                    : MessageFieldWithAmountToggle(
+                        onToggle: _toggleField,
+                        messageController: _messageController,
+                        focusNode: widget.messageFocusNode,
+                        onChange: updateMessage,
+                      ),
+              ),
+              SizedBox(width: 10),
+              SendButton(
+                onTap: sendTransaction,
+              ),
+            ],
+          ),
           SizedBox(height: 10),
-          CurrentBalance(),
+          CurrentBalance(balance: balance),
         ],
       ),
     );
@@ -126,14 +132,10 @@ class _FooterState extends State<Footer> {
 
 class SendButton extends StatelessWidget {
   final VoidCallback onTap;
-  final TextEditingController amountController;
-  final TextEditingController messageController;
 
   const SendButton({
     super.key,
     required this.onTap,
-    required this.amountController,
-    required this.messageController,
   });
 
   @override
@@ -141,11 +143,7 @@ class SendButton extends StatelessWidget {
     final theme = CupertinoTheme.of(context);
     return CupertinoButton(
       padding: EdgeInsets.zero,
-      onPressed: () {
-        onTap();
-        amountController.clear();
-        messageController.clear();
-      },
+      onPressed: onTap,
       child: Container(
         width: 44,
         height: 44,
@@ -170,6 +168,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
   final FocusNode focusNode;
   final VoidCallback onToggle;
   final AmountFormatter amountFormatter = AmountFormatter();
+  final Function(double) onChange;
   final bool isSending;
 
   AmountFieldWithMessageToggle({
@@ -177,6 +176,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
     required this.onToggle,
     required this.amountController,
     required this.focusNode,
+    required this.onChange,
     this.isSending = false,
   });
 
@@ -209,9 +209,15 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
             textInputAction: TextInputAction.done,
             prefix: Padding(
               padding: EdgeInsets.only(left: 11.0),
-              child: CoinLogo(size: 33) ,
+              child: CoinLogo(size: 33),
             ),
-            // TODO: onChanged
+            onChanged: (value) {
+              if (value.isEmpty) {
+                onChange(0);
+                return;
+              }
+              onChange(double.tryParse(value) ?? 0);
+            },
           ),
         ),
         SizedBox(width: 10),
@@ -242,13 +248,15 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
   final VoidCallback onToggle;
   final TextEditingController messageController;
   final FocusNode focusNode;
+  final Function(String) onChange;
   final bool isSending;
 
-  MessageFieldWithAmountToggle({
+  const MessageFieldWithAmountToggle({
     super.key,
     required this.onToggle,
     required this.messageController,
     required this.focusNode,
+    required this.onChange,
     this.isSending = false,
   });
 
@@ -262,7 +270,7 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
             controller: messageController,
             enabled: !isSending,
             placeholder: 'Add a message',
-             placeholderStyle: TextStyle(
+            placeholderStyle: TextStyle(
               color: Color(0xFFB7ADC4),
               fontSize: 20,
               fontWeight: FontWeight.w500,
@@ -276,7 +284,7 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
             autocorrect: true,
             enableSuggestions: true,
             keyboardType: TextInputType.multiline,
-            // TODO: onChanged
+            onChanged: onChange,
           ),
         ),
         SizedBox(width: 10),
@@ -303,7 +311,8 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
 }
 
 class CurrentBalance extends StatelessWidget {
-  const CurrentBalance({super.key});
+  final double balance;
+  const CurrentBalance({super.key, required this.balance});
 
   @override
   Widget build(BuildContext context) {
@@ -325,7 +334,7 @@ class CurrentBalance extends StatelessWidget {
           CoinLogo(size: 22),
           SizedBox(width: 4),
           Text(
-            '12.00',
+            balance.toString(),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -347,22 +356,30 @@ class TopUpButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = CupertinoTheme.of(context);
     return CupertinoButton(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      color: theme.primaryColor,
+      padding: EdgeInsets.zero,
+      color: theme.barBackgroundColor,
       borderRadius: BorderRadius.circular(8),
       minSize: 0,
       onPressed: () {
         // TODO: add a button to navigate to the top up screen
-        print('Top up');
+        debugPrint('Top up');
       },
-      child: SizedBox(
+      child: Container(
         width: 60,
         height: 28,
+        decoration: BoxDecoration(
+          color: theme.barBackgroundColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: theme.primaryColor,
+            width: 1,
+          ),
+        ),
         child: Center(
           child: Text(
             '+ add',
             style: TextStyle(
-              color: Color(0xFFFFFFFF),
+              color: theme.primaryColor,
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),

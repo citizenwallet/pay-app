@@ -18,22 +18,25 @@ class TransactionListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 74,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: Color(0xFFF0E9F4),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Container(
+        height: 74,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: Color(0xFFF0E9F4),
+            ),
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          _buildLeft(),
-          const Spacer(),
-          _buildRight(),
-        ],
+        child: Row(
+          children: [
+            _buildLeft(),
+            const Spacer(),
+            _buildRight(),
+          ],
+        ),
       ),
     );
   }
@@ -114,7 +117,7 @@ class TransactionHash extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Transaction #${formatLongText(transactionHash)}',
+      '#${formatLongText(transactionHash)}',
       style: TextStyle(
         fontSize: 10,
         fontWeight: FontWeight.w600,
