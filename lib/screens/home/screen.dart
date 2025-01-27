@@ -10,6 +10,7 @@ import 'package:pay_app/state/interactions/selectors.dart';
 import 'package:pay_app/state/places/places.dart';
 import 'package:pay_app/state/places/selectors.dart';
 import 'package:pay_app/state/wallet.dart';
+import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:provider/provider.dart';
 
@@ -97,6 +98,8 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _scrollOffset = _scrollController.offset.clamp(0, _maxScrollOffset);
       });
+
+      _searchFocusNode.unfocus();
     }
 
     // Show on scroll up
@@ -171,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final safeBottomPadding = MediaQuery.of(context).padding.bottom;
 
     return CupertinoPageScaffold(
-      backgroundColor: CupertinoColors.systemBackground,
+      backgroundColor: whiteColor,
       child: GestureDetector(
         onTap: _dismissKeyboard,
         behavior: HitTestBehavior.opaque,
@@ -180,62 +183,69 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Stack(
             alignment: Alignment.topCenter,
             children: [
-              CustomScrollView(
-                controller: _scrollController,
-                scrollBehavior: const CupertinoScrollBehavior(),
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  SliverPersistentHeader(
-                    floating: true,
-                    delegate: ProfileBarDelegate(),
-                  ),
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: SearchBarDelegate(
-                      controller: _searchController,
-                      focusNode: _searchFocusNode,
-                      onSearch: handleSearch,
+              Container(
+                color: whiteColor,
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  scrollBehavior: const CupertinoScrollBehavior(),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverPersistentHeader(
+                      floating: true,
+                      delegate: ProfileBarDelegate(),
                     ),
-                  ),
-                  CupertinoSliverRefreshControl(
-                    onRefresh: onLoad,
-                  ),
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: 10,
-                    ),
-                  ),
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      childCount: interactions.length,
-                      (context, index) => InteractionListItem(
-                        interaction: interactions[index],
-                        onTap: (interaction) async {
-                          // Navigate first
-                          goToChatHistory(myAddress, interaction);
-                          // Then mark as read
-                          await _interactionState
-                              .markInteractionAsRead(interaction);
-                        },
+                    SliverPersistentHeader(
+                      floating: true,
+                      delegate: SearchBarDelegate(
+                        controller: _searchController,
+                        focusNode: _searchFocusNode,
+                        onSearch: handleSearch,
                       ),
                     ),
-                  ),
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      childCount: places.length,
-                      (context, index) => PlaceListItem(
-                        place: places[index],
-                        onTap: (place) =>
-                            _goToInteractionWithPlace(myAddress, place),
+                    SliverPersistentHeader(
+                      pinned: true,
+                      delegate: WhiteBarDelegate(),
+                    ),
+                    CupertinoSliverRefreshControl(
+                      onRefresh: onLoad,
+                    ),
+                    SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: 10,
                       ),
                     ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: 10,
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        childCount: interactions.length,
+                        (context, index) => InteractionListItem(
+                          interaction: interactions[index],
+                          onTap: (interaction) async {
+                            // Navigate first
+                            goToChatHistory(myAddress, interaction);
+                            // Then mark as read
+                            await _interactionState
+                                .markInteractionAsRead(interaction);
+                          },
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        childCount: places.length,
+                        (context, index) => PlaceListItem(
+                          place: places[index],
+                          onTap: (place) =>
+                              _goToInteractionWithPlace(myAddress, place),
+                        ),
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: 10,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               Positioned(
                 left: 0,
@@ -260,29 +270,14 @@ class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
-    final progress = shrinkOffset / maxExtent;
-    final heightFactor = 1 - progress;
-    final translateY = -shrinkOffset;
-    final opacity = 1 - progress;
-
-    return SizeTransition(
-      sizeFactor: AlwaysStoppedAnimation(heightFactor.clamp(0, 1)),
-      axisAlignment: -1,
-      child: Transform.translate(
-        offset: Offset(0, translateY),
-        child: Opacity(
-          opacity: opacity.clamp(0, 1),
-          child: const ProfileBar(),
-        ),
-      ),
-    );
+    return const ProfileBar();
   }
 
   @override
   double get maxExtent => 95.0; // Maximum height of header
 
   @override
-  double get minExtent => 0; // Minimum height of header
+  double get minExtent => 95.0; // Minimum height of header
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
@@ -303,19 +298,64 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return SearchBar(
-      controller: controller,
-      focusNode: focusNode,
-      onSearch: onSearch,
+    return Container(
+      color: whiteColor,
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: SearchBar(
+        controller: controller,
+        focusNode: focusNode,
+        onSearch: onSearch,
+      ),
     );
   }
 
   @override
-  double get maxExtent => 57.0; // Height of your SearchBar
+  double get maxExtent => 77.0; // Height of your SearchBar
 
   @override
-  double get minExtent => 57.0; // Same as maxExtent for fixed height
+  double get minExtent => 77.0; // Same as maxExtent for fixed height
 
   @override
   bool shouldRebuild(covariant SearchBarDelegate oldDelegate) => true;
+}
+
+class WhiteBarDelegate extends SliverPersistentHeaderDelegate {
+  final bool reverse;
+
+  WhiteBarDelegate({
+    this.reverse = false,
+  });
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final gradientList = [
+      whiteColor,
+      whiteColor.withValues(alpha: 0.0),
+    ];
+
+    return Column(
+      children: [
+        Container(
+          height: 20,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: reverse ? gradientList.reversed.toList() : gradientList,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  double get maxExtent => 20.0; // Height of your SearchBar
+
+  @override
+  double get minExtent => 20.0; // Same as maxExtent for fixed height
+
+  @override
+  bool shouldRebuild(covariant WhiteBarDelegate oldDelegate) => true;
 }
