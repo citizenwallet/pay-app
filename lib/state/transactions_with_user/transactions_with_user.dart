@@ -206,9 +206,12 @@ class TransactionsWithUserState with ChangeNotifier {
 
     try {
       final profile = await withUserProfileService.getProfile();
+      debugPrint('profile: $profile');
       withUser = profile;
       safeNotifyListeners();
-    } catch (e) {
+    } catch (e, s) {
+      debugPrint('Error getting profile of with user: $e');
+      debugPrint('Stack trace: $s');
       error = true;
       safeNotifyListeners();
     } finally {

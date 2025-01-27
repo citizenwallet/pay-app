@@ -15,7 +15,6 @@ class ProfileService {
       final response = await apiService.get(url: '/accounts/$account/profile');
 
       final Map<String, dynamic> data = response;
-      final Map<String, dynamic> profileApiResponse = data['profile'];
 
       /* Example API Response:
        * {
@@ -30,16 +29,7 @@ class ProfileService {
        * }
        */
 
-      final profile = {
-        'account': profileApiResponse['account'],
-        'username': profileApiResponse['username'],
-        'name': profileApiResponse['name'],
-        'description': profileApiResponse['description'],
-        'imageUrl': profileApiResponse['image'],
-        'placeId': profileApiResponse['place_id'],
-      };
-
-      return User.fromJson(profile);
+      return User.fromJson(data['profile']);
     } catch (e, s) {
       debugPrint('Failed to fetch profile: $e');
       debugPrint('Stack trace: $s');

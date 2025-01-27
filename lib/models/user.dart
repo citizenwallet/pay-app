@@ -32,7 +32,7 @@ class User {
       'name': name,
       'username': username,
       'account': account,
-      'imageUrl': imageUrl,
+      'image': imageUrl,
       'description': description,
       'place_id': placeId,
     };
