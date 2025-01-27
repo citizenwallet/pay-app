@@ -2,11 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/place.dart';
 import 'package:pay_app/services/places/places.dart';
 
-
 class PlacesState with ChangeNotifier {
+  String searchQuery = '';
   List<Place> places = [];
   PlacesService apiService = PlacesService();
-
 
   bool loading = false;
   bool error = false;
@@ -22,6 +21,11 @@ class PlacesState with ChangeNotifier {
   void dispose() {
     _mounted = false;
     super.dispose();
+  }
+
+  void setSearchQuery(String query) {
+    searchQuery = query;
+    safeNotifyListeners();
   }
 
   Future<void> getAllPlaces() async {
