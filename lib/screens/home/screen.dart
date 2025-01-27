@@ -53,7 +53,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void onLoad() async {
+  Future<void> onLoad() async {
+    await _walletState.updateBalance();
     await _interactionState.getInteractions();
     _interactionState.startPolling();
     await _placesState.getAllPlaces();
@@ -106,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void goToChatHistory(Interaction interaction) {
+  void goToChatHistory(String? myAddress, Interaction interaction) {
     if (interaction.isPlace && interaction.placeId != null) {
       final place = Place(
         id: interaction.placeId!,
@@ -114,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
         imageUrl: interaction.imageUrl,
         account: interaction.withAccount,
       );
-      _goToInteractionWithPlace(place);
+      _goToInteractionWithPlace(myAddress, place);
     } else if (!interaction.isPlace) {
       final user = User(
         name: interaction.name,
@@ -123,36 +124,28 @@ class _HomeScreenState extends State<HomeScreen> {
         imageUrl: interaction.imageUrl,
       );
 
-      _goToInteractionWithUser(user);
+      _goToInteractionWithUser(myAddress, user);
     }
   }
 
-  void _goToInteractionWithPlace(Place place) {
-    final myAddress = _walletState.address?.hexEip55;
-
+  void _goToInteractionWithPlace(String? myAddress, Place place) {
     if (myAddress == null) {
       return;
     }
 
     final navigator = GoRouter.of(context);
 
-    final myUserId = navigator.state?.pathParameters['id'];
-
-    navigator.go('/$myUserId/place/${place.slug}');
+    navigator.go('/$myAddress/place/${place.slug}');
   }
 
-  void _goToInteractionWithUser(User user) {
-    final myAddress = _walletState.address?.hexEip55;
-
+  void _goToInteractionWithUser(String? myAddress, User user) {
     if (myAddress == null) {
       return;
     }
 
     final navigator = GoRouter.of(context);
 
-    final myUserId = GoRouter.of(context).state?.pathParameters['id'];
-
-    navigator.go('/$myUserId/user/${user.account}');
+    navigator.go('/$myAddress/user/${user.account}');
   }
 
   void _dismissKeyboard() {
@@ -165,6 +158,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final interactions = context.select(sortByUnreadAndDate);
     final places = context.select((PlacesState state) => state.places);
+
+    final myAddress =
+        context.select((WalletState state) => state.address?.hexEip55);
 
     final safeBottomPadding = MediaQuery.of(context).padding.bottom;
 
@@ -194,6 +190,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       focusNode: _searchFocusNode,
                     ),
                   ),
+                  CupertinoSliverRefreshControl(
+                    onRefresh: onLoad,
+                  ),
                   SliverToBoxAdapter(
                     child: SizedBox(
                       height: 10,
@@ -206,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         interaction: interactions[index],
                         onTap: (interaction) async {
                           // Navigate first
-                          goToChatHistory(interaction);
+                          goToChatHistory(myAddress, interaction);
                           // Then mark as read
                           await _interactionState
                               .markInteractionAsRead(interaction);
@@ -219,7 +218,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       childCount: places.length,
                       (context, index) => PlaceListItem(
                         place: places[index],
-                        onTap: _goToInteractionWithPlace,
+                        onTap: (place) =>
+                            _goToInteractionWithPlace(myAddress, place),
                       ),
                     ),
                   ),
