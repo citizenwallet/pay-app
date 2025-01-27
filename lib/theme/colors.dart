@@ -14,4 +14,4 @@ const textSurfaceMutedColor = Color.fromARGB(255, 211, 204, 215);
 const textColor = Color(0xFF14023F);
 const textMutedColor = Color(0xFF8F8A9D);
 
-const backgroundColor = Color.fromARGB(255, 236, 236, 239);
+const backgroundColor = Color.fromARGB(255, 246, 246, 254);

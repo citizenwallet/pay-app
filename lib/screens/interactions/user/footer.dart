@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
+import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/formatters.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/text_field.dart';
@@ -85,7 +86,14 @@ class _FooterState extends State<Footer> {
   @override
   Widget build(BuildContext context) {
     _walletState = context.watch<WalletState>();
-    final balance = _walletState.wallet?.formattedBalance ?? 0.00;
+    final balance =
+        context.watch<WalletState>().wallet?.formattedBalance ?? 0.00;
+
+    final toSendAmount =
+        context.watch<TransactionsWithUserState>().toSendAmount;
+
+    final error = toSendAmount > balance;
+    final disabled = toSendAmount == 0.0 || error;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -107,6 +115,8 @@ class _FooterState extends State<Footer> {
               Expanded(
                 child: _showAmountField
                     ? AmountFieldWithMessageToggle(
+                        disabled: disabled,
+                        error: error,
                         onToggle: _toggleField,
                         amountController: _amountController,
                         focusNode: widget.amountFocusNode,
@@ -121,12 +131,16 @@ class _FooterState extends State<Footer> {
               ),
               SizedBox(width: 10),
               SendButton(
+                disabled: disabled,
                 onTap: sendTransaction,
               ),
             ],
           ),
           SizedBox(height: 10),
-          CurrentBalance(balance: balance),
+          CurrentBalance(
+            balance: balance,
+            error: error,
+          ),
         ],
       ),
     );
@@ -135,10 +149,12 @@ class _FooterState extends State<Footer> {
 
 class SendButton extends StatelessWidget {
   final VoidCallback onTap;
+  final bool disabled;
 
   const SendButton({
     super.key,
     required this.onTap,
+    this.disabled = false,
   });
 
   @override
@@ -146,12 +162,12 @@ class SendButton extends StatelessWidget {
     final theme = CupertinoTheme.of(context);
     return CupertinoButton(
       padding: EdgeInsets.zero,
-      onPressed: onTap,
+      onPressed: disabled ? null : onTap,
       child: Container(
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: theme.primaryColor,
+          color: disabled ? mutedColor : theme.primaryColor,
           shape: BoxShape.circle,
         ),
         child: const Center(
@@ -173,6 +189,8 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
   final AmountFormatter amountFormatter = AmountFormatter();
   final Function(double) onChange;
   final bool isSending;
+  final bool disabled;
+  final bool error;
 
   AmountFieldWithMessageToggle({
     super.key,
@@ -181,6 +199,8 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
     required this.focusNode,
     required this.onChange,
     this.isSending = false,
+    this.disabled = false,
+    this.error = false,
   });
 
   @override
@@ -192,6 +212,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
           child: CustomTextField(
             controller: amountController,
             enabled: !isSending,
+            isError: error,
             placeholder: 'Enter amount',
             placeholderStyle: TextStyle(
               color: Color(0xFFB7ADC4),
@@ -226,7 +247,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
         SizedBox(width: 10),
         CupertinoButton(
           padding: EdgeInsets.zero,
-          onPressed: onToggle,
+          onPressed: disabled ? null : onToggle,
           child: Container(
             width: 44,
             height: 44,
@@ -236,7 +257,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
             child: Center(
               child: Icon(
                 CupertinoIcons.text_bubble,
-                color: theme.primaryColor,
+                color: disabled ? mutedColor : theme.primaryColor,
                 size: 35,
               ),
             ),
@@ -315,7 +336,13 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
 
 class CurrentBalance extends StatelessWidget {
   final double balance;
-  const CurrentBalance({super.key, required this.balance});
+  final bool error;
+
+  const CurrentBalance({
+    super.key,
+    required this.balance,
+    this.error = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -341,7 +368,7 @@ class CurrentBalance extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF171717),
+              color: error ? CupertinoColors.systemRed : Color(0xFF171717),
             ),
           ),
           SizedBox(width: 10),
