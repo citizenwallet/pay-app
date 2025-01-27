@@ -114,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
         imageUrl: interaction.imageUrl,
         account: interaction.withAccount,
       );
-      _goToChatWithPlace(place);
+      _goToInteractionWithPlace(place);
     } else if (!interaction.isPlace) {
       final user = User(
         name: interaction.name,
@@ -123,11 +123,11 @@ class _HomeScreenState extends State<HomeScreen> {
         imageUrl: interaction.imageUrl,
       );
 
-      _goToChatWithUser(user);
+      _goToInteractionWithUser(user);
     }
   }
 
-  void _goToChatWithPlace(Place place) {
+  void _goToInteractionWithPlace(Place place) {
     final myAddress = _walletState.address?.hexEip55;
 
     if (myAddress == null) {
@@ -138,11 +138,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final myUserId = navigator.state?.pathParameters['id'];
 
-    navigator.go('/$myUserId/place/${place.id}',
-        extra: {'myAddress': myAddress, 'place': place});
+    navigator.go('/$myUserId/place/${place.slug}');
   }
 
-  void _goToChatWithUser(User user) {
+  void _goToInteractionWithUser(User user) {
     final myAddress = _walletState.address?.hexEip55;
 
     if (myAddress == null) {
@@ -153,8 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final myUserId = GoRouter.of(context).state?.pathParameters['id'];
 
-    navigator.go('/$myUserId/user/${user.account}',
-        extra: {'myAddress': myAddress, 'user': user});
+    navigator.go('/$myUserId/user/${user.account}');
   }
 
   void _dismissKeyboard() {
@@ -221,7 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       childCount: places.length,
                       (context, index) => PlaceListItem(
                         place: places[index],
-                        onTap: _goToChatWithPlace,
+                        onTap: _goToInteractionWithPlace,
                       ),
                     ),
                   ),

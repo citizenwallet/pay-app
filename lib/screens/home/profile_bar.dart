@@ -35,7 +35,7 @@ class _ProfileBarState extends State<ProfileBar> {
 
     final myUserId = navigator.state?.pathParameters['id'];
 
-    navigator.push('/$myUserId/my-account', extra: {'myAddress': myAddress});
+    navigator.push('/$myUserId/my-account');
   }
 
   @override

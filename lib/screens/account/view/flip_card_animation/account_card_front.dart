@@ -36,7 +36,7 @@ class _AccountCardFrontState extends State<AccountCardFront> {
 
     final myUserId = navigator.state?.pathParameters['id'];
 
-    navigator.go('/$myUserId/my-account/edit', extra: {'myAddress': myAddress});
+    navigator.go('/$myUserId/my-account/edit');
   }
 
   @override

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/models/transaction.dart';
@@ -16,7 +15,8 @@ import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/utils/random.dart';
 
 class TransactionsWithUserState with ChangeNotifier {
-  User withUser;
+  String withUserAddress;
+  User? withUser;
   String myAddress;
 
   List<Transaction> transactions = [];
@@ -39,13 +39,13 @@ class TransactionsWithUserState with ChangeNotifier {
   bool error = false;
 
   TransactionsWithUserState({
-    required this.withUser,
+    required this.withUserAddress,
     required this.myAddress,
     required this.walletState,
   })  : myProfileService = ProfileService(account: myAddress),
-        withUserProfileService = ProfileService(account: withUser.account),
+        withUserProfileService = ProfileService(account: withUserAddress),
         transactionsWithUserService = TransactionsService(
-            firstAccount: myAddress, secondAccount: withUser.account);
+            firstAccount: myAddress, secondAccount: withUserAddress);
 
   bool _mounted = true;
   void safeNotifyListeners() {
@@ -83,7 +83,7 @@ class TransactionsWithUserState with ChangeNotifier {
         return null;
       }
 
-      final toAddress = withUser.account;
+      final toAddress = withUserAddress;
       final fromAddress = myAddress;
 
       final tempId = '${pendingTransactionId}_${generateRandomId()}';
