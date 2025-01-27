@@ -74,6 +74,7 @@ class CustomTextField extends StatelessWidget {
   final TextStyle? style;
   final TextStyle? placeholderStyle;
   final TextAlignVertical? textAlignVertical;
+  final TextAlign? textAlign;
   final BorderRadius? borderRadius;
   final List<TextInputFormatter>? inputFormatters;
 
@@ -105,11 +106,13 @@ class CustomTextField extends StatelessWidget {
     this.style,
     this.placeholderStyle,
     this.textAlignVertical,
+    this.textAlign,
     this.borderRadius,
     this.inputFormatters,
   });
 
-  final EdgeInsetsGeometry defaultPadding = const EdgeInsets.symmetric(horizontal: 24, vertical: 12);
+  final EdgeInsetsGeometry defaultPadding =
+      const EdgeInsets.symmetric(horizontal: 24, vertical: 12);
 
   final defaultBorderRadius = BorderRadius.circular(100);
 
@@ -167,6 +170,7 @@ class CustomTextField extends StatelessWidget {
           style: style,
           placeholderStyle: placeholderStyle ?? defaultPlaceholderStyle,
           textAlignVertical: textAlignVertical,
+          textAlign: textAlign ?? TextAlign.start,
           decoration: decoration ?? defaultDecoration,
           inputFormatters: inputFormatters,
           autocorrect: autocorrect,
