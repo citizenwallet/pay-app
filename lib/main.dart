@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/routes/router.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
@@ -12,8 +13,10 @@ void main() async {
 
   await dotenv.load(fileName: '.env');
 
+  await init();
+
   // await MainDB().init('main');
-    await PreferencesService().init(await SharedPreferences.getInstance());
+  await PreferencesService().init(await SharedPreferences.getInstance());
 
   WalletService();
 
