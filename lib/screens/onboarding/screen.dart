@@ -146,9 +146,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   : warningColor,
                         ),
                       ),
-                      textAlign: TextAlign.center,
+                      textAlign: TextAlign.start,
                       style: TextStyle(
-                        fontSize: 26,
+                        fontSize: 22,
                         fontWeight: touched && regionCode != null
                             ? FontWeight.w700
                             : FontWeight.w500,
@@ -177,10 +177,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   color: iconColor,
                                 ),
                               ),
-                      ),
-                      suffix: const SizedBox(
-                        height: 40,
-                        width: 40,
                       ),
                       keyboardType: TextInputType.phone,
                       onChanged: handlePhoneNumberChange,
