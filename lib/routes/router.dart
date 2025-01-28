@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/state/onboarding.dart';
+import 'package:pay_app/state/state.dart';
 import 'package:provider/provider.dart';
 
 // screens
@@ -16,8 +17,6 @@ import 'package:pay_app/screens/interactions/user/screen.dart';
 // state
 import 'package:pay_app/state/checkout.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
-import 'package:pay_app/state/wallet.dart';
-import 'package:pay_app/state/interactions/interactions.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 
 GoRouter createRouter(
@@ -43,28 +42,20 @@ GoRouter createRouter(
             );
           },
         ),
-        GoRoute(
-          name: 'Home',
-          path: '/:account', // user id from supabase
-          parentNavigatorKey: rootNavigatorKey,
-          builder: (context, state) {
-            final myAddress = state.pathParameters['account']!;
-
-            final walletState = context.read<WalletState>();
-
-            return ChangeNotifierProvider(
-              create: (_) => InteractionState(
-                account: myAddress,
-                walletState: walletState,
-              ),
-              child: const HomeScreen(),
-            );
-          },
+        ShellRoute(
+          builder: (context, state, child) =>
+              provideAccountState(context, state, child),
           routes: [
             GoRoute(
+              name: 'Home',
+              path: '/:account',
+              builder: (context, state) {
+                return const HomeScreen();
+              },
+            ),
+            GoRoute(
               name: 'MyAccount',
-              path: '/my-account',
-              parentNavigatorKey: rootNavigatorKey,
+              path: '/:account/my-account',
               builder: (context, state) {
                 return const MyAccount();
               },
@@ -72,7 +63,6 @@ GoRouter createRouter(
                 GoRoute(
                   name: 'EditMyAccount',
                   path: '/edit',
-                  parentNavigatorKey: rootNavigatorKey,
                   builder: (context, state) {
                     return const EditAccountScreen();
                   },
@@ -81,8 +71,7 @@ GoRouter createRouter(
             ),
             GoRoute(
               name: 'InteractionWithPlace',
-              path: '/place/:slug',
-              parentNavigatorKey: rootNavigatorKey,
+              path: '/:account/place/:slug',
               builder: (context, state) {
                 final myAddress = state.pathParameters['account']!;
                 final slug = state.pathParameters['slug']!;
@@ -102,7 +91,6 @@ GoRouter createRouter(
                 GoRoute(
                   name: 'PlaceMenu',
                   path: '/menu',
-                  parentNavigatorKey: rootNavigatorKey,
                   builder: (context, state) {
                     final userId = int.parse(state.pathParameters['id']!);
                     final slug = state.pathParameters['slug']!;
@@ -121,19 +109,15 @@ GoRouter createRouter(
             ),
             GoRoute(
               name: 'InteractionWithUser',
-              path: '/user/:withUser',
-              parentNavigatorKey: rootNavigatorKey,
+              path: '/:account/user/:withUser',
               builder: (context, state) {
                 final myAddress = state.pathParameters['account']!;
                 final userAddress = state.pathParameters['withUser']!;
-
-                final walletState = context.read<WalletState>();
 
                 return ChangeNotifierProvider(
                   create: (_) => TransactionsWithUserState(
                     withUserAddress: userAddress,
                     myAddress: myAddress,
-                    walletState: walletState,
                   ),
                   child: const InteractionWithUserScreen(),
                 );

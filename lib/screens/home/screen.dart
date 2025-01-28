@@ -58,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> onLoad() async {
     await _walletState.updateBalance();
     await _interactionState.getInteractions();
-    _interactionState.startPolling();
+    _interactionState.startPolling(updateBalance: _walletState.updateBalance);
     await _placesState.getAllPlaces();
   }
 

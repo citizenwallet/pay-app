@@ -11,7 +11,6 @@ import 'package:pay_app/services/pay/transactions_with_user.dart';
 import 'package:pay_app/services/wallet/contracts/erc20.dart';
 import 'package:pay_app/services/wallet/utils.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
-import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/utils/random.dart';
 
 class TransactionsWithUserState with ChangeNotifier {
@@ -23,7 +22,6 @@ class TransactionsWithUserState with ChangeNotifier {
   List<Transaction> newTransactions = [];
   List<Transaction> sendingQueue = [];
 
-  WalletState walletState;
   Timer? _pollingTimer;
 
   double toSendAmount = 0.0;
@@ -41,7 +39,6 @@ class TransactionsWithUserState with ChangeNotifier {
   TransactionsWithUserState({
     required this.withUserAddress,
     required this.myAddress,
-    required this.walletState,
   })  : myProfileService = ProfileService(account: myAddress),
         withUserProfileService = ProfileService(account: withUserAddress),
         transactionsWithUserService = TransactionsService(
@@ -160,7 +157,7 @@ class TransactionsWithUserState with ChangeNotifier {
     }
   }
 
-  void startPolling() {
+  void startPolling({Future<void> Function()? updateBalance}) {
     // Cancel any existing timer first
     stopPolling();
 
@@ -169,7 +166,7 @@ class TransactionsWithUserState with ChangeNotifier {
     // Create new timer
     _pollingTimer = Timer.periodic(
       const Duration(milliseconds: pollingInterval),
-      (_) => _pollTransactions(),
+      (_) => _pollTransactions(updateBalance: updateBalance),
     );
   }
 
@@ -181,7 +178,8 @@ class TransactionsWithUserState with ChangeNotifier {
 
   static const pollingInterval = 3000; // ms
   DateTime transactionsFromDate = DateTime.now();
-  Future<void> _pollTransactions() async {
+  Future<void> _pollTransactions(
+      {Future<void> Function()? updateBalance}) async {
     try {
       debugPrint('polling transactions');
       final newTransactions = await transactionsWithUserService
@@ -191,7 +189,7 @@ class TransactionsWithUserState with ChangeNotifier {
         _upsertNewTransactions(newTransactions);
 
         safeNotifyListeners();
-        walletState.updateBalance();
+        updateBalance?.call();
       }
     } catch (e, s) {
       debugPrint('Error polling transactions: $e');

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/state/transactions_with_user/selector.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:provider/provider.dart';
 
@@ -23,6 +24,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
   ScrollController scrollController = ScrollController();
 
   late TransactionsWithUserState _transactionsWithUserState;
+  late WalletState _walletState;
 
   @override
   void initState() {
@@ -32,6 +34,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _transactionsWithUserState = context.read<TransactionsWithUserState>();
+      _walletState = context.read<WalletState>();
       onLoad();
     });
   }
@@ -39,7 +42,8 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
   void onLoad() async {
     await _transactionsWithUserState.getProfileOfWithUser();
     await _transactionsWithUserState.getTransactionsWithUser();
-    _transactionsWithUserState.startPolling();
+    _transactionsWithUserState.startPolling(
+        updateBalance: _walletState.updateBalance);
   }
 
   void _scrollListener() {

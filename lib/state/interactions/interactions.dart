@@ -3,16 +3,14 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/services/pay/interactions.dart';
-import 'package:pay_app/state/wallet.dart';
 
 class InteractionState with ChangeNotifier {
   String searchQuery = '';
   List<Interaction> interactions = [];
   InteractionService apiService;
-  final WalletState walletState;
   Timer? _pollingTimer;
 
-  InteractionState({required String account, required this.walletState})
+  InteractionState({required String account})
       : apiService = InteractionService(myAccount: account);
 
   bool loading = false;
@@ -61,7 +59,7 @@ class InteractionState with ChangeNotifier {
     }
   }
 
-  void startPolling() {
+  void startPolling({Future<void> Function()? updateBalance}) {
     // Cancel any existing timer first
     stopPolling();
 
@@ -70,7 +68,7 @@ class InteractionState with ChangeNotifier {
     // Create new timer
     _pollingTimer = Timer.periodic(
       const Duration(milliseconds: pollingInterval),
-      (_) => _pollInteractions(),
+      (_) => _pollInteractions(updateBalance: updateBalance),
     );
   }
 
@@ -82,7 +80,8 @@ class InteractionState with ChangeNotifier {
 
   static const pollingInterval = 3000; // ms
   DateTime interactionsFromDate = DateTime.now();
-  Future<void> _pollInteractions() async {
+  Future<void> _pollInteractions(
+      {Future<void> Function()? updateBalance}) async {
     try {
       final newInteractions =
           await apiService.getNewInteractions(interactionsFromDate);
@@ -92,7 +91,7 @@ class InteractionState with ChangeNotifier {
         interactions = upsertedInteractions;
         interactionsFromDate = DateTime.now();
         safeNotifyListeners();
-        walletState.updateBalance();
+        updateBalance?.call();
       }
     } catch (e, s) {
       debugPrint('Error polling interactions: $e');
