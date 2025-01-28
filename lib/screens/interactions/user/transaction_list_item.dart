@@ -31,6 +31,7 @@ class TransactionListItem extends StatelessWidget {
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Container(
+          constraints: const BoxConstraints(maxWidth: 200),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
             color: isReceived
@@ -48,46 +49,54 @@ class TransactionListItem extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Amount(
-                    amount: transaction.amount,
-                    exchangeDirection: transaction.exchangeDirection,
-                  ),
-                  if (transaction.description != null) ...[
-                    SizedBox(height: 4),
-                    Description(
-                      exchangeDirection: transaction.exchangeDirection,
-                      description: transaction.description,
-                    ),
-                  ],
-                  SizedBox(height: 4),
-                  if (transaction.status == TransactionStatus.sending)
-                    Text(
-                      transaction.exchangeDirection == ExchangeDirection.sent
-                          ? 'Sending...'
-                          : 'Receiving...',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color:
-                            isReceived ? textMutedColor : textSurfaceMutedColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  if (transaction.status == TransactionStatus.pending ||
-                      transaction.status == TransactionStatus.success)
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        TimeAgo(
-                          createdAt: transaction.createdAt,
+                        Amount(
+                          amount: transaction.amount,
                           exchangeDirection: transaction.exchangeDirection,
                         ),
                       ],
                     ),
-                ],
+                    if (transaction.description != null) ...[
+                      SizedBox(height: 4),
+                      Description(
+                        exchangeDirection: transaction.exchangeDirection,
+                        description: transaction.description,
+                      ),
+                    ],
+                    SizedBox(height: 4),
+                    if (transaction.status == TransactionStatus.sending)
+                      Text(
+                        transaction.exchangeDirection == ExchangeDirection.sent
+                            ? 'Sending...'
+                            : 'Receiving...',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isReceived
+                              ? textMutedColor
+                              : textSurfaceMutedColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    if (transaction.status == TransactionStatus.pending ||
+                        transaction.status == TransactionStatus.success)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TimeAgo(
+                            createdAt: transaction.createdAt,
+                            exchangeDirection: transaction.exchangeDirection,
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
               )
             ],
           ),
@@ -119,7 +128,7 @@ class Description extends StatelessWidget {
     return Text(
       description!,
       style: TextStyle(
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: FontWeight.normal,
         color: isReceived ? textColor : textSurfaceColor,
       ),
@@ -146,13 +155,13 @@ class Amount extends StatelessWidget {
     return Row(
       children: [
         CoinLogo(
-          size: 24,
+          size: 22,
         ),
         const SizedBox(width: 4),
         Text(
           amount.toStringAsFixed(2),
           style: TextStyle(
-            fontSize: 28,
+            fontSize: 24,
             fontWeight: FontWeight.w600,
             color: isReceived ? textColor : CupertinoColors.white,
           ),

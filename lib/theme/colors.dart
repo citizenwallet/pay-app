@@ -15,3 +15,6 @@ const textColor = Color(0xFF14023F);
 const textMutedColor = Color(0xFF8F8A9D);
 
 const backgroundColor = Color.fromARGB(255, 246, 246, 254);
+
+const dividerColor = Color.fromARGB(76, 255, 255, 255);
+const dividerMutedColor = Color.fromARGB(255, 154, 152, 152);
