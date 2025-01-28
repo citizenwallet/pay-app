@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/utils/uint8.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
@@ -22,6 +23,15 @@ class SigAuthConnection {
   String get queryParams =>
       'sigAuthAccount=${address.hexEip55}&sigAuthExpiry=${expiry.toIso8601String()}&sigAuthSignature=$signature&sigAuthRedirect=${Uri.encodeComponent(redirect)}';
 
+  Map<String, String> toMap() {
+    return {
+      'address': address.hexEip55,
+      'expiry': expiry.toIso8601String(),
+      'signature': signature,
+      'redirect': redirect,
+    };
+  }
+
   @override
   String toString() =>
       'SigAuthConnection(address: ${address.hexEip55}, expiry: $expiry, signature: $signature)';
@@ -39,6 +49,17 @@ class SigAuthService {
   })  : _credentials = credentials,
         _address = address,
         _redirect = redirect;
+
+  factory SigAuthService.fromWalletService(
+    WalletService walletService,
+    String redirect,
+  ) {
+    return SigAuthService(
+      credentials: walletService.credentials,
+      address: walletService.account,
+      redirect: redirect,
+    );
+  }
 
   SigAuthConnection connect({DateTime? expiry}) {
     final expiryDate = expiry ?? DateTime.now().add(const Duration(days: 7));
