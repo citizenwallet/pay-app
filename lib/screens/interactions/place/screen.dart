@@ -48,7 +48,6 @@ class _InteractionWithPlaceScreenState
 
   void onLoad() async {
     _ordersWithPlaceState.fetchPlaceAndMenu();
-    _ordersWithPlaceState.fetchOrders();
   }
 
   void _onAmountFocus() {
@@ -131,6 +130,8 @@ class _InteractionWithPlaceScreenState
   Widget build(BuildContext context) {
     final place = context.select((OrdersWithPlaceState state) => state.place);
 
+    final orders = context.select((OrdersWithPlaceState state) => state.orders);
+
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemBackground,
       child: GestureDetector(
@@ -151,7 +152,12 @@ class _InteractionWithPlaceScreenState
                   reverse: true,
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   children: [
-                    for (var order in orders) OrderListItem(order: order),
+                    for (var order in orders)
+                      OrderListItem(
+                        key: Key('order-${order.id}'),
+                        order: order,
+                        mappedItems: place?.mappedItems ?? {},
+                      ),
                   ],
                 ),
               ),

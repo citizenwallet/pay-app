@@ -1,22 +1,28 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/models/menu_item.dart';
 
 import 'package:pay_app/models/order.dart';
+import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/date.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 
 class OrderListItem extends StatelessWidget {
   final Order order;
+  final Map<int, MenuItem> mappedItems;
 
   const OrderListItem({
     super.key,
     required this.order,
+    required this.mappedItems,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 74,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      constraints: const BoxConstraints(
+        minHeight: 80,
+      ),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -39,11 +45,14 @@ class OrderListItem extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        PaymentMethodBadge(paymentMode: order.type),
-        SizedBox(height: 4),
         OrderId(orderId: order.id),
         SizedBox(height: 4),
-        Description(description: order.description),
+        PaymentMethodBadge(paymentMode: order.type),
+        SizedBox(height: 4),
+        Items(
+          items: order.items,
+          mappedItems: mappedItems,
+        ),
       ],
     );
   }
@@ -61,26 +70,43 @@ class OrderListItem extends StatelessWidget {
   }
 }
 
-class Description extends StatelessWidget {
-  final String? description;
+class Items extends StatelessWidget {
+  final List<OrderItem> items;
+  final Map<int, MenuItem> mappedItems;
 
-  const Description({super.key, this.description});
+  const Items({super.key, required this.items, required this.mappedItems});
 
   @override
   Widget build(BuildContext context) {
-    if (description == null) {
+    if (items.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return Text(
-      description!,
-      style: TextStyle(
-        fontSize: 10,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFF4D4D4D),
-      ),
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Items',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        SizedBox(height: 4),
+        ...items.map(
+          (item) => Text(
+            '${mappedItems[item.id]?.name ?? ''} x ${item.quantity}',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: textMutedColor,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -97,11 +123,11 @@ class OrderId extends StatelessWidget {
     }
 
     return Text(
-      '#Order ${orderId!}',
+      'Order #${orderId!}',
       style: TextStyle(
-        fontSize: 10,
+        fontSize: 14,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF8F8A9D),
+        color: textColor,
       ),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
@@ -116,11 +142,7 @@ class PaymentMethodBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (paymentMode == null) {
-      return const SizedBox.shrink();
-    }
-
-    return _paymentBadge(paymentMode!);
+    return _paymentBadge(paymentMode);
   }
 
   Widget _qrPaymentBadge() {
@@ -205,7 +227,11 @@ class PaymentMethodBadge extends StatelessWidget {
     );
   }
 
-  Widget _paymentBadge(OrderType orderType) {
+  Widget _paymentBadge(OrderType? orderType) {
+    if (orderType == null) {
+      return _qrPaymentBadge();
+    }
+
     switch (orderType) {
       case OrderType.terminal:
         return _terminalPaymentBadge();

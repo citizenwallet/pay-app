@@ -57,8 +57,8 @@ class Order {
       completedAt: json['completed_at'] != null
           ? DateTime.parse(json['completed_at'])
           : null,
-      total: json['total'].toDouble(),
-      due: json['due'].toDouble(),
+      total: json['total'].toDouble() / 100,
+      due: json['due'].toDouble() / 100,
       placeId: json['place_id'],
       items: (json['items'] as List)
           .map((item) => OrderItem.fromJson(item))

@@ -35,27 +35,39 @@ class OrdersWithPlaceState with ChangeNotifier {
   PlaceWithMenu? place;
   String myAddress;
   List<Order> orders = [];
-
+  int total = 0;
   // state methods here
   bool loading = false;
   bool error = false;
 
   Future<void> fetchPlaceAndMenu() async {
     try {
+      loading = true;
+      error = false;
+      safeNotifyListeners();
+
       final placeWithMenu = await placesService.getPlaceAndMenu(slug);
       place = placeWithMenu;
+
+      await _fetchOrders(placeWithMenu.place.id);
 
       safeNotifyListeners();
     } catch (e) {
       error = true;
       safeNotifyListeners();
+    } finally {
+      loading = false;
+      safeNotifyListeners();
     }
   }
 
-  Future<void> fetchOrders() async {
+  Future<void> _fetchOrders(int placeId) async {
     try {
-      final response = await ordersService.getOrders();
+      debugPrint('fetchOrders, placeId: ${place?.place.id}');
+      final response = await ordersService.getOrders(placeId: place?.place.id);
+
       orders = response.orders;
+      total = response.total;
       safeNotifyListeners();
     } catch (e) {
       error = true;

@@ -13,11 +13,13 @@ class OrdersService {
   Future<({List<Order> orders, int total})> getOrders({
     int? limit,
     int? offset,
+    int? placeId,
   }) async {
     try {
       final queryParams = {
         if (limit != null) 'limit': limit.toString(),
         if (offset != null) 'offset': offset.toString(),
+        if (placeId != null) 'placeId': placeId.toString(),
       };
 
       String url = '/accounts/$account/orders';

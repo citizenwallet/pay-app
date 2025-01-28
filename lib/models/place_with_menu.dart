@@ -6,12 +6,13 @@ class PlaceWithMenu {
   final Place place;
   final User profile;
   final List<MenuItem> items;
+  final Map<int, MenuItem> mappedItems;
 
-  const PlaceWithMenu({
+  PlaceWithMenu({
     required this.place,
     required this.profile,
     required this.items,
-  });
+  }) : mappedItems = {for (var item in items) item.id: item};
 
   factory PlaceWithMenu.fromJson(Map<String, dynamic> json) {
     // Parse place data
