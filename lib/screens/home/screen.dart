@@ -139,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final navigator = GoRouter.of(context);
 
-    navigator.go('/$myAddress/place/${place.slug}');
+    navigator.push('/$myAddress/place/${place.slug}');
   }
 
   void _goToInteractionWithUser(String? myAddress, User user) {
@@ -149,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final navigator = GoRouter.of(context);
 
-    navigator.go('/$myAddress/user/${user.account}');
+    navigator.push('/$myAddress/user/${user.account}');
   }
 
   void handleSearch(String query) {
