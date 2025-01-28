@@ -6,36 +6,26 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class ProfileBar extends StatefulWidget {
-  const ProfileBar({super.key});
+  final String accountAddress;
+
+  const ProfileBar({super.key, required this.accountAddress});
 
   @override
   State<ProfileBar> createState() => _ProfileBarState();
 }
 
 class _ProfileBarState extends State<ProfileBar> {
-  late WalletState _walletState;
-
   @override
   void initState() {
     super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _walletState = context.read<WalletState>();
-    });
   }
 
   void _goToMyAccount() async {
-    final myAddress = _walletState.address?.hexEip55;
-
-    if (myAddress == null) {
-      return;
-    }
+    final myAddress = widget.accountAddress;
 
     final navigator = GoRouter.of(context);
 
-    final myUserId = navigator.state?.pathParameters['id'];
-
-    navigator.push('/$myUserId/my-account');
+    navigator.push('/$myAddress/my-account');
   }
 
   @override

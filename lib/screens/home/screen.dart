@@ -192,7 +192,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   slivers: [
                     SliverPersistentHeader(
                       floating: true,
-                      delegate: ProfileBarDelegate(),
+                      pinned: true,
+                      delegate: ProfileBarDelegate(
+                        accountAddress: myAddress ?? '',
+                      ),
                     ),
                     SliverPersistentHeader(
                       floating: true,
@@ -267,10 +270,14 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
+  final String accountAddress;
+
+  ProfileBarDelegate({required this.accountAddress});
+
   @override
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return const ProfileBar();
+    return ProfileBar(accountAddress: accountAddress);
   }
 
   @override
