@@ -132,8 +132,6 @@ class Description extends StatelessWidget {
         fontWeight: FontWeight.normal,
         color: isReceived ? textColor : textSurfaceColor,
       ),
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
     );
   }
 }
