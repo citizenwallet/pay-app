@@ -9,6 +9,7 @@ import 'package:pay_app/state/interactions/interactions.dart';
 import 'package:pay_app/state/interactions/selectors.dart';
 import 'package:pay_app/state/places/places.dart';
 import 'package:pay_app/state/places/selectors.dart';
+import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
@@ -39,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late InteractionState _interactionState;
   late PlacesState _placesState;
   late WalletState _walletState;
+  late ProfileState _profileState;
 
   @override
   void initState() {
@@ -51,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _interactionState = context.read<InteractionState>();
       _placesState = context.read<PlacesState>();
       _walletState = context.read<WalletState>();
+      _profileState = context.read<ProfileState>();
       onLoad();
     });
   }
@@ -60,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await _interactionState.getInteractions();
     _interactionState.startPolling(updateBalance: _walletState.updateBalance);
     await _placesState.getAllPlaces();
+    await _profileState.giveProfileUsername();
   }
 
   @override

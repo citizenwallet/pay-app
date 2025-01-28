@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
@@ -35,6 +36,8 @@ class _ProfileBarState extends State<ProfileBar> {
     final walletState = context.watch<WalletState>();
     final balance = walletState.wallet?.formattedBalance.toString();
 
+    final profile = context.watch<ProfileState>().profile;
+
     return GestureDetector(
       onTap: _goToMyAccount,
       child: Container(
@@ -53,6 +56,7 @@ class _ProfileBarState extends State<ProfileBar> {
                   size: 70,
                   borderWidth: 3,
                   borderColor: theme.primaryColor,
+                  imageUrl: profile.imageMedium,
                 ),
                 const SizedBox(width: 16),
                 Column(
@@ -60,7 +64,7 @@ class _ProfileBarState extends State<ProfileBar> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Name(),
+                    Name(name: profile.name),
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -82,12 +86,14 @@ class _ProfileBarState extends State<ProfileBar> {
 }
 
 class Name extends StatelessWidget {
-  const Name({super.key});
+  final String name;
+
+  const Name({super.key, required this.name});
 
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Kevin',
+      name,
       style: TextStyle(
         fontSize: 17,
         fontWeight: FontWeight.w600,

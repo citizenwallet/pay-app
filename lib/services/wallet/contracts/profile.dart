@@ -58,9 +58,9 @@ class ProfileV1 {
     this.username = '@anonymous',
     this.name = 'Anonymous',
     this.description = '',
-    this.image = 'assets/icons/profile.svg',
-    this.imageMedium = 'assets/icons/profile.svg',
-    this.imageSmall = 'assets/icons/profile.svg',
+    this.image = 'assets/icons/profile.png',
+    this.imageMedium = 'assets/icons/profile.png',
+    this.imageSmall = 'assets/icons/profile.png',
   });
 
   // from json
@@ -80,8 +80,8 @@ class ProfileV1 {
         name = json['name'],
         description = json['description'] ?? '',
         image = json['image'],
-        imageMedium = json['imageMedium'],
-        imageSmall = json['imageSmall'];
+        imageMedium = json['image_medium'],
+        imageSmall = json['image_small'];
 
   // to json
   Map<String, dynamic> toJson() => {
