@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
-import 'package:pay_app/services/interactions/interactions.dart';
+import 'package:pay_app/services/pay/interactions.dart';
 import 'package:pay_app/state/wallet.dart';
 
 class InteractionState with ChangeNotifier {

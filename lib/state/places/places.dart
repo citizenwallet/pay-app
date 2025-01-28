@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/place.dart';
-import 'package:pay_app/services/places/places.dart';
+import 'package:pay_app/services/pay/places.dart';
 
 class PlacesState with ChangeNotifier {
   String searchQuery = '';

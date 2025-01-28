@@ -92,7 +92,10 @@ GoRouter createRouter(
                     slug: slug,
                     myAddress: myAddress,
                   ),
-                  child: const InteractionWithPlaceScreen(),
+                  child: InteractionWithPlaceScreen(
+                    slug: slug,
+                    myAddress: myAddress,
+                  ),
                 );
               },
               routes: [

@@ -1,27 +1,44 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/place_with_menu.dart';
-import 'package:pay_app/services/places/places.dart';
+import 'package:pay_app/services/pay/orders.dart';
+import 'package:pay_app/services/pay/places.dart';
 
 class OrdersWithPlaceState with ChangeNotifier {
+  // instantiate services here
   final PlacesService placesService = PlacesService();
+  final OrdersService ordersService;
 
-  String slug;
-  PlaceWithMenu? place;
-  String myAddress;
-  List<Order> orders = [];
-
-  OrdersWithPlaceState({required this.slug, required this.myAddress});
-
-  bool loading = false;
-  bool error = false;
-
+  // private variables here
   bool _mounted = true;
+
+  // constructor here
+  OrdersWithPlaceState({
+    required this.slug,
+    required this.myAddress,
+  }) : ordersService = OrdersService(account: myAddress);
+
   void safeNotifyListeners() {
     if (_mounted) {
       notifyListeners();
     }
   }
+
+  @override
+  void dispose() {
+    _mounted = false;
+    super.dispose();
+  }
+
+  // state variables here
+  String slug;
+  PlaceWithMenu? place;
+  String myAddress;
+  List<Order> orders = [];
+
+  // state methods here
+  bool loading = false;
+  bool error = false;
 
   Future<void> fetchPlaceAndMenu() async {
     try {
@@ -35,9 +52,14 @@ class OrdersWithPlaceState with ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    _mounted = false;
-    super.dispose();
+  Future<void> fetchOrders() async {
+    try {
+      final response = await ordersService.getOrders();
+      orders = response.orders;
+      safeNotifyListeners();
+    } catch (e) {
+      error = true;
+      safeNotifyListeners();
+    }
   }
 }

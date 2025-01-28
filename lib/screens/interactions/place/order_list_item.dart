@@ -39,9 +39,9 @@ class OrderListItem extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        PaymentMethodBadge(paymentMode: order.paymentMode),
+        PaymentMethodBadge(paymentMode: order.type),
         SizedBox(height: 4),
-        OrderId(orderId: order.orderId),
+        OrderId(orderId: order.id),
         SizedBox(height: 4),
         Description(description: order.description),
       ],
@@ -53,7 +53,7 @@ class OrderListItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Amount(amount: order.amount),
+        Amount(amount: order.total),
         SizedBox(height: 4),
         TimeAgo(createdAt: order.createdAt),
       ],
@@ -110,7 +110,7 @@ class OrderId extends StatelessWidget {
 }
 
 class PaymentMethodBadge extends StatelessWidget {
-  final PaymentMode? paymentMode;
+  final OrderType? paymentMode;
 
   const PaymentMethodBadge({super.key, this.paymentMode});
 
@@ -205,13 +205,13 @@ class PaymentMethodBadge extends StatelessWidget {
     );
   }
 
-  Widget _paymentBadge(PaymentMode paymentMode) {
-    switch (paymentMode) {
-      case PaymentMode.terminal:
+  Widget _paymentBadge(OrderType orderType) {
+    switch (orderType) {
+      case OrderType.terminal:
         return _terminalPaymentBadge();
-      case PaymentMode.qrCode:
+      case OrderType.web:
         return _qrPaymentBadge();
-      case PaymentMode.app:
+      case OrderType.app:
         return _appPaymentBadge();
     }
   }
