@@ -1,12 +1,16 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/place.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/utils/formatters.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/text_field.dart';
 import 'package:pay_app/widgets/wide_button.dart';
+import 'package:provider/provider.dart';
 
 class Footer extends StatefulWidget {
+  final String myAddress;
+  final String slug;
   final Function(double, String?) onSend;
   final FocusNode amountFocusNode;
   final FocusNode messageFocusNode;
@@ -15,6 +19,8 @@ class Footer extends StatefulWidget {
 
   const Footer({
     super.key,
+    required this.myAddress,
+    required this.slug,
     required this.onSend,
     required this.amountFocusNode,
     required this.messageFocusNode,
@@ -61,10 +67,7 @@ class _FooterState extends State<Footer> {
   void _onMenuPressed() {
     final navigator = GoRouter.of(context);
 
-    final myUserId = navigator.state?.pathParameters['id'];
-    final slug = navigator.state?.pathParameters['slug'];
-
-    navigator.push('/$myUserId/place/$slug/menu');
+    navigator.push('/${widget.myAddress}/place/${widget.slug}/menu');
   }
 
   @override
@@ -93,8 +96,15 @@ class _FooterState extends State<Footer> {
             ),
           if (widget.display == Display.menu)
             WideButton(
-              text: 'Menu',
               onPressed: _onMenuPressed,
+              child: Text(
+                'Menu',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: CupertinoColors.white,
+                ),
+              ),
             ),
           if (widget.display == Display.amount)
             Row(
@@ -314,6 +324,9 @@ class CurrentBalance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final balance =
+        context.watch<WalletState>().wallet?.formattedBalance ?? 0.00;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       child: Row(
@@ -332,7 +345,7 @@ class CurrentBalance extends StatelessWidget {
           CoinLogo(size: 22),
           SizedBox(width: 4),
           Text(
-            '12.00',
+            balance.toString(),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,

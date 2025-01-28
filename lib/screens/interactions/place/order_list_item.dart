@@ -98,6 +98,7 @@ class Items extends StatelessWidget {
         SizedBox(height: 4),
         ...items.map(
           (item) => Text(
+            key: Key('item-${item.id}'),
             '${mappedItems[item.id]?.name ?? ''} x ${item.quantity}',
             style: TextStyle(
               fontSize: 14,

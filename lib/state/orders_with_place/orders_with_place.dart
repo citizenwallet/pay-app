@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/order.dart';
+import 'package:pay_app/models/place_menu.dart';
 import 'package:pay_app/models/place_with_menu.dart';
 import 'package:pay_app/services/pay/orders.dart';
 import 'package:pay_app/services/pay/places.dart';
@@ -33,6 +34,8 @@ class OrdersWithPlaceState with ChangeNotifier {
   // state variables here
   String slug;
   PlaceWithMenu? place;
+  PlaceMenu? placeMenu;
+  List<GlobalKey<State<StatefulWidget>>> categoryKeys = [];
   String myAddress;
   List<Order> orders = [];
   int total = 0;
@@ -48,6 +51,10 @@ class OrdersWithPlaceState with ChangeNotifier {
 
       final placeWithMenu = await placesService.getPlaceAndMenu(slug);
       place = placeWithMenu;
+
+      placeMenu = PlaceMenu(menuItems: placeWithMenu.items);
+      categoryKeys =
+          placeMenu!.categories.map((category) => GlobalKey()).toList();
 
       await _fetchOrders(placeWithMenu.place.id);
 

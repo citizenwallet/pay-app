@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/wide_button.dart';
 
@@ -22,6 +23,8 @@ class _FooterState extends State<Footer> {
 
   @override
   Widget build(BuildContext context) {
+    final disabled = widget.checkoutTotal == 0;
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 10,
@@ -36,9 +39,40 @@ class _FooterState extends State<Footer> {
         ),
       ),
       child: WideButton(
-        text: 'Pay ${widget.checkoutTotal.toStringAsFixed(2)}',
         onPressed: () => {},
-        color: Color(0xFF171717),
+        color: disabled
+            ? surfaceDarkColor.withValues(alpha: 0.8)
+            : surfaceDarkColor,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Pay',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: disabled
+                    ? CupertinoColors.white.withValues(alpha: 0.7)
+                    : CupertinoColors.white,
+              ),
+            ),
+            const SizedBox(width: 8),
+            CoinLogo(
+              size: 20,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              widget.checkoutTotal.toStringAsFixed(2),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: disabled
+                    ? CupertinoColors.white.withValues(alpha: 0.7)
+                    : CupertinoColors.white,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

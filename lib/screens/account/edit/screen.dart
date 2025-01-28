@@ -76,7 +76,14 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                   const SizedBox(height: 60),
                   WideButton(
                     onPressed: () {},
-                    text: 'Save',
+                    child: Text(
+                      'Save',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: CupertinoColors.white,
+                      ),
+                    ),
                   ),
                   SizedBox(height: safeAreaBottom),
                 ],

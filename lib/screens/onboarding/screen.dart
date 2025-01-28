@@ -185,10 +185,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                     // Confirm Button
                     WideButton(
-                      text: 'Confirm',
                       disabled: regionCode == null,
                       onPressed:
                           regionCode != null ? () => handleConfirm() : null,
+                      child: Text(
+                        'Confirm',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: CupertinoColors.white,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16),
                   ],

@@ -10,7 +10,7 @@ class MenuItem {
   final String? emoji;
   final double order;
 
-  double get formattedPrice => price / 100 * (1 + vat / 100);
+  double get formattedPrice => price / 100;
 
   String get priceString => (formattedPrice).toStringAsFixed(2);
 

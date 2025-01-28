@@ -69,41 +69,41 @@ GoRouter createRouter(
                 ),
               ],
             ),
-            GoRoute(
-              name: 'InteractionWithPlace',
-              path: '/:account/place/:slug',
-              builder: (context, state) {
-                final myAddress = state.pathParameters['account']!;
-                final slug = state.pathParameters['slug']!;
-
-                return ChangeNotifierProvider(
-                  create: (_) => OrdersWithPlaceState(
-                    slug: slug,
-                    myAddress: myAddress,
-                  ),
-                  child: InteractionWithPlaceScreen(
-                    slug: slug,
-                    myAddress: myAddress,
-                  ),
-                );
-              },
+            ShellRoute(
+              builder: (context, state, child) =>
+                  providePlaceState(context, state, child),
               routes: [
                 GoRoute(
-                  name: 'PlaceMenu',
-                  path: '/menu',
+                  name: 'InteractionWithPlace',
+                  path: '/:account/place/:slug',
                   builder: (context, state) {
-                    final userId = int.parse(state.pathParameters['id']!);
+                    final myAddress = state.pathParameters['account']!;
                     final slug = state.pathParameters['slug']!;
 
-                    return ChangeNotifierProvider(
-                      key: Key('menu-$userId-$slug'),
-                      create: (_) => CheckoutState(
-                        userId: userId,
-                        slug: slug,
-                      ),
-                      child: const PlaceMenuScreen(),
+                    return InteractionWithPlaceScreen(
+                      slug: slug,
+                      myAddress: myAddress,
                     );
                   },
+                  routes: [
+                    GoRoute(
+                      name: 'PlaceMenu',
+                      path: '/menu',
+                      builder: (context, state) {
+                        final account = state.pathParameters['account']!;
+                        final slug = state.pathParameters['slug']!;
+
+                        return ChangeNotifierProvider(
+                          key: Key('menu-$account-$slug'),
+                          create: (_) => CheckoutState(
+                            account: account,
+                            slug: slug,
+                          ),
+                          child: const PlaceMenuScreen(),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),

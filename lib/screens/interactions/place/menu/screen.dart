@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
-import 'package:pay_app/models/menu_item.dart';
-import 'package:pay_app/models/place_menu.dart';
 import 'package:pay_app/screens/interactions/place/header.dart';
+import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
+import 'package:pay_app/theme/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -35,9 +35,6 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
 
   int _selectedIndex = 0;
 
-  List<GlobalKey> categoryKeys = [];
-  PlaceMenu placeMenu = PlaceMenu(menuItems: []);
-
   String _currentVisibleCategory = '';
   Timer? _scrollThrottle;
 
@@ -50,251 +47,17 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
   void initState() {
     super.initState();
 
-    placeMenu = PlaceMenu(menuItems: [
-      MenuItem(
-        id: 7,
-        placeId: 2,
-        imageUrl:
-            'https://ounjigiydhimruivuxjv.supabase.co/storage/v1/object/public/uploads/Quattro%20Fromaggi%20Pizza.jpeg',
-        price: 1350,
-        name: 'Quattro Formaggi',
-        description: 'Tomato, mozzarella, parmigiano, gorgonzola, taleggio',
-        category: 'Pizza',
-        vat: 21,
-        emoji: null,
-        order: 2,
-      ),
-
-      MenuItem(
-        id: 9,
-        placeId: 2,
-        imageUrl:
-            'https://ounjigiydhimruivuxjv.supabase.co/storage/v1/object/public/uploads/Peroni%20Nastro%20Azzurro%20330ml.jpg',
-        price: 350,
-        name: 'Peroni',
-        description: 'Beer',
-        category: 'Drinks',
-        vat: 6,
-        emoji: null,
-        order: 4,
-      ),
-      MenuItem(
-        id: 11,
-        placeId: 2,
-        imageUrl:
-            'https://ounjigiydhimruivuxjv.supabase.co/storage/v1/object/public/uploads/Zinnebir.jpg',
-        price: 350,
-        name: 'Zinnebir',
-        description: 'Beer',
-        category: 'Drinks',
-        vat: 21,
-        emoji: null,
-        order: 0,
-      ),
-      MenuItem(
-        id: 12,
-        placeId: 2,
-        imageUrl:
-            'https://ounjigiydhimruivuxjv.supabase.co/storage/v1/object/public/uploads/Spa%20Water.jpg',
-        price: 200,
-        name: 'Water',
-        description: 'Water',
-        category: 'Drinks',
-        vat: 21,
-        emoji: null,
-        order: 1,
-      ),
-      // Starters
-      MenuItem(
-        id: 1,
-        placeId: 2,
-        imageUrl: 'https://example.com/bruschetta.jpg',
-        price: 800,
-        name: 'Bruschetta',
-        description: 'Grilled bread with tomatoes, garlic and basil',
-        category: 'Starters',
-        vat: 21,
-        emoji: '🍅',
-        order: 0,
-      ),
-      MenuItem(
-        id: 2,
-        placeId: 2,
-        imageUrl: 'https://example.com/calamari.jpg',
-        price: 1200,
-        name: 'Calamari Fritti',
-        description: 'Crispy fried squid with lemon aioli',
-        category: 'Starters',
-        vat: 21,
-        emoji: '🦑',
-        order: 0,
-      ),
-
-      // Pizza (existing items plus new ones)
-      MenuItem(
-        id: 5,
-        placeId: 2,
-        imageUrl: 'https://example.com/diavola.jpg',
-        price: 1400,
-        name: 'Diavola',
-        description: 'Tomato, mozzarella, spicy salami',
-        category: 'Pizza',
-        vat: 21,
-        emoji: '🌶️',
-        order: 0,
-      ),
-      MenuItem(
-        id: 6,
-        placeId: 2,
-        imageUrl: 'https://example.com/margherita.jpg',
-        price: 1100,
-        name: 'Margherita',
-        description: 'Tomato, mozzarella, basil',
-        category: 'Pizza',
-        vat: 21,
-        emoji: '🍕',
-        order: 0,
-      ),
-
-      // Pasta
-      MenuItem(
-        id: 15,
-        placeId: 2,
-        imageUrl: 'https://example.com/carbonara.jpg',
-        price: 1600,
-        name: 'Carbonara',
-        description: 'Spaghetti with eggs, pecorino, guanciale',
-        category: 'Pasta',
-        vat: 21,
-        emoji: '🍝',
-        order: 0,
-      ),
-      MenuItem(
-        id: 16,
-        placeId: 2,
-        imageUrl: 'https://example.com/pesto.jpg',
-        price: 1500,
-        name: 'Pesto Genovese',
-        description: 'Trofie with basil pesto, potatoes, green beans',
-        category: 'Pasta',
-        vat: 21,
-        emoji: '🌿',
-        order: 0,
-      ),
-
-      // Main Courses
-      MenuItem(
-        id: 20,
-        placeId: 2,
-        imageUrl: 'https://example.com/saltimbocca.jpg',
-        price: 2200,
-        name: 'Saltimbocca',
-        description: 'Veal with prosciutto and sage, white wine sauce',
-        category: 'Main Courses',
-        vat: 21,
-        emoji: '🥩',
-        order: 0,
-      ),
-      MenuItem(
-        id: 21,
-        placeId: 2,
-        imageUrl: 'https://example.com/seabass.jpg',
-        price: 2400,
-        name: 'Branzino',
-        description: 'Grilled sea bass with herbs and lemon',
-        category: 'Main Courses',
-        vat: 21,
-        emoji: '🐟',
-        order: 0,
-      ),
-
-      // Drinks (existing plus new ones)
-      MenuItem(
-        id: 8,
-        placeId: 2,
-        imageUrl: 'https://example.com/pellegrino.jpg',
-        price: 250,
-        name: 'San Pellegrino',
-        description: 'Sparkling mineral water',
-        category: 'Drinks',
-        vat: 6,
-        emoji: '💧',
-        order: 0,
-      ),
-      MenuItem(
-        id: 25,
-        placeId: 2,
-        imageUrl: 'https://example.com/negroni.jpg',
-        price: 1200,
-        name: 'Negroni',
-        description: 'Gin, Campari, sweet vermouth',
-        category: 'Cocktails',
-        vat: 21,
-        emoji: '🍸',
-        order: 0,
-      ),
-
-      // Desserts
-      MenuItem(
-        id: 30,
-        placeId: 2,
-        imageUrl: 'https://example.com/tiramisu.jpg',
-        price: 900,
-        name: 'Tiramisù',
-        description: 'Coffee-flavored dessert with mascarpone',
-        category: 'Desserts',
-        vat: 21,
-        emoji: '🍰',
-        order: 0,
-      ),
-      MenuItem(
-        id: 31,
-        placeId: 2,
-        imageUrl: 'https://example.com/cannoli.jpg',
-        price: 800,
-        name: 'Cannoli',
-        description: 'Sicilian pastry tubes with ricotta filling',
-        category: 'Desserts',
-        vat: 21,
-        emoji: '🍪',
-        order: 0,
-      ),
-
-      // Sides
-      MenuItem(
-        id: 35,
-        placeId: 2,
-        imageUrl: 'https://example.com/salad.jpg',
-        price: 600,
-        name: 'Insalata Mista',
-        description: 'Mixed green salad with balsamic dressing',
-        category: 'Sides',
-        vat: 21,
-        emoji: '🥗',
-        order: 0,
-      ),
-      MenuItem(
-        id: 36,
-        placeId: 2,
-        imageUrl: 'https://example.com/fries.jpg',
-        price: 500,
-        name: 'Truffle Fries',
-        description: 'French fries with truffle oil and parmesan',
-        category: 'Sides',
-        vat: 21,
-        emoji: '🍟',
-        order: 0,
-      ),
-    ]);
-
-    categoryKeys = placeMenu.categories.map((category) => GlobalKey()).toList();
-    _currentVisibleCategory = placeMenu.categories[0];
-
     _menuScrollController.addListener(_throttledOnScroll);
 
     tabPositionsListener.itemPositions.addListener(_onItemPositionsChange);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {});
+  }
+
+  void onLoad() {
+    final placeMenu = context.read<OrdersWithPlaceState>().placeMenu;
+    if (placeMenu == null) return;
+    _currentVisibleCategory = placeMenu.categories[0];
   }
 
   @override
@@ -313,6 +76,11 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
   }
 
   void _onScroll() {
+    // TODO: see if there is a better way to access these state variables
+    final categoryKeys = context.read<OrdersWithPlaceState>().categoryKeys;
+    final placeMenu = context.read<OrdersWithPlaceState>().placeMenu;
+    if (placeMenu == null) return;
+
     final headerContexts =
         categoryKeys.map((key) => key.currentContext).toList();
 
@@ -357,7 +125,8 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
     tabPositionsListener.itemPositions.value.first.index;
   }
 
-  void onCategorySelected(int index) async {
+  void onCategorySelected(
+      int index, List<GlobalKey<State<StatefulWidget>>> categoryKeys) async {
     _menuScrollController.removeListener(_onScroll);
     setState(() {
       _selectedIndex = index;
@@ -377,8 +146,13 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final categoryKeys = context.watch<OrdersWithPlaceState>().categoryKeys;
+    final placeMenu = context.watch<OrdersWithPlaceState>().placeMenu;
+
     final checkoutState = context.watch<CheckoutState>();
-    final place = checkoutState.place;
+    final place = context.watch<OrdersWithPlaceState>().place?.place;
+    final menuItems = context.watch<OrdersWithPlaceState>().place?.items ?? [];
+    final profile = context.watch<OrdersWithPlaceState>().place?.profile;
     final checkout = checkoutState.checkout;
     final checkoutTotal = checkout.total;
 
@@ -388,18 +162,19 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         child: Column(
           children: [
             ChatHeader(
-              imageUrl: place?.imageUrl ?? '',
-              placeName: place?.name ?? '',
-              placeDescription: place?.description ?? '',
+              imageUrl: profile?.imageUrl ?? place?.imageUrl ?? '',
+              placeName: profile?.name ?? place?.name ?? '',
+              placeDescription:
+                  profile?.description ?? place?.description ?? '',
               onTapLeading: goBack,
             ),
 
             CategoryScroll(
-              categories: placeMenu.categories,
+              categories: placeMenu?.categories ?? [],
               tabScrollController: tabScrollController,
               tabPositionsListener: tabPositionsListener,
               tabScrollOffsetController: tabScrollOffsetController,
-              onSelected: onCategorySelected,
+              onSelected: (index) => onCategorySelected(index, categoryKeys),
               selectedIndex: _selectedIndex,
             ),
 
@@ -408,35 +183,41 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
               child: CustomScrollView(
                 controller: _menuScrollController,
                 slivers: [
-                  for (var category in placeMenu.categories)
+                  for (var category in placeMenu?.categories ?? [])
                     SliverMainAxisGroup(
                       slivers: [
                         SliverPersistentHeader(
                           key: categoryKeys[
-                              placeMenu.categories.indexOf(category)],
+                              (placeMenu?.categories ?? []).indexOf(category)],
                           pinned: true,
                           delegate: _StickyHeaderDelegate(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                              ),
-                              color: CupertinoColors.systemBackground
-                                  .withOpacity(0.95),
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                category,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: whiteColor.withValues(alpha: 0.95),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    category,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
                         ),
                         SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
-                              final items = placeMenu.menuItems
+                              final items = menuItems
                                   .where((item) => item.category == category)
                                   .toList();
                               if (index >= items.length) return null;
@@ -445,7 +226,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
                                 checkoutState: checkoutState,
                               );
                             },
-                            childCount: placeMenu.menuItems
+                            childCount: menuItems
                                 .where((item) => item.category == category)
                                 .length,
                           ),

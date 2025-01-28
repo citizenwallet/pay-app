@@ -20,7 +20,7 @@ class MenuListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 74,
+      height: 80,
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       margin: EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       decoration: BoxDecoration(
@@ -202,10 +202,11 @@ class ItemPrice extends StatelessWidget {
     return Row(
       children: [
         CoinLogo(size: 16),
+        const SizedBox(width: 4),
         Text(
           price,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             color: theme.primaryColor,
           ),
@@ -280,8 +281,8 @@ class IncDecButton extends StatelessWidget {
           onPressed: () => onDecrease(menuItem),
           child: Container(
             padding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 4,
+              horizontal: 12,
+              vertical: 8,
             ),
             decoration: BoxDecoration(
               border: Border.all(
@@ -316,8 +317,8 @@ class IncDecButton extends StatelessWidget {
           onPressed: () => onIncrease(menuItem),
           child: Container(
             padding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 4,
+              horizontal: 12,
+              vertical: 8,
             ),
             decoration: BoxDecoration(
               border: Border.all(

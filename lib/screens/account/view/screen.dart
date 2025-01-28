@@ -84,9 +84,16 @@ class _MyAccountState extends State<MyAccount> {
                 About(),
                 const SizedBox(height: 60),
                 WideButton(
-                  text: 'Log out',
                   color: const Color(0xFF4D4D4D),
                   onPressed: handleLogout,
+                  child: Text(
+                    'Log out',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: CupertinoColors.white,
+                    ),
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -97,8 +104,15 @@ class _MyAccountState extends State<MyAccount> {
                 ),
                 WideButton(
                   color: const Color(0xFFFC4343),
-                  text: 'Delete account',
                   onPressed: handleDeleteAccount,
+                  child: Text(
+                    'Delete account',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: CupertinoColors.white,
+                    ),
+                  ),
                 ),
                 SizedBox(height: safeAreaBottom),
               ],

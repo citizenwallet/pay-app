@@ -8,6 +8,7 @@ const mutedColor = Color(0xFFE0E0E0);
 const iconColor = Color(0xFF4D4D4D);
 
 const surfaceColor = Color.fromARGB(255, 221, 215, 225);
+const surfaceDarkColor = Color(0xFF171717);
 
 const textSurfaceColor = Color(0xFFFFFFFF);
 const textSurfaceMutedColor = Color.fromARGB(255, 211, 204, 215);

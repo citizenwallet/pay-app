@@ -2,14 +2,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:pay_app/theme/colors.dart';
 
 class WideButton extends StatelessWidget {
-  final String text;
+  final Widget child;
   final VoidCallback? onPressed;
   final Color? color;
   final bool disabled;
 
   const WideButton({
     super.key,
-    required this.text,
+    required this.child,
     this.onPressed,
     this.color,
     this.disabled = false,
@@ -26,16 +26,7 @@ class WideButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(100),
         padding: const EdgeInsets.symmetric(vertical: 16),
         onPressed: disabled ? null : onPressed,
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: disabled
-                ? CupertinoColors.white.withValues(alpha: 0.7)
-                : CupertinoColors.white,
-          ),
-        ),
+        child: child,
       ),
     );
   }

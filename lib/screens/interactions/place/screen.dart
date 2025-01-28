@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 
 import 'package:pay_app/models/order.dart';
-import 'package:pay_app/models/transaction.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:provider/provider.dart';
 import 'header.dart';
@@ -142,8 +141,10 @@ class _InteractionWithPlaceScreenState
               ChatHeader(
                 onTapLeading: goBack,
                 imageUrl: place?.profile.imageUrl ?? place?.place.imageUrl,
-                placeName: place?.place.name ?? '',
-                placeDescription: place?.place.description ?? '',
+                placeName: place?.profile.name ?? place?.place.name ?? '',
+                placeDescription: place?.profile.description ??
+                    place?.place.description ??
+                    '',
               ),
               Expanded(
                 child: ListView(
@@ -162,6 +163,8 @@ class _InteractionWithPlaceScreenState
                 ),
               ),
               Footer(
+                myAddress: widget.myAddress,
+                slug: widget.slug,
                 onSend: sendMessage,
                 amountFocusNode: amountFocusNode,
                 messageFocusNode: messageFocusNode,

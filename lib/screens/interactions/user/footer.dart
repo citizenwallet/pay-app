@@ -31,7 +31,6 @@ class _FooterState extends State<Footer> {
   bool _showAmountField = true;
 
   late TransactionsWithUserState _transactionsWithUserState;
-  late WalletState _walletState;
 
   @override
   void initState() {
@@ -85,7 +84,6 @@ class _FooterState extends State<Footer> {
 
   @override
   Widget build(BuildContext context) {
-    _walletState = context.watch<WalletState>();
     final balance =
         context.watch<WalletState>().wallet?.formattedBalance ?? 0.00;
 

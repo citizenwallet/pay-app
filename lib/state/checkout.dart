@@ -6,14 +6,14 @@ import 'package:pay_app/models/place.dart';
 class CheckoutState with ChangeNotifier {
   Checkout checkout;
   final Place? place;
-  final int _userId;
+  final String _account;
   final String _slug;
 
   CheckoutState({
-    required userId,
+    required account,
     required slug,
     this.place,
-  })  : _userId = userId,
+  })  : _account = account,
         _slug = slug,
         checkout = Checkout(items: []);
 

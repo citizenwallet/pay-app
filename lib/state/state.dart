@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/state/app.dart';
+import 'package:pay_app/state/checkout.dart';
 import 'package:pay_app/state/community.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
+import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/state/places/places.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/wallet.dart';
@@ -51,6 +53,36 @@ Widget provideAccountState(
       ChangeNotifierProvider(
         key: Key('profile-$account'),
         create: (_) => ProfileState(account),
+      ),
+    ],
+    child: child,
+  );
+}
+
+Widget providePlaceState(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) {
+  final slug = state.pathParameters['slug']!;
+  final account = state.pathParameters['account']!;
+
+  return MultiProvider(
+    key: Key('place-$account-$slug'),
+    providers: [
+      ChangeNotifierProvider(
+        key: Key('orders-with-place-$account-$slug'),
+        create: (_) => OrdersWithPlaceState(
+          slug: slug,
+          myAddress: account,
+        ),
+      ),
+      ChangeNotifierProvider(
+        key: Key('checkout-$account-$slug'),
+        create: (_) => CheckoutState(
+          account: account,
+          slug: slug,
+        ),
       ),
     ],
     child: child,
