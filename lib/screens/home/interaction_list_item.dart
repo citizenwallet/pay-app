@@ -18,6 +18,8 @@ class InteractionListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const circleSize = 60.0;
+
     return CupertinoButton(
       padding: EdgeInsets.symmetric(vertical: 4),
       onPressed: () => onTap(interaction),
@@ -31,14 +33,14 @@ class InteractionListItem extends StatelessWidget {
             if (interaction.isPlace)
               ProfileCircle(
                 imageUrl: interaction.imageUrl ?? 'assets/icons/shop.png',
-                size: 48,
+                size: circleSize,
                 padding: 2,
                 fit: BoxFit.contain,
               ),
             if (!interaction.isPlace)
               ProfileCircle(
                 imageUrl: interaction.imageUrl,
-                size: 48,
+                size: circleSize,
                 padding: 2,
               ),
             const SizedBox(width: 12),
@@ -115,7 +117,7 @@ class Name extends StatelessWidget {
     return Text(
       name,
       style: const TextStyle(
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: FontWeight.w600,
         color: Color(0xFF14023F),
       ),
@@ -174,7 +176,7 @@ class AmountDescription extends StatelessWidget {
         Text(
           '${exchangeDirection == ExchangeDirection.sent ? '-' : '+'}${amount.toStringAsFixed(2)}',
           style: TextStyle(
-            fontSize: 10,
+            fontSize: 14,
             fontWeight: FontWeight.w600,
             color: Color(0xFF8F8A9D),
           ),

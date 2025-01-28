@@ -16,6 +16,8 @@ class PlaceListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const circleSize = 60.0;
+
     return CupertinoButton(
       padding: EdgeInsets.symmetric(vertical: 4),
       onPressed: () => onTap(place),
@@ -28,7 +30,7 @@ class PlaceListItem extends StatelessWidget {
           children: [
             ProfileCircle(
               imageUrl: place.imageUrl ?? 'assets/icons/shop.png',
-              size: 48,
+              size: circleSize,
               padding: 2,
               fit: BoxFit.cover,
             ),
@@ -90,7 +92,7 @@ class Name extends StatelessWidget {
     return Text(
       name,
       style: const TextStyle(
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: FontWeight.w600,
         color: Color(0xFF14023F),
       ),
