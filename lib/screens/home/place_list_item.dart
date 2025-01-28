@@ -76,6 +76,7 @@ class Details extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Location(location: place.description),
+          const SizedBox(height: 4),
         ],
       ),
     );

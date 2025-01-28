@@ -182,15 +182,18 @@ class AmountDescription extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 4),
-        Text(
-          description ?? (isPlace ? '1000 Brussels' : ''),
-          style: const TextStyle(
-            fontSize: 10,
-            color: Color(0xFF8F8A9D),
+        Expanded(
+          child: Text(
+            description ?? (isPlace ? '1000 Brussels' : ''),
+            style: const TextStyle(
+              fontSize: 10,
+              color: Color(0xFF8F8A9D),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
         ),
+        const SizedBox(width: 4),
       ],
     );
   }
