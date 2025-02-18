@@ -3,7 +3,6 @@ enum ExchangeDirection {
   received,
 }
 
-
 // TODO: interaction with place, has menu item
 class Interaction {
   final String id; // id from supabase
@@ -19,6 +18,7 @@ class Interaction {
 
   final bool isPlace;
   final int? placeId; // id from supabase
+  final String? slug;
   final bool hasMenuItem;
   bool hasUnreadMessages;
   final DateTime lastMessageAt;
@@ -36,26 +36,28 @@ class Interaction {
     this.hasMenuItem = false,
     this.description,
     this.placeId,
+    this.slug,
   });
 
   factory Interaction.fromJson(Map<String, dynamic> json) {
+    final transaction = json['transaction'] as Map<String, dynamic>;
+    final withProfile = json['with_profile'] as Map<String, dynamic>;
+    final withPlace = json['with_place'] as Map<String, dynamic>?;
+
     return Interaction(
       id: json['id'],
       exchangeDirection: parseExchangeDirection(json['exchange_direction']),
-      withAccount: json['withAccount'],
-      imageUrl: json['imageUrl'] == null || json['imageUrl'] == ''
-          ? null
-          : json['imageUrl'],
-      name: json['name'],
-      amount: json['amount'],
-      description: json['description'] == null || json['description'] == ''
-          ? null
-          : json['description'],
-      isPlace: json['isPlace'],
-      placeId: json['placeId'],
-      hasUnreadMessages: json['hasUnreadMessages'],
-      lastMessageAt: DateTime.parse(json['lastMessageAt']),
-      hasMenuItem: json['hasMenuItem'] ?? false,
+      withAccount: withProfile['account'],
+      imageUrl: withPlace != null ? withPlace['image'] : withProfile['image'],
+      name: withPlace != null ? withPlace['name'] : withProfile['name'],
+      amount: double.tryParse(transaction['value']) ?? 0,
+      description: transaction['description'],
+      isPlace: withPlace != null,
+      placeId: withPlace?['id'],
+      hasUnreadMessages: json['new_interaction'],
+      lastMessageAt: DateTime.parse(transaction['created_at']),
+      hasMenuItem: false,
+      slug: withPlace?['slug'],
     );
   }
 
@@ -76,6 +78,7 @@ class Interaction {
       'hasUnreadMessages': hasUnreadMessages,
       'lastMessageAt': lastMessageAt.toIso8601String(),
       'hasMenuItem': hasMenuItem,
+      'slug': slug,
     };
   }
 

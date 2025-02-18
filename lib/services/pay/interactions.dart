@@ -49,30 +49,7 @@ class InteractionService {
        * ]
        */
 
-      // Transform the API response into the format expected by Interaction.fromJson
-      final List<Map<String, dynamic>> transformedInteractions =
-          interactionsApiResponse.map((i) {
-        final transaction = i['transaction'] as Map<String, dynamic>;
-        final withProfile = i['with_profile'] as Map<String, dynamic>;
-        final withPlace = i['with_place'] as Map<String, dynamic>?;
-
-        return {
-          'id': i['id'],
-          'exchange_direction': i['exchange_direction'],
-          'withAccount': i['with_profile']['account'],
-          'imageUrl':
-              withPlace != null ? withPlace['image'] : withProfile['image'],
-          'name': withPlace != null ? withPlace['name'] : withProfile['name'],
-          'amount': double.tryParse(transaction['value']),
-          'description': transaction['description'],
-          'isPlace': withPlace != null,
-          'placeId': withPlace?['id'],
-          'hasUnreadMessages': i['new_interaction'],
-          'lastMessageAt': transaction['created_at'],
-        };
-      }).toList();
-
-      return transformedInteractions
+      return interactionsApiResponse
           .map((i) => Interaction.fromJson(i))
           .toList();
     } catch (e, s) {
@@ -123,30 +100,7 @@ class InteractionService {
        * ]
        */
 
-      // Transform the API response into the format expected by Interaction.fromJson
-      final List<Map<String, dynamic>> transformedInteractions =
-          interactionsApiResponse.map((i) {
-        final transaction = i['transaction'] as Map<String, dynamic>;
-        final withProfile = i['with_profile'] as Map<String, dynamic>;
-        final withPlace = i['with_place'] as Map<String, dynamic>?;
-
-        return {
-          'id': i['id'],
-          'exchange_direction': i['exchange_direction'],
-          'withAccount': i['with_profile']['account'],
-          'imageUrl':
-              withPlace != null ? withPlace['image'] : withProfile['image'],
-          'name': withPlace != null ? withPlace['name'] : withProfile['name'],
-          'amount': double.tryParse(transaction['value']),
-          'description': transaction['description'],
-          'isPlace': withPlace != null,
-          'placeId': withPlace?['id'],
-          'hasUnreadMessages': i['new_interaction'],
-          'lastMessageAt': transaction['created_at'],
-        };
-      }).toList();
-
-      return transformedInteractions
+      return interactionsApiResponse
           .map((i) => Interaction.fromJson(i))
           .toList();
     } catch (e, s) {

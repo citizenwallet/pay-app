@@ -122,6 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
         name: interaction.name,
         imageUrl: interaction.imageUrl,
         account: interaction.withAccount,
+        slug: interaction.slug ?? '',
       );
       _goToInteractionWithPlace(myAddress, place);
     } else if (!interaction.isPlace) {
@@ -159,6 +160,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void handleSearch(String query) {
     _interactionState.setSearchQuery(query);
     _placesState.setSearchQuery(query);
+  }
+
+  void handleInteractionTap(String? myAddress, Interaction interaction) {
+    goToChatHistory(myAddress, interaction);
+    _interactionState.markInteractionAsRead(interaction);
   }
 
   void _dismissKeyboard() {
@@ -226,13 +232,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         childCount: interactions.length,
                         (context, index) => InteractionListItem(
                           interaction: interactions[index],
-                          onTap: (interaction) async {
-                            // Navigate first
-                            goToChatHistory(myAddress, interaction);
-                            // Then mark as read
-                            await _interactionState
-                                .markInteractionAsRead(interaction);
-                          },
+                          onTap: (interaction) =>
+                              handleInteractionTap(myAddress, interaction),
                         ),
                       ),
                     ),

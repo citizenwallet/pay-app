@@ -35,7 +35,7 @@ class InteractionListItem extends StatelessWidget {
                 imageUrl: interaction.imageUrl ?? 'assets/icons/shop.png',
                 size: circleSize,
                 padding: 2,
-                fit: BoxFit.contain,
+                fit: BoxFit.cover,
               ),
             if (!interaction.isPlace)
               ProfileCircle(

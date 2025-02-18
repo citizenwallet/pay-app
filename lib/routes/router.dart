@@ -90,17 +90,7 @@ GoRouter createRouter(
                       name: 'PlaceMenu',
                       path: '/menu',
                       builder: (context, state) {
-                        final account = state.pathParameters['account']!;
-                        final slug = state.pathParameters['slug']!;
-
-                        return ChangeNotifierProvider(
-                          key: Key('menu-$account-$slug'),
-                          create: (_) => CheckoutState(
-                            account: account,
-                            slug: slug,
-                          ),
-                          child: const PlaceMenuScreen(),
-                        );
+                        return const PlaceMenuScreen();
                       },
                     ),
                   ],
