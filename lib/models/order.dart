@@ -1,8 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:web3dart/web3dart.dart' show EthereumAddress;
 
-import 'transaction.dart';
-
 enum PaymentMode {
   terminal,
   qrCode,
@@ -30,10 +28,11 @@ class Order {
   final int placeId;
   final List<OrderItem> items;
   final OrderStatus status;
-  final String description;
+  final String? description;
   final String? txHash;
   final OrderType? type;
   final EthereumAddress? account;
+  final double fees;
 
   Order({
     required this.id,
@@ -48,6 +47,7 @@ class Order {
     this.txHash,
     this.type,
     this.account,
+    this.fees = 0,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -70,6 +70,7 @@ class Order {
       account: json['account'] != null
           ? EthereumAddress.fromHex(json['account'])
           : null,
+      fees: (json['fees'] ?? 0).toDouble() / 100,
     );
   }
 
