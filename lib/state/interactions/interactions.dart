@@ -124,12 +124,16 @@ class InteractionState with ChangeNotifier {
     }
 
     try {
-      interaction.hasUnreadMessages = false;
-      final upsertedInteractions = _upsertInteractions([interaction]);
-      interactions = upsertedInteractions;
+      final index = interactions.indexWhere((i) => i.id == interaction.id);
+      if (index < 0) {
+        return;
+      }
+
+      interactions[index].hasUnreadMessages = false;
       safeNotifyListeners();
 
-      apiService.patchInteraction(interaction);
+      await apiService.setInteractionAsRead(interaction.id);
+      getInteractions();
     } catch (e, s) {
       debugPrint('Error marking interaction as read: $e');
       debugPrint('Stack trace: $s');
