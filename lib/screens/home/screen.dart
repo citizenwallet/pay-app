@@ -117,44 +117,36 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void goToChatHistory(String? myAddress, Interaction interaction) {
     if (interaction.isPlace && interaction.placeId != null) {
-      final place = Place(
-        id: interaction.placeId!,
-        name: interaction.name,
-        imageUrl: interaction.imageUrl,
-        account: interaction.withAccount,
-        slug: interaction.slug ?? '',
+      _goToInteractionWithPlace(
+        myAddress,
+        interaction.place?.slug ?? '',
       );
-      _goToInteractionWithPlace(myAddress, place);
     } else if (!interaction.isPlace) {
-      final user = User(
-        name: interaction.name,
-        username: '',
-        account: interaction.withAccount,
-        imageUrl: interaction.imageUrl,
-      );
-
-      _goToInteractionWithUser(myAddress, user);
+      _goToInteractionWithUser(myAddress, interaction.withAccount);
     }
   }
 
-  void _goToInteractionWithPlace(String? myAddress, Place place) {
+  void _goToInteractionWithPlace(
+    String? myAddress,
+    String slug,
+  ) {
     if (myAddress == null) {
       return;
     }
 
     final navigator = GoRouter.of(context);
 
-    navigator.push('/$myAddress/place/${place.slug}');
+    navigator.push('/$myAddress/place/$slug');
   }
 
-  void _goToInteractionWithUser(String? myAddress, User user) {
+  void _goToInteractionWithUser(String? myAddress, String account) {
     if (myAddress == null) {
       return;
     }
 
     final navigator = GoRouter.of(context);
 
-    navigator.push('/$myAddress/user/${user.account}');
+    navigator.push('/$myAddress/user/$account');
   }
 
   void handleSearch(String query) {
@@ -242,8 +234,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         childCount: places.length,
                         (context, index) => PlaceListItem(
                           place: places[index],
-                          onTap: (place) =>
-                              _goToInteractionWithPlace(myAddress, place),
+                          onTap: (place) => _goToInteractionWithPlace(
+                            myAddress,
+                            place.slug,
+                          ),
                         ),
                       ),
                     ),

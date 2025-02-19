@@ -4,6 +4,7 @@ enum Display {
   amount,
   menu,
   amountAndMenu,
+  topup,
 }
 
 class Place {

@@ -52,6 +52,7 @@ class OrderListItem extends StatelessWidget {
         Items(
           items: order.items,
           mappedItems: mappedItems,
+          description: order.description,
         ),
       ],
     );
@@ -73,12 +74,18 @@ class OrderListItem extends StatelessWidget {
 class Items extends StatelessWidget {
   final List<OrderItem> items;
   final Map<int, MenuItem> mappedItems;
+  final String? description;
 
-  const Items({super.key, required this.items, required this.mappedItems});
+  const Items({
+    super.key,
+    required this.items,
+    required this.mappedItems,
+    required this.description,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) {
+    if (items.isEmpty && description == null) {
       return const SizedBox.shrink();
     }
 
@@ -96,6 +103,15 @@ class Items extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         SizedBox(height: 4),
+        if (description != null && description!.isNotEmpty)
+          Text(
+            description!,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: textMutedColor,
+            ),
+          ),
         ...items.map(
           (item) => Text(
             key: Key('item-${item.id}'),

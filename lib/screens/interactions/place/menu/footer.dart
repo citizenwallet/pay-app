@@ -1,29 +1,22 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/wide_button.dart';
 
-class Footer extends StatefulWidget {
-  final double checkoutTotal;
+class Footer extends StatelessWidget {
+  final Checkout checkout;
+  final Function(Checkout) onPay;
 
   const Footer({
-    required this.checkoutTotal,
+    required this.checkout,
+    required this.onPay,
     super.key,
   });
 
   @override
-  State<Footer> createState() => _FooterState();
-}
-
-class _FooterState extends State<Footer> {
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final disabled = widget.checkoutTotal == 0;
+    final disabled = checkout.total == 0;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -39,7 +32,7 @@ class _FooterState extends State<Footer> {
         ),
       ),
       child: WideButton(
-        onPressed: () => {},
+        onPressed: () => onPay(checkout),
         color: disabled
             ? surfaceDarkColor.withValues(alpha: 0.8)
             : surfaceDarkColor,
@@ -62,7 +55,7 @@ class _FooterState extends State<Footer> {
             ),
             const SizedBox(width: 4),
             Text(
-              widget.checkoutTotal.toStringAsFixed(2),
+              checkout.total.toStringAsFixed(2),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,

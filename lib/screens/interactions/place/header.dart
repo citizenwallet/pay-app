@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
 
 class ChatHeader extends StatelessWidget {
+  final bool loading;
   final String? imageUrl;
   final String? placeName;
   final String? placeDescription;
@@ -10,6 +11,7 @@ class ChatHeader extends StatelessWidget {
 
   const ChatHeader({
     super.key,
+    this.loading = false,
     this.imageUrl,
     this.placeName,
     this.placeDescription,
@@ -42,6 +44,7 @@ class ChatHeader extends StatelessWidget {
       child: Row(
         children: [
           ProfileCircle(
+            loading: loading,
             imageUrl: imageUrl,
             size: 70,
           ),

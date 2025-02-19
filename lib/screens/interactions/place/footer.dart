@@ -12,6 +12,7 @@ class Footer extends StatefulWidget {
   final String myAddress;
   final String slug;
   final Function(double, String?) onSend;
+  final Function() onMenuPressed;
   final FocusNode amountFocusNode;
   final FocusNode messageFocusNode;
   final Place? place;
@@ -22,6 +23,7 @@ class Footer extends StatefulWidget {
     required this.myAddress,
     required this.slug,
     required this.onSend,
+    required this.onMenuPressed,
     required this.amountFocusNode,
     required this.messageFocusNode,
     this.place,
@@ -64,11 +66,11 @@ class _FooterState extends State<Footer> {
     });
   }
 
-  void _onMenuPressed() {
-    final navigator = GoRouter.of(context);
+  // void _onMenuPressed() {
+  //   final navigator = GoRouter.of(context);
 
-    navigator.push('/${widget.myAddress}/place/${widget.slug}/menu');
-  }
+  //   navigator.push('/${widget.myAddress}/place/${widget.slug}/menu');
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +98,7 @@ class _FooterState extends State<Footer> {
             ),
           if (widget.display == Display.menu)
             WideButton(
-              onPressed: _onMenuPressed,
+              onPressed: widget.onMenuPressed,
               child: Text(
                 'Menu',
                 style: TextStyle(

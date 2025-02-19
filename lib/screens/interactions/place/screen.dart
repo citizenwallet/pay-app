@@ -1,4 +1,6 @@
 import 'package:flutter/cupertino.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pay_app/models/checkout.dart';
 
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
@@ -118,6 +120,20 @@ class _InteractionWithPlaceScreenState
     );
   }
 
+  void handleMenuPressed() async {
+    final navigator = GoRouter.of(context);
+
+    final checkout = await navigator.push<Checkout?>(
+      '/${widget.myAddress}/place/${widget.slug}/menu',
+    );
+
+    if (checkout == null) {
+      return;
+    }
+
+    _ordersWithPlaceState.payOrder(checkout);
+  }
+
   final List<Order> orders = [
 ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
@@ -166,6 +182,7 @@ class _InteractionWithPlaceScreenState
                 myAddress: widget.myAddress,
                 slug: widget.slug,
                 onSend: sendMessage,
+                onMenuPressed: handleMenuPressed,
                 amountFocusNode: amountFocusNode,
                 messageFocusNode: messageFocusNode,
                 display: place?.place.display,

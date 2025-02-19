@@ -1,3 +1,5 @@
+import 'package:pay_app/models/place.dart';
+
 enum ExchangeDirection {
   sent,
   received,
@@ -18,7 +20,7 @@ class Interaction {
 
   final bool isPlace;
   final int? placeId; // id from supabase
-  final String? slug;
+  final Place? place;
   final bool hasMenuItem;
   bool hasUnreadMessages;
   final DateTime lastMessageAt;
@@ -36,13 +38,15 @@ class Interaction {
     this.hasMenuItem = false,
     this.description,
     this.placeId,
-    this.slug,
+    this.place,
   });
 
   factory Interaction.fromJson(Map<String, dynamic> json) {
     final transaction = json['transaction'] as Map<String, dynamic>;
     final withProfile = json['with_profile'] as Map<String, dynamic>;
     final withPlace = json['with_place'] as Map<String, dynamic>?;
+
+    print('withPlace: $withPlace');
 
     return Interaction(
       id: json['id'],
@@ -57,7 +61,7 @@ class Interaction {
       hasUnreadMessages: json['new_interaction'],
       lastMessageAt: DateTime.parse(transaction['created_at']),
       hasMenuItem: false,
-      slug: withPlace?['slug'],
+      place: withPlace != null ? Place.fromJson(withPlace) : null,
     );
   }
 
@@ -78,7 +82,7 @@ class Interaction {
       'hasUnreadMessages': hasUnreadMessages,
       'lastMessageAt': lastMessageAt.toIso8601String(),
       'hasMenuItem': hasMenuItem,
-      'slug': slug,
+      'place': place?.toMap(),
     };
   }
 

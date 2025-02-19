@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/screens/interactions/place/header.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/theme/colors.dart';
@@ -13,8 +15,6 @@ import 'package:pay_app/state/checkout.dart';
 import 'footer.dart';
 import 'menu_list_item.dart';
 import 'catergory_scroll.dart';
-
-// reference: https://github.com/AmirBayat0/flutter_scroll_animation
 
 class PlaceMenuScreen extends StatefulWidget {
   const PlaceMenuScreen({super.key});
@@ -43,6 +43,8 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
 
   double get _scrollThreshold => headerHeight * (1 + detectionSensitivity);
 
+  late OrdersWithPlaceState _ordersWithPlaceState;
+
   @override
   void initState() {
     super.initState();
@@ -51,11 +53,17 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
 
     tabPositionsListener.itemPositions.addListener(_onItemPositionsChange);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ordersWithPlaceState = context.read<OrdersWithPlaceState>();
+
+      onLoad();
+    });
   }
 
   void onLoad() {
-    final placeMenu = context.read<OrdersWithPlaceState>().placeMenu;
+    _ordersWithPlaceState.fetchPlaceAndMenu();
+
+    final placeMenu = _ordersWithPlaceState.placeMenu;
     if (placeMenu == null) return;
     _currentVisibleCategory = placeMenu.categories[0];
   }
@@ -144,17 +152,25 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
     _menuScrollController.addListener(_onScroll);
   }
 
+  void handlePay(Checkout checkout) {
+    print('handlePay: ${checkout.total}');
+
+    final navigator = GoRouter.of(context);
+
+    navigator.pop(checkout);
+  }
+
   @override
   Widget build(BuildContext context) {
     final categoryKeys = context.watch<OrdersWithPlaceState>().categoryKeys;
     final placeMenu = context.watch<OrdersWithPlaceState>().placeMenu;
+    final loading = context.watch<OrdersWithPlaceState>().loading;
 
     final checkoutState = context.watch<CheckoutState>();
     final place = context.watch<OrdersWithPlaceState>().place?.place;
     final menuItems = context.watch<OrdersWithPlaceState>().place?.items ?? [];
     final profile = context.watch<OrdersWithPlaceState>().place?.profile;
     final checkout = checkoutState.checkout;
-    final checkoutTotal = checkout.total;
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemBackground,
@@ -162,6 +178,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
         child: Column(
           children: [
             ChatHeader(
+              loading: loading,
               imageUrl: profile?.imageUrl ?? place?.imageUrl ?? '',
               placeName: profile?.name ?? place?.name ?? '',
               placeDescription:
@@ -180,64 +197,72 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
 
             // Menu items grouped by category
             Expanded(
-              child: CustomScrollView(
-                controller: _menuScrollController,
-                slivers: [
-                  for (var category in placeMenu?.categories ?? [])
-                    SliverMainAxisGroup(
+              child: !loading && menuItems.isNotEmpty
+                  ? CustomScrollView(
+                      controller: _menuScrollController,
                       slivers: [
-                        SliverPersistentHeader(
-                          key: categoryKeys[
-                              (placeMenu?.categories ?? []).indexOf(category)],
-                          pinned: true,
-                          delegate: _StickyHeaderDelegate(
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: whiteColor.withValues(alpha: 0.95),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(
-                                    category,
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                        for (var category in placeMenu?.categories ?? [])
+                          SliverMainAxisGroup(
+                            slivers: [
+                              SliverPersistentHeader(
+                                key: categoryKeys[(placeMenu?.categories ?? [])
+                                    .indexOf(category)],
+                                pinned: true,
+                                delegate: _StickyHeaderDelegate(
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: whiteColor.withValues(
+                                            alpha: 0.95,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          category,
+                                          style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                              SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    final items = menuItems
+                                        .where(
+                                            (item) => item.category == category)
+                                        .toList();
+                                    if (index >= items.length) return null;
+                                    return MenuListItem(
+                                      menuItem: items[index],
+                                      checkoutState: checkoutState,
+                                    );
+                                  },
+                                  childCount: menuItems
+                                      .where(
+                                          (item) => item.category == category)
+                                      .length,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final items = menuItems
-                                  .where((item) => item.category == category)
-                                  .toList();
-                              if (index >= items.length) return null;
-                              return MenuListItem(
-                                menuItem: items[index],
-                                checkoutState: checkoutState,
-                              );
-                            },
-                            childCount: menuItems
-                                .where((item) => item.category == category)
-                                .length,
-                          ),
-                        ),
                       ],
-                    ),
-                ],
-              ),
+                    )
+                  : const Center(child: CupertinoActivityIndicator()),
             ),
             Footer(
-              checkoutTotal: checkoutTotal,
+              checkout: checkout,
+              onPay: handlePay,
             ),
           ],
         ),
