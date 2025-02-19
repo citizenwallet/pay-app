@@ -110,10 +110,9 @@ class InteractionService {
     }
   }
 
-  Future<void> patchInteraction(Interaction interaction) async {
+  Future<void> setInteractionAsRead(String interactionId) async {
     await apiService.patch(
-        url: '/accounts/$myAccount/interactions/by-id/${interaction.id}',
-        body: {'new_interaction': interaction.hasUnreadMessages},
-        headers: {'Content-Type': 'application/json'});
+      url: '/accounts/$myAccount/interactions/$interactionId/read',
+    );
   }
 }
