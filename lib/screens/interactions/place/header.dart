@@ -49,34 +49,39 @@ class ChatHeader extends StatelessWidget {
             size: 70,
           ),
           const SizedBox(width: 15),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  SvgPicture.asset(
-                    'assets/icons/shop.svg',
-                    width: 16,
-                    height: 16,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    placeName ?? '',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    SvgPicture.asset(
+                      'assets/icons/shop.svg',
+                      width: 16,
+                      height: 16,
                     ),
-                  ),
-                ],
-              ),
-              Text(
-                placeDescription ?? '',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+                    const SizedBox(width: 10),
+                    Text(
+                      placeName ?? '',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                Text(
+                  placeDescription ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF71717A),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

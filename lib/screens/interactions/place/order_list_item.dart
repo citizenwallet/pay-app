@@ -33,7 +33,6 @@ class OrderListItem extends StatelessWidget {
       child: Row(
         children: [
           _buildLeft(),
-          const Spacer(),
           _buildRight(),
         ],
       ),
@@ -41,20 +40,26 @@ class OrderListItem extends StatelessWidget {
   }
 
   Widget _buildLeft() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        OrderId(orderId: order.id),
-        SizedBox(height: 4),
-        PaymentMethodBadge(paymentMode: order.type),
-        SizedBox(height: 4),
-        Items(
-          items: order.items,
-          mappedItems: mappedItems,
-          description: order.description,
-        ),
-      ],
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          OrderId(orderId: order.id),
+          SizedBox(height: 4),
+          Row(
+            children: [
+              PaymentMethodBadge(paymentMode: order.type),
+            ],
+          ),
+          SizedBox(height: 4),
+          Items(
+            items: order.items,
+            mappedItems: mappedItems,
+            description: order.description,
+          ),
+        ],
+      ),
     );
   }
 
@@ -106,6 +111,7 @@ class Items extends StatelessWidget {
         if (description != null && description!.isNotEmpty)
           Text(
             description!,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
