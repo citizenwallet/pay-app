@@ -96,6 +96,7 @@ class Interaction {
     bool? hasUnreadMessages,
     DateTime? lastMessageAt,
     bool? hasMenuItem,
+    Place? place,
   }) {
     return Interaction(
       id: id,
@@ -110,6 +111,7 @@ class Interaction {
       hasUnreadMessages: hasUnreadMessages ?? this.hasUnreadMessages,
       lastMessageAt: lastMessageAt ?? this.lastMessageAt,
       hasMenuItem: hasMenuItem ?? this.hasMenuItem,
+      place: place ?? this.place,
     );
   }
 
@@ -127,6 +129,7 @@ class Interaction {
       hasUnreadMessages: updated.hasUnreadMessages,
       lastMessageAt: updated.lastMessageAt,
       hasMenuItem: updated.hasMenuItem,
+      place: updated.place,
     );
   }
 
