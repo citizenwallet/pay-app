@@ -102,7 +102,7 @@ class APIService {
 
   Future<dynamic> patch({
     String? url,
-    required Object body,
+    Object? body,
     Map<String, String>? headers,
   }) async {
     final mergedHeaders = <String, String>{
@@ -117,7 +117,7 @@ class APIService {
         .patch(
           Uri.parse('$baseURL${url ?? ''}'),
           headers: mergedHeaders,
-          body: jsonEncode(body),
+          body: body != null ? jsonEncode(body) : null,
         )
         .timeout(Duration(seconds: netTimeoutSeconds));
 
