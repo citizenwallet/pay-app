@@ -17,22 +17,43 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends State<OnboardingScreen>
+    with SingleTickerProviderStateMixin {
   late OnboardingState _onboardingState;
   late CommunityState _communityState;
   late WalletState _walletState;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
+
+    // Setup animation controller
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    );
+
+    _fadeAnimation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _onboardingState = context.read<OnboardingState>();
       _communityState = context.read<CommunityState>();
       _walletState = context.read<WalletState>();
       onLoad();
+
+      // Start the animation
+      _animationController.forward().then((_) {
+        // Focus the text field after animation completes
+        FocusScope.of(context).requestFocus(_focusNode);
+      });
     });
   }
+
+  // Add a focus node
+  final FocusNode _focusNode = FocusNode();
 
   void onLoad() async {
     await _communityState.fetchCommunity();
@@ -40,6 +61,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   void dispose() {
+    _animationController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -127,78 +150,83 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ),
 
-                // Bottom content
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Email Input
-                    CustomTextField(
-                      controller: phoneNumberController,
-                      placeholder: '+32475123456',
-                      autofocus: true,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(
-                          color: !touched
-                              ? mutedColor
-                              : touched && regionCode != null
-                                  ? primaryColor
-                                  : warningColor,
+                // Bottom content with fade animation
+                FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Email Input
+                      CustomTextField(
+                        controller: phoneNumberController,
+                        placeholder: '+32475123456',
+                        focusNode: _focusNode, // Use the focus node
+                        autofocus:
+                            false, // We'll focus manually after animation
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                            color: !touched
+                                ? mutedColor
+                                : touched && regionCode != null
+                                    ? primaryColor
+                                    : warningColor,
+                          ),
                         ),
-                      ),
-                      textAlign: TextAlign.start,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: touched && regionCode != null
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        letterSpacing: 2,
-                      ),
-                      placeholderStyle: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w500,
-                        color: textMutedColor,
-                        letterSpacing: 2,
-                      ),
-                      prefix: Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: regionCode != null
-                            ? CountryFlag.fromCountryCode(
-                                regionCode,
-                                shape: const Circle(),
-                                height: 40,
-                                width: 40,
-                              )
-                            : SizedBox(
-                                height: 40,
-                                width: 40,
-                                child: Icon(
-                                  CupertinoIcons.phone,
-                                  color: iconColor,
-                                ),
-                              ),
-                      ),
-                      keyboardType: TextInputType.phone,
-                      onChanged: handlePhoneNumberChange,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Confirm Button
-                    WideButton(
-                      disabled: regionCode == null,
-                      onPressed:
-                          regionCode != null ? () => handleConfirm() : null,
-                      child: Text(
-                        'Confirm',
+                        textAlign: TextAlign.start,
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: CupertinoColors.white,
+                          fontSize: 22,
+                          fontWeight: touched && regionCode != null
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          letterSpacing: 2,
+                        ),
+                        placeholderStyle: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w500,
+                          color: textMutedColor,
+                          letterSpacing: 2,
+                        ),
+                        prefix: Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: regionCode != null
+                              ? CountryFlag.fromCountryCode(
+                                  regionCode,
+                                  shape: const Circle(),
+                                  height: 40,
+                                  width: 40,
+                                )
+                              : SizedBox(
+                                  height: 40,
+                                  width: 40,
+                                  child: Icon(
+                                    CupertinoIcons.phone,
+                                    color: iconColor,
+                                  ),
+                                ),
+                        ),
+                        keyboardType: TextInputType.phone,
+                        onChanged: handlePhoneNumberChange,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Confirm Button
+                      WideButton(
+                        disabled: regionCode == null,
+                        onPressed:
+                            regionCode != null ? () => handleConfirm() : null,
+                        child: Text(
+                          'Confirm',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: CupertinoColors.white,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
               ],
             ),
