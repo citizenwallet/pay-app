@@ -4,7 +4,7 @@ import 'package:pay_app/models/menu_item.dart';
 
 class PlaceWithMenu {
   final Place place;
-  final User profile;
+  final User? profile;
   final List<MenuItem> items;
   final Map<int, MenuItem> mappedItems;
 
@@ -20,9 +20,9 @@ class PlaceWithMenu {
     final place = Place.fromJson(placeData);
 
     // Parse profile data
-    final profileData = json['profile'] as Map<String, dynamic>;
+    final profileData = json['profile'] as Map<String, dynamic>?;
 
-    final profile = User.fromJson(profileData);
+    final profile = profileData != null ? User.fromJson(profileData) : null;
 
     // Parse items data
     final itemsData = json['items'] as List<dynamic>;
@@ -41,7 +41,7 @@ class PlaceWithMenu {
   Map<String, dynamic> toMap() {
     return {
       'place': place.toMap(),
-      'profile': profile.toMap(),
+      'profile': profile?.toMap(),
       'items': items.map((item) => item.toMap()).toList(),
     };
   }
