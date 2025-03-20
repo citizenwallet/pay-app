@@ -85,8 +85,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v0.0.11"
-      resolved-ref: "20697fd2eaefe1dbd434aeee8d23e71ab2354ff6"
+      ref: "v0.0.16"
+      resolved-ref: e514ded996db50c12d2a4a53e58dd2ec706bd0b8
       url: "https://github.com/citizenwallet/contractforge.git"
     source: git
     version: "1.0.0"

@@ -95,7 +95,9 @@ class OrdersWithPlaceState with ChangeNotifier {
 
       _fetchOrders(placeWithMenu.place.id);
       startPolling();
-    } catch (e) {
+    } catch (e, s) {
+      print('fetchPlaceAndMenu error: $e');
+      print('fetchPlaceAndMenu stack trace: $s');
       error = true;
       safeNotifyListeners();
     } finally {
@@ -126,14 +128,15 @@ class OrdersWithPlaceState with ChangeNotifier {
 
       final total = checkout.total;
 
-      final message = checkout.items.fold('', (acc, item) {
-        final line = '${item.menuItem.name} x ${item.quantity}';
-        if (acc.isEmpty) {
-          return line;
-        }
+      final message = checkout.message ??
+          checkout.items.fold<String>('', (acc, item) {
+            final line = '${item.menuItem.name} x ${item.quantity}';
+            if (acc.isEmpty) {
+              return line;
+            }
 
-        return '$acc\n$line';
-      });
+            return '$acc\n$line';
+          });
 
       final doubleAmount = total.toString().replaceAll(',', '.');
       final parsedAmount = toUnit(
@@ -191,10 +194,13 @@ class OrdersWithPlaceState with ChangeNotifier {
         args: args,
       );
 
+      print('sending message: ${message.trim()}');
+
       final txHash = await _walletService.submitUserop(
         userOp,
         data: eventData,
-        extraData: message != '' ? TransferData(message.trim()) : null,
+        extraData:
+            message.trim().isNotEmpty ? TransferData(message.trim()) : null,
       );
 
       if (txHash == null) {
@@ -202,7 +208,9 @@ class OrdersWithPlaceState with ChangeNotifier {
       }
 
       return txHash;
-    } catch (e) {
+    } catch (e, s) {
+      print('payOrder error: $e');
+      print('payOrder stack trace: $s');
       payingOrder = null;
       safeNotifyListeners();
       return null;

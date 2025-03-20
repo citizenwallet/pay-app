@@ -5,6 +5,7 @@ import 'package:pay_app/state/community.dart';
 import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
+import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/wide_button.dart';
 import 'package:pay_app/widgets/text_field.dart';
@@ -21,7 +22,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     with SingleTickerProviderStateMixin {
   late OnboardingState _onboardingState;
   late CommunityState _communityState;
-  late WalletState _walletState;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -41,7 +41,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _onboardingState = context.read<OnboardingState>();
       _communityState = context.read<CommunityState>();
-      _walletState = context.read<WalletState>();
       onLoad();
 
       // Start the animation
@@ -54,6 +53,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   // Add a focus node
   final FocusNode _focusNode = FocusNode();
+  final FocusNode _challengeFocusNode = FocusNode();
+
+  String? _previousChallenge;
 
   void onLoad() async {
     await _communityState.fetchCommunity();
@@ -70,26 +72,25 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     FocusScope.of(context).unfocus();
   }
 
-  void handleConfirm() async {
-    final addressFromCreate = await _walletState.createWallet();
-    final addressFromOpen = await _walletState.openWallet();
+  void handleRequest(String source) async {
+    await _onboardingState.requestSession(source);
+    _onboardingState.updateChallenge(null);
 
-    debugPrint('addressFromCreate: $addressFromCreate');
-    debugPrint('addressFromOpen: $addressFromOpen');
+    await delay(const Duration(milliseconds: 100));
 
-    // final exists = await _walletState.createAccount();
+    _challengeFocusNode.requestFocus();
+  }
 
-    // debugPrint('account exists: $exists');
-    // debugPrint('finish');
-
-    if (!mounted) return;
-
-    final navigator = GoRouter.of(context);
-    navigator.replace('/$addressFromOpen');
+  void handleConfirm(String challenge) async {
+    await _onboardingState.confirmSession(challenge);
   }
 
   void handlePhoneNumberChange(String phoneNumber) {
     _onboardingState.formatPhoneNumber(phoneNumber);
+  }
+
+  void handleChallengeChange(String challenge) {
+    _onboardingState.updateChallenge(challenge);
   }
 
   @override
@@ -98,12 +99,31 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
     final community = context.select((CommunityState state) => state.community);
 
+    final sessionRequestStatus =
+        context.select((OnboardingState state) => state.sessionRequestStatus);
+
     final phoneNumberController =
         context.read<OnboardingState>().phoneNumberController;
+    final challengeController =
+        context.read<OnboardingState>().challengeController;
+
+    final challenge =
+        context.select((OnboardingState state) => state.challenge);
 
     final touched = context.select((OnboardingState state) => state.touched);
     final regionCode =
         context.select((OnboardingState state) => state.regionCode);
+
+    final challengeTouched =
+        context.select((OnboardingState state) => state.challengeTouched);
+
+    final isValidPhoneNumber = regionCode != null;
+    final isValidChallenge = challenge != null && challenge.length == 6;
+
+    if (challenge != _previousChallenge && isValidChallenge) {
+      handleConfirm(challenge);
+    }
+    _previousChallenge = challenge;
 
     return CupertinoPageScaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -156,74 +176,156 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Email Input
-                      CustomTextField(
-                        controller: phoneNumberController,
-                        placeholder: '+32475123456',
-                        focusNode: _focusNode, // Use the focus node
-                        autofocus:
-                            false, // We'll focus manually after animation
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(
-                            color: !touched
-                                ? mutedColor
-                                : touched && regionCode != null
-                                    ? primaryColor
-                                    : warningColor,
+                      // Phone Number Input
+                      if (sessionRequestStatus == SessionRequestStatus.none ||
+                          sessionRequestStatus ==
+                              SessionRequestStatus.pending ||
+                          sessionRequestStatus == SessionRequestStatus.failed)
+                        CustomTextField(
+                          controller: phoneNumberController,
+                          placeholder: '+32475123456',
+                          focusNode: _focusNode, // Use the focus node
+                          autofocus:
+                              false, // We'll focus manually after animation
+                          enabled:
+                              sessionRequestStatus == SessionRequestStatus.none,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(
+                              color: !touched
+                                  ? mutedColor
+                                  : touched && isValidPhoneNumber
+                                      ? primaryColor
+                                      : warningColor,
+                            ),
                           ),
-                        ),
-                        textAlign: TextAlign.start,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: touched && regionCode != null
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          letterSpacing: 2,
-                        ),
-                        placeholderStyle: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w500,
-                          color: textMutedColor,
-                          letterSpacing: 2,
-                        ),
-                        prefix: Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: regionCode != null
-                              ? CountryFlag.fromCountryCode(
-                                  regionCode,
-                                  shape: const Circle(),
-                                  height: 40,
-                                  width: 40,
-                                )
-                              : SizedBox(
-                                  height: 40,
-                                  width: 40,
-                                  child: Icon(
-                                    CupertinoIcons.phone,
-                                    color: iconColor,
+                          textAlign: TextAlign.start,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: touched && isValidPhoneNumber
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            letterSpacing: 2,
+                          ),
+                          placeholderStyle: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w500,
+                            color: textMutedColor,
+                            letterSpacing: 2,
+                          ),
+                          prefix: Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: isValidPhoneNumber
+                                ? CountryFlag.fromCountryCode(
+                                    regionCode,
+                                    shape: const Circle(),
+                                    height: 40,
+                                    width: 40,
+                                  )
+                                : SizedBox(
+                                    height: 40,
+                                    width: 40,
+                                    child: Icon(
+                                      CupertinoIcons.phone,
+                                      color: iconColor,
+                                    ),
                                   ),
-                                ),
+                          ),
+                          keyboardType: TextInputType.phone,
+                          onChanged: handlePhoneNumberChange,
                         ),
-                        keyboardType: TextInputType.phone,
-                        onChanged: handlePhoneNumberChange,
-                      ),
+                      //   Number Input
+                      if (sessionRequestStatus ==
+                              SessionRequestStatus.challenge ||
+                          sessionRequestStatus ==
+                              SessionRequestStatus.confirming ||
+                          sessionRequestStatus ==
+                              SessionRequestStatus.confirmFailed)
+                        CustomTextField(
+                          controller: challengeController,
+                          placeholder: 'Enter login code',
+                          focusNode: _challengeFocusNode, // Use the focus node
+                          autofocus:
+                              false, // We'll focus manually after animation
+                          enabled: sessionRequestStatus ==
+                              SessionRequestStatus.challenge,
+                          maxLength: 6,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(
+                              color: !challengeTouched
+                                  ? mutedColor
+                                  : challengeTouched && isValidChallenge
+                                      ? primaryColor
+                                      : warningColor,
+                            ),
+                          ),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: challengeTouched && isValidChallenge
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            letterSpacing: 2,
+                          ),
+                          placeholderStyle: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w500,
+                            color: textMutedColor,
+                            letterSpacing: 2,
+                          ),
+                          keyboardType: TextInputType.number,
+                          onChanged: handleChallengeChange,
+                        ),
                       const SizedBox(height: 16),
 
                       // Confirm Button
-                      WideButton(
-                        disabled: regionCode == null,
-                        onPressed:
-                            regionCode != null ? () => handleConfirm() : null,
-                        child: Text(
-                          'Confirm',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: CupertinoColors.white,
+                      if (sessionRequestStatus == SessionRequestStatus.none ||
+                          sessionRequestStatus ==
+                              SessionRequestStatus.pending ||
+                          sessionRequestStatus == SessionRequestStatus.failed)
+                        WideButton(
+                          disabled: !isValidPhoneNumber,
+                          onPressed: isValidPhoneNumber
+                              ? () => handleRequest(
+                                  phoneNumberController.value.text)
+                              : null,
+                          child: Text(
+                            sessionRequestStatus == SessionRequestStatus.pending
+                                ? 'Confirming...'
+                                : 'Confirm',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: CupertinoColors.white,
+                            ),
                           ),
                         ),
-                      ),
+                      // Challenge Confirm Button
+                      if (sessionRequestStatus ==
+                              SessionRequestStatus.challenge ||
+                          sessionRequestStatus ==
+                              SessionRequestStatus.confirming ||
+                          sessionRequestStatus ==
+                              SessionRequestStatus.confirmFailed)
+                        WideButton(
+                          disabled: !isValidChallenge,
+                          onPressed: isValidChallenge
+                              ? () =>
+                                  handleConfirm(challengeController.value.text)
+                              : null,
+                          child: Text(
+                            sessionRequestStatus ==
+                                    SessionRequestStatus.confirming
+                                ? 'Logging in...'
+                                : 'Login',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: CupertinoColors.white,
+                            ),
+                          ),
+                        ),
                       const SizedBox(height: 16),
                     ],
                   ),

@@ -9,32 +9,37 @@ import 'package:pay_app/widgets/coin_logo.dart';
 class OrderListItem extends StatelessWidget {
   final Order order;
   final Map<int, MenuItem> mappedItems;
+  final Function(Order) onPressed;
 
   const OrderListItem({
     super.key,
     required this.order,
     required this.mappedItems,
+    required this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      constraints: const BoxConstraints(
-        minHeight: 80,
-      ),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFF0E9F4),
+    return GestureDetector(
+      onTap: () => onPressed(order),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        constraints: const BoxConstraints(
+          minHeight: 80,
+        ),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Color(0xFFF0E9F4),
+            ),
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          _buildLeft(),
-          _buildRight(),
-        ],
+        child: Row(
+          children: [
+            _buildLeft(),
+            _buildRight(),
+          ],
+        ),
       ),
     );
   }

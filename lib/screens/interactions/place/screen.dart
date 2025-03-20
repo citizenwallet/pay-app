@@ -97,20 +97,13 @@ class _InteractionWithPlaceScreenState
   }
 
   void sendMessage(double amount, String? message) {
-    final last = orders.last;
+    final checkout = Checkout(
+      items: [],
+      manualAmount: amount,
+      message: message,
+    );
 
-    // setState(() {
-    //   orders.add(Order(
-    //     type: OrderType.app,
-    //     id: last.id + 1,
-    //     txHash:
-    //         '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-    //     createdAt: DateTime.now(),
-    //     account: EthereumAddress.fromHex('0xUserWallet123'),
-    //     description: message,
-    //     status: OrderStatus.success,
-    //   ));
-    // });
+    _ordersWithPlaceState.payOrder(checkout);
 
     Future.delayed(
       const Duration(milliseconds: 100),
@@ -137,6 +130,15 @@ class _InteractionWithPlaceScreenState
   final List<Order> orders = [
 ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
+  void handleOrderPressed(Order order) {
+    final navigator = GoRouter.of(context);
+
+    navigator.push(
+      '/${widget.myAddress}/place/${widget.slug}/order/${order.id}',
+      extra: order,
+    );
+  }
+
   void _dismissKeyboard() {
     FocusScope.of(context).unfocus();
   }
@@ -156,10 +158,10 @@ class _InteractionWithPlaceScreenState
             children: [
               ChatHeader(
                 onTapLeading: goBack,
-                imageUrl: place?.profile.imageUrl ?? place?.place.imageUrl,
-                placeName: place?.profile.name ?? place?.place.name ?? '',
-                placeDescription: place?.profile.description ??
-                    place?.place.description ??
+                imageUrl: place?.place.imageUrl ?? place?.profile?.imageUrl,
+                placeName: place?.place.name ?? place?.profile?.name ?? '',
+                placeDescription: place?.place.description ??
+                    place?.profile?.description ??
                     '',
               ),
               Expanded(
@@ -174,6 +176,7 @@ class _InteractionWithPlaceScreenState
                         key: Key('order-${order.id}'),
                         order: order,
                         mappedItems: place?.mappedItems ?? {},
+                        onPressed: handleOrderPressed,
                       ),
                   ],
                 ),

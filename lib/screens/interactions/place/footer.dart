@@ -66,6 +66,13 @@ class _FooterState extends State<Footer> {
     });
   }
 
+  void handleSend(double amount, String? message) {
+    widget.amountFocusNode.unfocus();
+    widget.messageFocusNode.unfocus();
+
+    widget.onSend(amount, message);
+  }
+
   // void _onMenuPressed() {
   //   final navigator = GoRouter.of(context);
 
@@ -128,7 +135,7 @@ class _FooterState extends State<Footer> {
                 SendButton(
                   amountController: _amountController,
                   messageController: _messageController,
-                  onTap: () => widget.onSend(
+                  onTap: () => handleSend(
                     double.parse(_amountController.text),
                     _messageController.text,
                   ),

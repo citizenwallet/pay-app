@@ -4,9 +4,13 @@ import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/routes/router.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
+import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
+import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/state.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:web3dart/web3dart.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +21,7 @@ void main() async {
 
   // await MainDB().init('main');
   await PreferencesService().init(await SharedPreferences.getInstance());
+  await SecureService().init(await SharedPreferences.getInstance());
 
   WalletService();
 
@@ -58,11 +63,22 @@ class _MyAppState extends State<MyApp> {
   final observers = <NavigatorObserver>[];
   late GoRouter router;
 
+  late OnboardingState _onboardingState;
+
   @override
   void initState() {
     super.initState();
 
-    router = createRouter(_rootNavigatorKey, _shellNavigatorKey, observers);
+    _onboardingState = context.read<OnboardingState>();
+
+    final accountAddress = _onboardingState.getAccountAddress();
+
+    router = createRouter(
+      _rootNavigatorKey,
+      _shellNavigatorKey,
+      observers,
+      accountAddress: accountAddress?.hexEip55,
+    );
   }
 
   @override

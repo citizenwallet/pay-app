@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pay_app/models/order.dart';
+import 'package:pay_app/screens/interactions/place/order/screen.dart';
 import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/state.dart';
 import 'package:provider/provider.dart';
@@ -21,10 +23,10 @@ GoRouter createRouter(
   GlobalKey<NavigatorState> rootNavigatorKey,
   GlobalKey<NavigatorState> shellNavigatorKey,
   List<NavigatorObserver> observers, {
-  String? userId,
+  String? accountAddress,
 }) =>
     GoRouter(
-      initialLocation: userId != null ? '/$userId' : '/',
+      initialLocation: accountAddress != null ? '/$accountAddress' : '/',
       debugLogDiagnostics: kDebugMode,
       navigatorKey: rootNavigatorKey,
       observers: observers,
@@ -34,10 +36,7 @@ GoRouter createRouter(
           path: '/',
           parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) {
-            return ChangeNotifierProvider(
-              create: (_) => OnboardingState(),
-              child: const OnboardingScreen(),
-            );
+            return const OnboardingScreen();
           },
         ),
         ShellRoute(
@@ -89,6 +88,15 @@ GoRouter createRouter(
                       path: '/menu',
                       builder: (context, state) {
                         return const PlaceMenuScreen();
+                      },
+                    ),
+                    GoRoute(
+                      name: 'PlaceOrder',
+                      path: '/order/:orderId',
+                      builder: (context, state) {
+                        final order = state.extra! as Order;
+
+                        return OrderScreen(order: order);
                       },
                     ),
                   ],

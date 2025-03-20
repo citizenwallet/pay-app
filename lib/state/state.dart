@@ -4,6 +4,7 @@ import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/checkout.dart';
 import 'package:pay_app/state/community.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
+import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/state/places/places.dart';
 import 'package:pay_app/state/profile.dart';
@@ -24,6 +25,9 @@ Widget provideAppState(
         ),
         ChangeNotifierProvider(
           create: (_) => WalletState(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => OnboardingState(),
         ),
       ],
       builder: builder,

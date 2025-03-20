@@ -179,10 +179,10 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
           children: [
             ChatHeader(
               loading: loading,
-              imageUrl: profile?.imageUrl ?? place?.imageUrl ?? '',
-              placeName: profile?.name ?? place?.name ?? '',
+              imageUrl: place?.imageUrl ?? profile?.imageUrl ?? '',
+              placeName: place?.name ?? profile?.name ?? '',
               placeDescription:
-                  profile?.description ?? place?.description ?? '',
+                  place?.description ?? profile?.description ?? '',
               onTapLeading: goBack,
             ),
 

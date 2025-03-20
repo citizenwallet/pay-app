@@ -58,7 +58,7 @@ dependencies:
   contractforge:
     git:
       url: https://github.com/citizenwallet/contractforge.git
-      ref: v0.0.11
+      ref: v0.0.16
   flutter_libphonenumber: ^2.5.0
   country_flags: ^3.2.0
   file_picker: ^8.1.7
@@ -128,6 +128,8 @@ flutter:
     - packages/contractforge/abi/CardManagerModule.json
     - packages/contractforge/abi/Safe.json
     - packages/contractforge/abi/CommunityModule.json
+    - packages/contractforge/abi/TwoFAFactory.json
+    - packages/contractforge/abi/SessionManagerModule.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

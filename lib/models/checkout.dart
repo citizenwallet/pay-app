@@ -3,15 +3,17 @@ import 'package:pay_app/models/menu_item.dart';
 
 class Checkout {
   final List<CheckoutItem> items;
+  final double? manualAmount;
+  final String? message;
 
   const Checkout({
     required this.items,
+    this.manualAmount,
+    this.message,
   });
 
-  double get total => items.fold(
-        0,
-        (sum, item) => sum + item.subtotal,
-      );
+  double get total =>
+      manualAmount ?? items.fold(0, (sum, item) => sum + item.subtotal);
 
   bool get isEmpty => items.isEmpty;
 

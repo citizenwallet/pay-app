@@ -211,7 +211,7 @@ class WalletService {
     final cachedChainId = _pref.getChainIdForAlias(config.community.alias);
     _chainId = cachedChainId != null
         ? BigInt.parse(cachedChainId)
-        : await _ethClient.getChainId();
+        : BigInt.from(token.chainId);
     await _pref.setChainIdForAlias(
         config.community.alias, _chainId!.toString());
 
@@ -1364,4 +1364,43 @@ class WalletService {
   void dispose() {
     _ethClient.dispose();
   }
+}
+
+/// given a tx hash, waits for the tx to be mined
+Future<bool> waitForTxSuccess(
+  Config config,
+  String txHash, {
+  int retryCount = 0,
+  int maxRetries = 20,
+}) async {
+  if (retryCount >= maxRetries) {
+    return false;
+  }
+
+  final rpc = config.getRpcUrl(config.getPrimaryToken().chainId.toString());
+
+  final client = Client();
+
+  final ethClient = Web3Client(rpc, client);
+
+  final receipt = await ethClient.getTransactionReceipt(txHash);
+  if (receipt?.status != true) {
+    // there is either no receipt or the tx is still not confirmed
+
+    // increment the retry count
+    final nextRetryCount = retryCount + 1;
+
+    // wait for a bit before retrying
+    await delay(Duration(milliseconds: 250 * (nextRetryCount)));
+
+    // retry
+    return waitForTxSuccess(
+      config,
+      txHash,
+      retryCount: nextRetryCount,
+      maxRetries: maxRetries,
+    );
+  }
+
+  return true;
 }
