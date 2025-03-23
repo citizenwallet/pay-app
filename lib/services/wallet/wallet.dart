@@ -1377,11 +1377,7 @@ Future<bool> waitForTxSuccess(
     return false;
   }
 
-  final rpc = config.getRpcUrl(config.getPrimaryToken().chainId.toString());
-
-  final client = Client();
-
-  final ethClient = Web3Client(rpc, client);
+  final ethClient = config.ethClient;
 
   final receipt = await ethClient.getTransactionReceipt(txHash);
   if (receipt?.status != true) {
@@ -1403,4 +1399,474 @@ Future<bool> waitForTxSuccess(
   }
 
   return true;
+}
+
+/// retrieves the current balance of the address
+Future<String> getBalance(
+  Config config,
+  EthereumAddress addr, {
+  BigInt? tokenId,
+}) async {
+  try {
+    final tokenAddress = config.getPrimaryToken().address;
+
+    final tokenStandard = config.getPrimaryToken().standard;
+
+    final chainId = config.getPrimaryToken().chainId;
+
+    final ethClient = config.ethClient;
+
+    BigInt balance = BigInt.zero;
+    switch (tokenStandard) {
+      case 'erc20':
+        // Create a new ERC20 token contract instance and initialize it.
+        final contractToken = ERC20Contract(chainId, ethClient, tokenAddress);
+        await contractToken.init();
+
+        balance = await contractToken.getBalance(addr.hexEip55).timeout(
+              const Duration(seconds: 4),
+            );
+
+        break;
+      case 'erc1155':
+        final contract1155Token =
+            ERC1155Contract(chainId, ethClient, tokenAddress);
+        await contract1155Token.init();
+
+        balance = await contract1155Token
+            .getBalance(addr.hexEip55, tokenId ?? BigInt.zero)
+            .timeout(
+              const Duration(seconds: 4),
+            );
+        break;
+    }
+
+    return balance.toString();
+  } catch (_) {}
+
+  return '0';
+}
+
+/// get profile data
+Future<ProfileV1?> getProfile(Config config, String addr) async {
+  try {
+    final url = await config.profileContract.getURL(addr);
+
+    final profileData = await config.ipfsService.get(url: '/$url');
+
+    final profile = ProfileV1.fromJson(profileData);
+
+    profile.parseIPFSImageURLs(config.ipfs.url);
+
+    return profile;
+  } catch (exception) {
+    //
+  }
+
+  return null;
+}
+
+/// profileExists checks whether there is a profile for this username
+Future<bool> profileExists(Config config, String username) async {
+  try {
+    final url = await config.profileContract.getURLFromUsername(username);
+
+    return url != '';
+  } catch (exception) {
+    //
+  }
+
+  return false;
+}
+
+/// get profile data
+Future<ProfileV1?> getProfileFromUrl(Config config, String url) async {
+  try {
+    final profileData = await config.ipfsService.get(url: '/$url');
+
+    final profile = ProfileV1.fromJson(profileData);
+
+    profile.parseIPFSImageURLs(config.ipfs.url);
+
+    return profile;
+  } catch (exception) {
+    //
+  }
+
+  return null;
+}
+
+/// set profile data
+Future<String?> setProfile(
+  Config config,
+  EthereumAddress account,
+  EthPrivateKey credentials,
+  ProfileRequest profile, {
+  required List<int> image,
+  required String fileType,
+}) async {
+  try {
+    final url =
+        '/v1/profiles/${config.profileContract.addr}/${account.hexEip55}';
+
+    final json = jsonEncode(
+      profile.toJson(),
+    );
+
+    final body = SignedRequest(convertBytesToUint8List(utf8.encode(json)));
+
+    final sig = await compute(
+        generateSignature, (jsonEncode(body.toJson()), credentials));
+
+    final resp = await config.engineIPFSService.filePut(
+      url: url,
+      file: image,
+      fileType: fileType,
+      headers: {
+        'X-Signature': sig,
+        'X-Address': account.hexEip55,
+      },
+      body: body.toJson(),
+    );
+
+    final String profileUrl = resp['object']['ipfs_url'];
+
+    final calldata = config.profileContract
+        .setCallData(account.hexEip55, profile.username, profileUrl);
+
+    final (_, userop) = await prepareUserop(
+      config,
+      account,
+      credentials,
+      [config.profileContract.addr],
+      [calldata],
+    );
+
+    final txHash = await submitUserop(config, userop);
+    if (txHash == null) {
+      throw Exception('profile update failed');
+    }
+
+    final success = await waitForTxSuccess(config, txHash);
+    if (!success) {
+      throw Exception('transaction failed');
+    }
+
+    return profileUrl;
+  } catch (_) {}
+
+  return null;
+}
+
+/// check if an account exists
+Future<bool> accountExists(
+  Config config,
+  EthereumAddress account,
+) async {
+  try {
+    final url = '/v1/accounts/${account.hexEip55}/exists';
+
+    await config.engine.get(
+      url: url,
+    );
+
+    return true;
+  } catch (_) {}
+
+  return false;
+}
+
+/// makes a jsonrpc request from this wallet
+Future<SUJSONRPCResponse> requestPaymaster(
+  Config config,
+  SUJSONRPCRequest body, {
+  bool legacy = false,
+}) async {
+  final rawResponse = await config.engineRPC.post(
+    body: body,
+  );
+
+  final response = SUJSONRPCResponse.fromJson(rawResponse);
+
+  if (response.error != null) {
+    throw Exception(response.error!.message);
+  }
+
+  return response;
+}
+
+/// return paymaster data for constructing a user op
+Future<(PaymasterData?, Exception?)> getPaymasterData(
+  Config config,
+  UserOp userop,
+  String eaddr,
+  String ptype, {
+  bool legacy = false,
+}) async {
+  final body = SUJSONRPCRequest(
+    method: 'pm_sponsorUserOperation',
+    params: [
+      userop.toJson(),
+      eaddr,
+      {'type': ptype},
+    ],
+  );
+
+  try {
+    final response = await requestPaymaster(config, body, legacy: legacy);
+
+    return (PaymasterData.fromJson(response.result), null);
+  } catch (exception) {
+    final strerr = exception.toString();
+
+    if (strerr.contains(gasFeeErrorMessage)) {
+      return (null, NetworkCongestedException());
+    }
+
+    if (strerr.contains(invalidBalanceErrorMessage)) {
+      return (null, NetworkInvalidBalanceException());
+    }
+  }
+
+  return (null, NetworkUnknownException());
+}
+
+/// return paymaster data for constructing a user op
+Future<(List<PaymasterData>, Exception?)> getPaymasterOOData(
+  Config config,
+  UserOp userop,
+  String eaddr,
+  String ptype, {
+  bool legacy = false,
+  int count = 1,
+}) async {
+  final body = SUJSONRPCRequest(
+    method: 'pm_ooSponsorUserOperation',
+    params: [
+      userop.toJson(),
+      eaddr,
+      {'type': ptype},
+      count,
+    ],
+  );
+
+  try {
+    final response = await requestPaymaster(config, body, legacy: legacy);
+
+    final List<dynamic> data = response.result;
+    if (data.isEmpty) {
+      throw Exception('empty paymaster data');
+    }
+
+    if (data.length != count) {
+      throw Exception('invalid paymaster data');
+    }
+
+    return (data.map((item) => PaymasterData.fromJson(item)).toList(), null);
+  } catch (exception) {
+    final strerr = exception.toString();
+
+    if (strerr.contains(gasFeeErrorMessage)) {
+      return (<PaymasterData>[], NetworkCongestedException());
+    }
+
+    if (strerr.contains(invalidBalanceErrorMessage)) {
+      return (<PaymasterData>[], NetworkInvalidBalanceException());
+    }
+  }
+
+  return (<PaymasterData>[], NetworkUnknownException());
+}
+
+/// prepare a userop for with calldata
+Future<(String, UserOp)> prepareUserop(
+  Config config,
+  EthereumAddress account,
+  EthPrivateKey credentials,
+  List<String> dest,
+  List<Uint8List> calldata, {
+  BigInt? customNonce,
+  bool deploy = true,
+}) async {
+  try {
+    // instantiate user op with default values
+    final userop = UserOp.defaultUserOp();
+
+    // use the account hex as the sender
+    userop.sender = account.hexEip55;
+
+    // determine the appropriate nonce
+    BigInt nonce = customNonce ??
+        await config.entryPointContract.getNonce(account.hexEip55);
+
+    // if it's the first user op from this account, we need to deploy the account contract
+    if (nonce == BigInt.zero && deploy) {
+      bool exists = false;
+      if (config.getPaymasterType() == 'payg') {
+        // solves edge case with legacy account migration
+        exists = await accountExists(config, account);
+      }
+
+      if (!exists) {
+        final accountFactory = config.accountFactoryContract;
+
+        // construct the init code to deploy the account
+        userop.initCode = await accountFactory.createAccountInitCode(
+          credentials.address.hexEip55,
+          BigInt.zero,
+        );
+      } else {
+        // try again in case the account was created in the meantime
+        nonce = customNonce ??
+            await config.entryPointContract.getNonce(account.hexEip55);
+      }
+    }
+
+    userop.nonce = nonce;
+
+    // set the appropriate call data for the transfer
+    // we need to call account.execute which will call token.transfer
+    switch (config.getPaymasterType()) {
+      case 'payg':
+      case 'cw':
+        userop.callData = dest.length > 1 && calldata.length > 1
+            ? config.accountContract.executeBatchCallData(
+                dest,
+                calldata,
+              )
+            : config.accountContract.executeCallData(
+                dest[0],
+                BigInt.zero,
+                calldata[0],
+              );
+        break;
+      case 'cw-safe':
+        userop.callData = config.safeAccountContract.executeCallData(
+          dest[0],
+          BigInt.zero,
+          calldata[0],
+        );
+        break;
+    }
+
+    // submit the user op to the paymaster in order to receive information to complete the user op
+    List<PaymasterData> paymasterOOData = [];
+    Exception? paymasterErr;
+    final useAccountNonce =
+        (nonce == BigInt.zero || config.getPaymasterType() == 'payg') && deploy;
+
+    if (useAccountNonce) {
+      // if it's the first user op, we should use a normal paymaster signature
+      PaymasterData? paymasterData;
+      (paymasterData, paymasterErr) = await getPaymasterData(
+        config,
+        userop,
+        config.entryPointContract.addr,
+        config.getPaymasterType(),
+      );
+
+      if (paymasterData != null) {
+        paymasterOOData.add(paymasterData);
+      }
+    } else {
+      // if it's not the first user op, we should use an out of order paymaster signature
+      (paymasterOOData, paymasterErr) = await getPaymasterOOData(
+        config,
+        userop,
+        config.entryPointContract.addr,
+        config.getPaymasterType(),
+      );
+    }
+
+    if (paymasterErr != null) {
+      throw paymasterErr;
+    }
+
+    if (paymasterOOData.isEmpty) {
+      throw Exception('unable to get paymaster data');
+    }
+
+    final paymasterData = paymasterOOData.first;
+    if (!useAccountNonce) {
+      // use the nonce received from the paymaster
+      userop.nonce = paymasterData.nonce;
+    }
+
+    // add the received data to the user op
+    userop.paymasterAndData = paymasterData.paymasterAndData;
+    userop.preVerificationGas = paymasterData.preVerificationGas;
+    userop.verificationGasLimit = paymasterData.verificationGasLimit;
+    userop.callGasLimit = paymasterData.callGasLimit;
+
+    // get the hash of the user op
+    final hash = await config.entryPointContract.getUserOpHash(userop);
+
+    // now we can sign the user op
+    userop.generateSignature(credentials, hash);
+
+    return (bytesToHex(hash, include0x: true), userop);
+  } catch (_) {
+    rethrow;
+  }
+}
+
+/// submit a user op
+Future<String?> submitUserop(
+  Config config,
+  UserOp userop, {
+  EthPrivateKey? customCredentials,
+  Map<String, dynamic>? data,
+  TransferData? extraData,
+}) async {
+  final entryPoint = config.entryPointContract;
+
+  final params = [userop.toJson(), entryPoint.addr];
+  if (data != null) {
+    params.add(data);
+  }
+  if (data != null && extraData != null) {
+    params.add(extraData.toJson());
+  }
+
+  final body = SUJSONRPCRequest(
+    method: 'eth_sendUserOperation',
+    params: params,
+  );
+
+  try {
+    final response = await requestBundler(config, body);
+
+    return response.result as String;
+  } catch (exception, s) {
+    debugPrint('error: $exception');
+    debugPrint('stack trace: $s');
+
+    final strerr = exception.toString();
+
+    if (strerr.contains(gasFeeErrorMessage)) {
+      throw NetworkCongestedException();
+    }
+
+    if (strerr.contains(invalidBalanceErrorMessage)) {
+      throw NetworkInvalidBalanceException();
+    }
+  }
+
+  throw NetworkUnknownException();
+}
+
+/// makes a jsonrpc request from this wallet
+Future<SUJSONRPCResponse> requestBundler(
+    Config config, SUJSONRPCRequest body) async {
+  final rawResponse = await config.engineRPC.post(
+    body: body,
+  );
+
+  final response = SUJSONRPCResponse.fromJson(rawResponse);
+
+  if (response.error != null) {
+    throw Exception(response.error!.message);
+  }
+
+  return response;
 }

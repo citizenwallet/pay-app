@@ -1,5 +1,13 @@
+import 'package:http/http.dart';
+import 'package:pay_app/services/api/api.dart';
 import 'package:pay_app/services/config/legacy.dart';
 import 'package:collection/collection.dart';
+import 'package:pay_app/services/wallet/contracts/account_factory.dart';
+import 'package:pay_app/services/wallet/contracts/entrypoint.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
+import 'package:pay_app/services/wallet/contracts/safe_account.dart';
+import 'package:pay_app/services/wallet/contracts/simple_account.dart';
+import 'package:web3dart/web3dart.dart';
 
 const String defaultPrimary = '#A256FF';
 
@@ -528,6 +536,18 @@ class Config {
   final int version;
   bool online;
 
+  late Web3Client ethClient;
+  late APIService ipfsService;
+  late APIService engine;
+  late APIService engineRPC;
+  late APIService engineIPFSService;
+
+  late StackupEntryPoint entryPointContract;
+  late AccountFactoryService accountFactoryContract;
+  late ProfileContract profileContract;
+  late SimpleAccount accountContract;
+  late SafeAccount safeAccountContract;
+
   Config({
     required this.community,
     required this.tokens,
@@ -540,7 +560,54 @@ class Config {
     required this.configLocation,
     this.version = 0,
     this.online = true,
-  });
+  }) {
+    final chain = chains.values.first;
+    final rpcUrl = getRpcUrl(chain.id.toString());
+    final nodeUrl = getNodeUrl(chain.id.toString());
+
+    final erc4337Config = getPrimaryAccountAbstractionConfig();
+
+    ethClient = Web3Client(rpcUrl, Client());
+    ipfsService = APIService(baseURL: ipfs.url);
+    engine = APIService(baseURL: nodeUrl);
+    engineRPC = APIService(baseURL: rpcUrl);
+    engineIPFSService = APIService(baseURL: nodeUrl);
+
+    entryPointContract = StackupEntryPoint(
+      chain.id,
+      ethClient,
+      erc4337Config.entrypointAddress,
+    );
+    entryPointContract.init();
+
+    accountFactoryContract = AccountFactoryService(
+      chain.id,
+      ethClient,
+      erc4337Config.accountFactoryAddress,
+    );
+    accountFactoryContract.init();
+
+    accountContract = SimpleAccount(
+      chain.id,
+      ethClient,
+      erc4337Config.accountFactoryAddress,
+    );
+    accountContract.init();
+
+    safeAccountContract = SafeAccount(
+      chain.id,
+      ethClient,
+      erc4337Config.accountFactoryAddress,
+    );
+    safeAccountContract.init();
+
+    profileContract = ProfileContract(
+      chain.id,
+      ethClient,
+      community.profile.address,
+    );
+    profileContract.init();
+  }
 
   factory Config.fromLegacy(LegacyConfig legacy) {
     final community = CommunityConfig(
@@ -710,6 +777,12 @@ class Config {
     }
 
     return primaryAccountAbstraction;
+  }
+
+  String getPaymasterType() {
+    final erc4337Config = getPrimaryAccountAbstractionConfig();
+
+    return erc4337Config.paymasterType;
   }
 
   CardsConfig? getPrimaryCardManager() {

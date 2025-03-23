@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/models/wallet.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
+import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/contracts/account_factory.dart';
 import 'package:pay_app/services/wallet/models/chain.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
@@ -13,7 +15,10 @@ class WalletState with ChangeNotifier {
 
   final ConfigService _configService = ConfigService();
   final WalletService _walletService = WalletService();
+  final SecureService _secureService = SecureService();
   final PreferencesService _preferencesService = PreferencesService();
+
+  late Config _config;
 
 // TODO: remove later
   final String _credentials = dotenv.env['PRIVATE_KEY']!;
@@ -37,6 +42,34 @@ class WalletState with ChangeNotifier {
   void dispose() {
     _mounted = false;
     super.dispose();
+  }
+
+  Future<void> init() async {
+    try {
+      final config = await _configService.getLocalConfig();
+      if (config == null) {
+        throw Exception('Community not found in local asset');
+      }
+
+      _config = config;
+
+      final credentials = _secureService.getCredentials();
+
+      if (credentials == null) {
+        throw Exception('Credentials not found');
+      }
+
+      final (account, _) = credentials;
+
+      _address = account;
+
+      await updateBalance();
+    } catch (e, s) {
+      debugPrint('error: $e');
+      debugPrint('stack trace: $s');
+      error = true;
+      safeNotifyListeners();
+    }
   }
 
   Future<String?> createWallet() async {
@@ -198,7 +231,7 @@ class WalletState with ChangeNotifier {
   }
 
   Future<void> updateBalance() async {
-    final balance = await _walletService.getBalance();
+    final balance = await getBalance(_config, _address!);
     wallet?.setBalance(balance);
     safeNotifyListeners();
   }

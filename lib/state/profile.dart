@@ -1,5 +1,8 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/services/config/config.dart';
+import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/photos/photos.dart';
+import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/utils/delay.dart';
@@ -7,15 +10,28 @@ import 'package:pay_app/utils/random.dart';
 
 class ProfileState with ChangeNotifier {
   // instantiate services here
-  final WalletService _walletService = WalletService();
+  final ConfigService _configService = ConfigService();
+  final SecureService _secureService = SecureService();
   final PhotosService _photosService = PhotosService();
 
   // private variables here
   bool _pauseProfileCreation = false;
   final String _account;
 
+  late Config _config;
+
   // constructor here
-  ProfileState(this._account);
+  ProfileState(this._account) {
+    init();
+  }
+
+  Future<void> init() async {
+    final config = await _configService.getLocalConfig();
+    if (config == null) {
+      throw Exception('Community not found in local asset');
+    }
+    _config = config;
+  }
 
   bool _mounted = true;
   void safeNotifyListeners() {
@@ -43,7 +59,7 @@ class ProfileState with ChangeNotifier {
     const baseDelay = Duration(milliseconds: 100);
 
     for (int tries = 1; tries <= maxTries; tries++) {
-      final exists = await _walletService.profileExists(username);
+      final exists = await profileExists(_config, username);
 
       if (!exists) {
         return username;
@@ -66,7 +82,7 @@ class ProfileState with ChangeNotifier {
       error = false;
       safeNotifyListeners();
 
-      final existingProfile = await _walletService.getProfile(_account);
+      final existingProfile = await getProfile(_config, _account);
 
       if (existingProfile != null) {
         profile = existingProfile;
@@ -79,10 +95,15 @@ class ProfileState with ChangeNotifier {
         return;
       }
 
-      final address = _walletService.account.hexEip55;
+      final credentials = _secureService.getCredentials();
+      if (credentials == null) {
+        throw Exception('Credentials not found');
+      }
+
+      final (address, privateKey) = credentials;
 
       profile.username = username;
-      profile.account = address;
+      profile.account = address.hexEip55;
       profile.name = username.isNotEmpty
           ? username[0].toUpperCase() + username.substring(1)
           : 'Anonymous';
@@ -93,7 +114,7 @@ class ProfileState with ChangeNotifier {
         return;
       }
 
-      final exists = await _walletService.createAccount();
+      final exists = await accountExists(_config, address);
       if (!exists) {
         throw Exception('Failed to create account');
       }
@@ -102,7 +123,10 @@ class ProfileState with ChangeNotifier {
         return;
       }
 
-      final url = await _walletService.setProfile(
+      final url = await setProfile(
+        _config,
+        address,
+        privateKey,
         ProfileRequest.fromProfileV1(profile),
         image: await _photosService.photoFromBundle('assets/icons/profile.png'),
         fileType: '.png',
@@ -115,7 +139,7 @@ class ProfileState with ChangeNotifier {
         return;
       }
 
-      final newProfile = await _walletService.getProfileFromUrl(url);
+      final newProfile = await getProfileFromUrl(_config, url);
       if (newProfile == null) {
         throw Exception('Failed to get profile from url $url');
       }
