@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/models/wallet.dart';
@@ -11,8 +13,6 @@ import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:web3dart/web3dart.dart';
 
 class WalletState with ChangeNotifier {
-  CWWallet? wallet;
-
   final ConfigService _configService = ConfigService();
   final WalletService _walletService = WalletService();
   final SecureService _secureService = SecureService();
@@ -27,6 +27,11 @@ class WalletState with ChangeNotifier {
 // TODO: remove later
   EthereumAddress? _address;
   EthereumAddress? get address => _address;
+
+  String _balance = '0';
+  int _decimals = 6;
+  double get doubleBalance => double.tryParse(_balance) ?? 0.0;
+  double get balance => doubleBalance / pow(10, _decimals);
 
   bool loading = false;
   bool error = false;
@@ -54,6 +59,7 @@ class WalletState with ChangeNotifier {
       await config.initContracts();
 
       _config = config;
+      _decimals = config.getPrimaryToken().decimals;
 
       final credentials = _secureService.getCredentials();
 
@@ -111,17 +117,17 @@ class WalletState with ChangeNotifier {
       _address = address;
       safeNotifyListeners();
 
-      wallet = CWWallet(
-        '0.0',
-        name: 'New ${token.symbol} Account',
-        address: address.hexEip55,
-        alias: config.community.alias,
-        account: address.hexEip55,
-        currencyName: token.name,
-        symbol: token.symbol,
-        currencyLogo: config.community.logo,
-        decimalDigits: token.decimals,
-      );
+      // wallet = CWWallet(
+      //   '0.0',
+      //   name: 'New ${token.symbol} Account',
+      //   address: address.hexEip55,
+      //   alias: config.community.alias,
+      //   account: address.hexEip55,
+      //   currencyName: token.name,
+      //   symbol: token.symbol,
+      //   currencyLogo: config.community.logo,
+      //   decimalDigits: token.decimals,
+      // );
 
       await _preferencesService.setLastWallet(address.hexEip55);
       await _preferencesService.setLastAlias(config.community.alias);
@@ -168,17 +174,17 @@ class WalletState with ChangeNotifier {
         debugPrint('wallet service init: $success');
       });
 
-      wallet = CWWallet(
-        '0.0',
-        name: '${config.community.alias} Wallet',
-        address: address.hexEip55,
-        alias: config.community.alias,
-        account: address.hexEip55,
-        currencyName: token.name,
-        symbol: token.symbol,
-        currencyLogo: config.community.logo,
-        decimalDigits: nativeCurrency.decimals,
-      );
+      // wallet = CWWallet(
+      //   '0.0',
+      //   name: '${config.community.alias} Wallet',
+      //   address: address.hexEip55,
+      //   alias: config.community.alias,
+      //   account: address.hexEip55,
+      //   currencyName: token.name,
+      //   symbol: token.symbol,
+      //   currencyLogo: config.community.logo,
+      //   decimalDigits: nativeCurrency.decimals,
+      // );
 
       updateBalance();
 
@@ -251,8 +257,7 @@ class WalletState with ChangeNotifier {
   }
 
   Future<void> updateBalance() async {
-    final balance = await getBalance(_config, _address!);
-    wallet?.setBalance(balance);
+    _balance = await getBalance(_config, _address!);
     safeNotifyListeners();
   }
 }

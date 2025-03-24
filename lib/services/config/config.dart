@@ -5,6 +5,8 @@ import 'package:collection/collection.dart';
 import 'package:pay_app/services/wallet/contracts/account_factory.dart';
 import 'package:pay_app/services/wallet/contracts/communityModule.dart';
 import 'package:pay_app/services/wallet/contracts/entrypoint.dart';
+import 'package:pay_app/services/wallet/contracts/erc1155.dart';
+import 'package:pay_app/services/wallet/contracts/erc20.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/contracts/safe_account.dart';
 import 'package:pay_app/services/wallet/contracts/session_manager_module.dart';
@@ -550,6 +552,9 @@ class Config {
   late ProfileContract profileContract;
   late SessionManagerModuleService sessionManagerModuleContract;
 
+  late ERC20Contract token20Contract;
+  late ERC1155Contract token1155Contract;
+
   Config({
     required this.community,
     required this.tokens,
@@ -599,6 +604,20 @@ class Config {
       erc4337Config.accountFactoryAddress,
     );
     await accountFactoryContract.init();
+
+    token20Contract = ERC20Contract(
+      chain.id,
+      ethClient,
+      getPrimaryToken().address,
+    );
+    await token20Contract.init();
+
+    token1155Contract = ERC1155Contract(
+      chain.id,
+      ethClient,
+      getPrimaryToken().address,
+    );
+    await token1155Contract.init();
 
     profileContract = ProfileContract(
       chain.id,

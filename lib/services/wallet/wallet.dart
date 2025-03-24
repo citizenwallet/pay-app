@@ -1401,6 +1401,44 @@ Future<bool> waitForTxSuccess(
   return true;
 }
 
+/// construct transfer call data
+Uint8List tokenTransferCallData(
+  Config config,
+  EthereumAddress from,
+  String to,
+  BigInt amount, {
+  BigInt? tokenId,
+}) {
+  if (config.getPrimaryToken().standard == 'erc20') {
+    return config.token20Contract.transferCallData(to, amount);
+  } else if (config.getPrimaryToken().standard == 'erc1155') {
+    return config.token1155Contract
+        .transferCallData(from.hexEip55, to, tokenId ?? BigInt.zero, amount);
+  }
+
+  return Uint8List.fromList([]);
+}
+
+String transferEventStringSignature(Config config) {
+  if (config.getPrimaryToken().standard == 'erc20') {
+    return config.token20Contract.transferEventStringSignature;
+  } else if (config.getPrimaryToken().standard == 'erc1155') {
+    return config.token1155Contract.transferEventStringSignature;
+  }
+
+  return '';
+}
+
+String transferEventSignature(Config config) {
+  if (config.getPrimaryToken().standard == 'erc20') {
+    return config.token20Contract.transferEventSignature;
+  } else if (config.getPrimaryToken().standard == 'erc1155') {
+    return config.token1155Contract.transferEventSignature;
+  }
+
+  return '';
+}
+
 /// retrieves the current balance of the address
 Future<String> getBalance(
   Config config,
@@ -1408,32 +1446,19 @@ Future<String> getBalance(
   BigInt? tokenId,
 }) async {
   try {
-    final tokenAddress = config.getPrimaryToken().address;
-
     final tokenStandard = config.getPrimaryToken().standard;
-
-    final chainId = config.getPrimaryToken().chainId;
-
-    final ethClient = config.ethClient;
 
     BigInt balance = BigInt.zero;
     switch (tokenStandard) {
       case 'erc20':
-        // Create a new ERC20 token contract instance and initialize it.
-        final contractToken = ERC20Contract(chainId, ethClient, tokenAddress);
-        await contractToken.init();
-
-        balance = await contractToken.getBalance(addr.hexEip55).timeout(
-              const Duration(seconds: 4),
-            );
+        balance =
+            await config.token20Contract.getBalance(addr.hexEip55).timeout(
+                  const Duration(seconds: 4),
+                );
 
         break;
       case 'erc1155':
-        final contract1155Token =
-            ERC1155Contract(chainId, ethClient, tokenAddress);
-        await contract1155Token.init();
-
-        balance = await contract1155Token
+        balance = await config.token1155Contract
             .getBalance(addr.hexEip55, tokenId ?? BigInt.zero)
             .timeout(
               const Duration(seconds: 4),
@@ -1442,7 +1467,10 @@ Future<String> getBalance(
     }
 
     return balance.toString();
-  } catch (_) {}
+  } catch (e, s) {
+    debugPrint('error: $e');
+    debugPrint('stack trace: $s');
+  }
 
   return '0';
 }
@@ -1922,9 +1950,12 @@ Future<SUJSONRPCResponse> requestBundler(
     body: body,
   );
 
+  debugPrint('rawResponse: ${rawResponse.toString()}');
+
   final response = SUJSONRPCResponse.fromJson(rawResponse);
 
   if (response.error != null) {
+    debugPrint('error: ${response.error!.message}');
     throw Exception(response.error!.message);
   }
 

@@ -333,8 +333,7 @@ class CurrentBalance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final balance =
-        context.watch<WalletState>().wallet?.formattedBalance ?? 0.00;
+    final balance = context.watch<WalletState>().balance;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

@@ -34,7 +34,7 @@ class _ProfileBarState extends State<ProfileBar> {
     final theme = CupertinoTheme.of(context);
 
     final walletState = context.watch<WalletState>();
-    final balance = walletState.wallet?.formattedBalance.toString();
+    final balance = walletState.balance.toStringAsFixed(2);
 
     final profile = context.watch<ProfileState>().profile;
 
@@ -68,7 +68,7 @@ class _ProfileBarState extends State<ProfileBar> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Balance(balance: balance ?? '0.00'),
+                        Balance(balance: balance),
                         const SizedBox(width: 16),
                         TopUpButton(),
                       ],

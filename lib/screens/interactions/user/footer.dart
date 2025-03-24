@@ -84,8 +84,7 @@ class _FooterState extends State<Footer> {
 
   @override
   Widget build(BuildContext context) {
-    final balance =
-        context.watch<WalletState>().wallet?.formattedBalance ?? 0.00;
+    final balance = context.watch<WalletState>().balance;
 
     final toSendAmount =
         context.watch<TransactionsWithUserState>().toSendAmount;
