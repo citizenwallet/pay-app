@@ -35,6 +35,8 @@ class CommunityState with ChangeNotifier {
         throw Exception('Community not found in local asset');
       }
 
+      await config.initContracts();
+
       // Update state with local data
       community = config;
       safeNotifyListeners();

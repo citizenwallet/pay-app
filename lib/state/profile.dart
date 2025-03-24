@@ -30,6 +30,9 @@ class ProfileState with ChangeNotifier {
     if (config == null) {
       throw Exception('Community not found in local asset');
     }
+
+    await config.initContracts();
+
     _config = config;
   }
 
@@ -116,7 +119,7 @@ class ProfileState with ChangeNotifier {
 
       final exists = await accountExists(_config, address);
       if (!exists) {
-        throw Exception('Failed to create account');
+        await createAccount(_config, address, privateKey);
       }
 
       if (_pauseProfileCreation) {

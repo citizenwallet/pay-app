@@ -139,6 +139,8 @@ class CommunityTable extends DBTable {
       return;
     }
 
+    await localConfig.initContracts();
+
     // Check if the table is empty
     final count =
         Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM $name'));

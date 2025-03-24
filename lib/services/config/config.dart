@@ -3,9 +3,11 @@ import 'package:pay_app/services/api/api.dart';
 import 'package:pay_app/services/config/legacy.dart';
 import 'package:collection/collection.dart';
 import 'package:pay_app/services/wallet/contracts/account_factory.dart';
+import 'package:pay_app/services/wallet/contracts/communityModule.dart';
 import 'package:pay_app/services/wallet/contracts/entrypoint.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/contracts/safe_account.dart';
+import 'package:pay_app/services/wallet/contracts/session_manager_module.dart';
 import 'package:pay_app/services/wallet/contracts/simple_account.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -543,10 +545,10 @@ class Config {
   late APIService engineIPFSService;
 
   late StackupEntryPoint entryPointContract;
+  late CommunityModule communityModuleContract;
   late AccountFactoryService accountFactoryContract;
   late ProfileContract profileContract;
-  late SimpleAccount accountContract;
-  late SafeAccount safeAccountContract;
+  late SessionManagerModuleService sessionManagerModuleContract;
 
   Config({
     required this.community,
@@ -565,48 +567,78 @@ class Config {
     final rpcUrl = getRpcUrl(chain.id.toString());
     final nodeUrl = getNodeUrl(chain.id.toString());
 
-    final erc4337Config = getPrimaryAccountAbstractionConfig();
-
     ethClient = Web3Client(rpcUrl, Client());
     ipfsService = APIService(baseURL: ipfs.url);
     engine = APIService(baseURL: nodeUrl);
     engineRPC = APIService(baseURL: rpcUrl);
     engineIPFSService = APIService(baseURL: nodeUrl);
+  }
+
+  Future<void> initContracts() async {
+    final chain = chains.values.first;
+
+    final erc4337Config = getPrimaryAccountAbstractionConfig();
 
     entryPointContract = StackupEntryPoint(
       chain.id,
       ethClient,
       erc4337Config.entrypointAddress,
     );
-    entryPointContract.init();
+    await entryPointContract.init();
+
+    communityModuleContract = CommunityModule(
+      chain.id,
+      ethClient,
+      erc4337Config.entrypointAddress,
+    );
+    await communityModuleContract.init();
 
     accountFactoryContract = AccountFactoryService(
       chain.id,
       ethClient,
       erc4337Config.accountFactoryAddress,
     );
-    accountFactoryContract.init();
-
-    accountContract = SimpleAccount(
-      chain.id,
-      ethClient,
-      erc4337Config.accountFactoryAddress,
-    );
-    accountContract.init();
-
-    safeAccountContract = SafeAccount(
-      chain.id,
-      ethClient,
-      erc4337Config.accountFactoryAddress,
-    );
-    safeAccountContract.init();
+    await accountFactoryContract.init();
 
     profileContract = ProfileContract(
       chain.id,
       ethClient,
       community.profile.address,
     );
-    profileContract.init();
+    await profileContract.init();
+
+    sessionManagerModuleContract = SessionManagerModuleService(
+      chain.id,
+      ethClient,
+      "0x10772bc224786D2743d2c8C41f4e946242Ebac04",
+    );
+    await sessionManagerModuleContract.init();
+  }
+
+  Future<SimpleAccount> getSimpleAccount(String address) async {
+    final chain = chains.values.first;
+
+    final account = SimpleAccount(
+      chain.id,
+      ethClient,
+      address,
+    );
+    await account.init();
+
+    return account;
+  }
+
+  Future<SafeAccount> getSafeAccount(String address) async {
+    final chain = chains.values.first;
+
+    final account = SafeAccount(
+      chain.id,
+      ethClient,
+      address,
+    );
+    await account.init();
+
+    return account;
   }
 
   factory Config.fromLegacy(LegacyConfig legacy) {

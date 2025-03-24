@@ -42,12 +42,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       _onboardingState = context.read<OnboardingState>();
       _communityState = context.read<CommunityState>();
       onLoad();
-
-      // Start the animation
-      _animationController.forward().then((_) {
-        // Focus the text field after animation completes
-        FocusScope.of(context).requestFocus(_focusNode);
-      });
     });
   }
 
@@ -58,7 +52,22 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   String? _previousChallenge;
 
   void onLoad() async {
+    final navigator = GoRouter.of(context);
+
+    await _onboardingState.init();
     await _communityState.fetchCommunity();
+
+    final account = await _onboardingState.isSessionExpired();
+    if (account != null) {
+      navigator.go('/${account.hexEip55}');
+      return;
+    }
+
+    // Start the animation
+    _animationController.forward().then((_) {
+      // Focus the text field after animation completes
+      FocusScope.of(context).requestFocus(_focusNode);
+    });
   }
 
   @override

@@ -1553,7 +1553,10 @@ Future<String?> setProfile(
     }
 
     return profileUrl;
-  } catch (_) {}
+  } catch (e, s) {
+    debugPrint('error: $e');
+    debugPrint('stack trace: $s');
+  }
 
   return null;
 }
@@ -1572,6 +1575,57 @@ Future<bool> accountExists(
 
     return true;
   } catch (_) {}
+
+  return false;
+}
+
+/// create an account
+Future<bool> createAccount(
+  Config config,
+  EthereumAddress account,
+  EthPrivateKey credentials,
+) async {
+  try {
+    final exists = await accountExists(config, account);
+    if (exists) {
+      return true;
+    }
+
+    final simpleAccount = await config.getSimpleAccount(account.hexEip55);
+
+    Uint8List calldata = simpleAccount.transferOwnershipCallData(
+      credentials.address.hexEip55,
+    );
+    if (config.getPaymasterType() == 'cw-safe') {
+      calldata = config.communityModuleContract.getChainIdCallData();
+    }
+
+    final (_, userop) = await prepareUserop(
+      config,
+      account,
+      credentials,
+      [account.hexEip55],
+      [calldata],
+    );
+
+    final txHash = await submitUserop(
+      config,
+      userop,
+    );
+    if (txHash == null) {
+      throw Exception('failed to submit user op');
+    }
+
+    final success = await waitForTxSuccess(config, txHash);
+    if (!success) {
+      throw Exception('transaction failed');
+    }
+
+    return true;
+  } catch (e, s) {
+    debugPrint('error: $e');
+    debugPrint('stack trace: $s');
+  }
 
   return false;
 }
@@ -1729,24 +1783,31 @@ Future<(String, UserOp)> prepareUserop(
     switch (config.getPaymasterType()) {
       case 'payg':
       case 'cw':
-        userop.callData = dest.length > 1 && calldata.length > 1
-            ? config.accountContract.executeBatchCallData(
-                dest,
-                calldata,
-              )
-            : config.accountContract.executeCallData(
-                dest[0],
-                BigInt.zero,
-                calldata[0],
-              );
-        break;
+        {
+          final simpleAccount = await config.getSimpleAccount(account.hexEip55);
+
+          userop.callData = dest.length > 1 && calldata.length > 1
+              ? simpleAccount.executeBatchCallData(
+                  dest,
+                  calldata,
+                )
+              : simpleAccount.executeCallData(
+                  dest[0],
+                  BigInt.zero,
+                  calldata[0],
+                );
+          break;
+        }
       case 'cw-safe':
-        userop.callData = config.safeAccountContract.executeCallData(
-          dest[0],
-          BigInt.zero,
-          calldata[0],
-        );
-        break;
+        {
+          final safeAccount = await config.getSafeAccount(account.hexEip55);
+          userop.callData = safeAccount.executeCallData(
+            dest[0],
+            BigInt.zero,
+            calldata[0],
+          );
+          break;
+        }
     }
 
     // submit the user op to the paymaster in order to receive information to complete the user op
@@ -1814,7 +1875,6 @@ Future<(String, UserOp)> prepareUserop(
 Future<String?> submitUserop(
   Config config,
   UserOp userop, {
-  EthPrivateKey? customCredentials,
   Map<String, dynamic>? data,
   TransferData? extraData,
 }) async {

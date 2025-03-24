@@ -78,12 +78,12 @@ class SecureService {
   }
 
   // Check if a private key is stored
-  bool hasPrivateKey() {
+  bool hasCredentials() {
     return _preferences.containsKey(_privateKeyKey);
   }
 
   // Delete the stored private key
-  Future deletePrivateKey() async {
+  Future clearCredentials() async {
     await _preferences.remove(_privateKeyKey);
   }
 }

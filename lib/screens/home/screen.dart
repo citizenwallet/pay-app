@@ -59,7 +59,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> onLoad() async {
-    await _walletState.init();
+    final navigator = GoRouter.of(context);
+
+    final success = await _walletState.init();
+    if (!success) {
+      navigator.go('/');
+      return;
+    }
 
     await _walletState.updateBalance();
     await _interactionState.getInteractions();

@@ -54,12 +54,22 @@ class OnboardingState with ChangeNotifier {
       throw Exception('Community not found in local asset');
     }
 
+    await config.initContracts();
+
     _config = config;
 
     _twoFAFactoryService = await twoFAFactoryServiceFromConfig(
       _config,
-      customTwoFAFactory: '0xe285E1Ef2198bcC44C83D9FaE56a73Ed548dCDC8',
+      customTwoFAFactory: '0xB5617ccd861Fa3A0eA66f063e239d0763C3C311A',
     );
+
+    final credentials = _secureService.getCredentials();
+    if (credentials != null) {
+      final (account, key) = credentials;
+
+      print('account: ${account.hexEip55}');
+      print('key: ${key.address.hexEip55}');
+    }
 
     await _twoFAFactoryService.init();
   }
@@ -96,10 +106,10 @@ class OnboardingState with ChangeNotifier {
     return account;
   }
 
-  Future<bool> isSessionExpired() async {
+  Future<EthereumAddress?> isSessionExpired() async {
     final credentials = _secureService.getCredentials();
     if (credentials == null) {
-      return false;
+      return null;
     }
 
     final (account, privateKey) = credentials;
@@ -112,11 +122,13 @@ class OnboardingState with ChangeNotifier {
       privateKey.address,
     );
 
+    print('isExpired: $isExpired');
+
     if (isExpired) {
-      return false;
+      return null;
     }
 
-    return true;
+    return account;
   }
 
   // state methods here
@@ -176,6 +188,9 @@ class OnboardingState with ChangeNotifier {
         throw Exception('Session request hash not found');
       }
 
+      print('confirming session');
+      print('challenge: $challenge');
+
       sessionRequestStatus = SessionRequestStatus.confirming;
       safeNotifyListeners();
 
@@ -199,7 +214,7 @@ class OnboardingState with ChangeNotifier {
       sessionRequestStatus = SessionRequestStatus.confirmed;
       safeNotifyListeners();
 
-      // _sessionRequestPrivateKey = null;
+      _sessionRequestPrivateKey = null;
     } catch (e, s) {
       debugPrint('error: $e');
       debugPrint('stack trace: $s');

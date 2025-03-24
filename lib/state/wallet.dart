@@ -44,12 +44,14 @@ class WalletState with ChangeNotifier {
     super.dispose();
   }
 
-  Future<void> init() async {
+  Future<bool> init() async {
     try {
       final config = await _configService.getLocalConfig();
       if (config == null) {
         throw Exception('Community not found in local asset');
       }
+
+      await config.initContracts();
 
       _config = config;
 
@@ -59,17 +61,31 @@ class WalletState with ChangeNotifier {
         throw Exception('Credentials not found');
       }
 
-      final (account, _) = credentials;
+      final (account, key) = credentials;
 
       _address = account;
 
+      final expired = await _config.sessionManagerModuleContract.isExpired(
+        account,
+        key.address,
+      );
+
+      if (expired) {
+        await _secureService.clearCredentials();
+        return false;
+      }
+
       await updateBalance();
+
+      return true;
     } catch (e, s) {
       debugPrint('error: $e');
       debugPrint('stack trace: $s');
       error = true;
       safeNotifyListeners();
     }
+
+    return false;
   }
 
   Future<String?> createWallet() async {
@@ -83,6 +99,8 @@ class WalletState with ChangeNotifier {
       if (config == null) {
         throw Exception('Community not found in local asset');
       }
+
+      await config.initContracts();
 
       EthPrivateKey privateKey = EthPrivateKey.fromHex(credentials);
       final accFactory = await accountFactoryServiceFromConfig(config);
@@ -130,6 +148,8 @@ class WalletState with ChangeNotifier {
       if (config == null) {
         throw Exception('Community not found in local asset');
       }
+
+      await config.initContracts();
 
       EthPrivateKey privateKey = EthPrivateKey.fromHex(credentials);
       final accFactory = await accountFactoryServiceFromConfig(config);

@@ -85,9 +85,9 @@ class SessionService {
       final sessionOwner = privateKey.address.hexEip55;
       final sessionType = 'sms';
 
-      // Generate expiry timestamp (current time + 2 minutes in seconds)
-      final expiry =
-          (DateTime.now().millisecondsSinceEpoch ~/ 1000) + 120; // 2 minutes
+      // Generate expiry timestamp (current time + 365 days in seconds)
+      final expiry = (DateTime.now().millisecondsSinceEpoch ~/ 1000) +
+          (60 * 60 * 24 * 365); // 365 days
 
       // Generate salt
       final salt = generateSessionSalt(source, sessionType);
