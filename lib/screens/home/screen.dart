@@ -1,10 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/models/place.dart';
 import 'package:pay_app/models/user.dart';
+import 'package:pay_app/screens/home/contact_list_item.dart';
+import 'package:pay_app/services/contacts/contacts.dart';
+import 'package:pay_app/state/contacts/contacts.dart';
+import 'package:pay_app/state/contacts/selectors.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
 import 'package:pay_app/state/interactions/selectors.dart';
 import 'package:pay_app/state/places/places.dart';
@@ -41,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late PlacesState _placesState;
   late WalletState _walletState;
   late ProfileState _profileState;
+  late ContactsState _contactsState;
 
   @override
   void initState() {
@@ -54,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _placesState = context.read<PlacesState>();
       _walletState = context.read<WalletState>();
       _profileState = context.read<ProfileState>();
+      _contactsState = context.read<ContactsState>();
       onLoad();
     });
   }
@@ -91,6 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _searchListener() {
     if (_searchFocusNode.hasFocus) {
+      _contactsState.fetchContacts();
       setState(() {
         isKeyboardVisible = true;
       });
@@ -125,16 +133,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void goToChatHistory(String? myAddress, Interaction interaction) {
     if (interaction.isPlace && interaction.placeId != null) {
-      _goToInteractionWithPlace(
+      handleInteractionWithPlace(
         myAddress,
         interaction.place?.slug ?? '',
       );
     } else if (!interaction.isPlace) {
-      _goToInteractionWithUser(myAddress, interaction.withAccount);
+      handleInteractionWithUser(myAddress, interaction.withAccount);
     }
   }
 
-  void _goToInteractionWithPlace(
+  void handleInteractionWithPlace(
     String? myAddress,
     String slug,
   ) {
@@ -142,15 +150,39 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
+    _contactsState.clearContacts();
+
     final navigator = GoRouter.of(context);
 
     navigator.push('/$myAddress/place/$slug');
   }
 
-  void _goToInteractionWithUser(String? myAddress, String account) {
+  Future<void> handleInteractionWithContact(
+      String? myAddress, SimpleContact contact) async {
     if (myAddress == null) {
       return;
     }
+
+    _contactsState.clearContacts();
+
+    final account = await _contactsState.getContactAddress(
+      contact.phone,
+      'sms',
+    );
+
+    if (account == null) {
+      return;
+    }
+
+    handleInteractionWithUser(myAddress, account.hexEip55);
+  }
+
+  void handleInteractionWithUser(String? myAddress, String account) {
+    if (myAddress == null) {
+      return;
+    }
+
+    _contactsState.clearContacts();
 
     final navigator = GoRouter.of(context);
 
@@ -160,6 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void handleSearch(String query) {
     _interactionState.setSearchQuery(query);
     _placesState.setSearchQuery(query);
+    _contactsState.setSearchQuery(query);
   }
 
   void handleInteractionTap(String? myAddress, Interaction interaction) {
@@ -177,6 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final interactions = context.select(sortByUnreadAndDate);
     final places = context.select(selectFilteredPlaces);
+    final contacts = context.select(selectFilteredContacts);
 
     final myAddress =
         context.select((WalletState state) => state.address?.hexEip55);
@@ -242,13 +276,26 @@ class _HomeScreenState extends State<HomeScreen> {
                         childCount: places.length,
                         (context, index) => PlaceListItem(
                           place: places[index],
-                          onTap: (place) => _goToInteractionWithPlace(
+                          onTap: (place) => handleInteractionWithPlace(
                             myAddress,
                             place.slug,
                           ),
                         ),
                       ),
                     ),
+                    if (contacts.isNotEmpty)
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          childCount: contacts.length,
+                          (context, index) => ContactListItem(
+                            contact: contacts[index],
+                            onTap: (contact) => handleInteractionWithContact(
+                              myAddress,
+                              contact,
+                            ),
+                          ),
+                        ),
+                      ),
                     SliverToBoxAdapter(
                       child: SizedBox(
                         height: 10,

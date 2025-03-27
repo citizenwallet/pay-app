@@ -1,5 +1,5 @@
+import 'package:pay_app/services/db/app/contacts.dart';
 import 'package:pay_app/services/db/db.dart';
-import 'package:pay_app/services/db/app/communities.dart';
 import 'package:sqflite/sqflite.dart';
 
 class AppDBService extends DBService {
@@ -11,20 +11,20 @@ class AppDBService extends DBService {
 
   AppDBService._internal();
 
-  late CommunityTable communities;
+  late ContactsTable contacts;
 
   @override
   Future<Database> openDB(String path) async {
     final options = OpenDatabaseOptions(
       onConfigure: (db) async {
-        communities = CommunityTable(db);
+        contacts = ContactsTable(db);
       },
       onCreate: (db, version) async {
-        await communities.create(db);
+        await contacts.create(db);
         return;
       },
       onUpgrade: (db, oldVersion, newVersion) async {
-        await communities.migrate(db, oldVersion, newVersion);
+        await contacts.migrate(db, oldVersion, newVersion);
         return;
       },
       version: 1,
@@ -37,5 +37,4 @@ class AppDBService extends DBService {
 
     return db;
   }
-  
 }

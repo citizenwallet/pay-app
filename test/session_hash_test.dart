@@ -26,10 +26,10 @@ void main() {
           '0x79d7d5c7ac68a4c4bf9bf7402aea177c3c78def1df5f683693f472aea3017af2';
 
       // Generate salt
-      final salt = sessionService.generateSessionSalt(source, type);
+      final salt = generateSessionSalt(source, type);
 
       // When
-      final hash = sessionService.generateSessionRequestHash(
+      final hash = generateSessionRequestHash(
         provider,
         owner,
         salt,
@@ -47,8 +47,8 @@ void main() {
       final type = 'sms';
 
       // When
-      final salt1 = sessionService.generateSessionSalt(source, type);
-      final salt2 = sessionService.generateSessionSalt(source, type);
+      final salt1 = generateSessionSalt(source, type);
+      final salt2 = generateSessionSalt(source, type);
 
       // Then
       expect(bytesToHex(salt1), equals(bytesToHex(salt2)));
@@ -60,17 +60,17 @@ void main() {
       final owner = '0x7aCA83D8270d61824195d459Fef373D9B61A83E0';
       final source = '+32478123123';
       final type = 'sms';
-      final salt = sessionService.generateSessionSalt(source, type);
+      final salt = generateSessionSalt(source, type);
 
       // When
-      final hash1 = sessionService.generateSessionRequestHash(
+      final hash1 = generateSessionRequestHash(
         provider,
         owner,
         salt,
         1741704470,
       );
 
-      final hash2 = sessionService.generateSessionRequestHash(
+      final hash2 = generateSessionRequestHash(
         provider,
         owner,
         salt,
@@ -89,17 +89,17 @@ void main() {
       final source = '+32478123123';
       final type = 'sms';
       final expiry = 1741704470;
-      final salt = sessionService.generateSessionSalt(source, type);
+      final salt = generateSessionSalt(source, type);
 
       // When
-      final hash1 = sessionService.generateSessionRequestHash(
+      final hash1 = generateSessionRequestHash(
         provider,
         owner1,
         salt,
         expiry,
       );
 
-      final hash2 = sessionService.generateSessionRequestHash(
+      final hash2 = generateSessionRequestHash(
         provider,
         owner2,
         salt,

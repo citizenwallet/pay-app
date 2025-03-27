@@ -5,6 +5,65 @@ import 'package:web3dart/web3dart.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:pay_app/services/api/api.dart';
 
+/// Generates a salt from source and type
+Uint8List generateSessionSalt(String source, String type) {
+  final saltString = '$source:$type';
+  return keccak256(utf8.encode(saltString));
+}
+
+/// Generates a hash for session request
+Uint8List generateSessionRequestHash(
+  String sessionProvider,
+  String sessionOwner,
+  Uint8List salt,
+  int expiry,
+) {
+  final providerAddr = EthereumAddress.fromHex(sessionProvider);
+  final ownerAddr = EthereumAddress.fromHex(sessionOwner);
+
+  final packed = LengthTrackingByteSink();
+
+  final List<AbiType> encoders = [
+    parseAbiType('address'),
+    parseAbiType('address'),
+    parseAbiType('bytes32'),
+    parseAbiType('uint48'),
+  ];
+
+  final List<dynamic> values = [
+    providerAddr,
+    ownerAddr,
+    salt,
+    BigInt.from(expiry),
+  ];
+
+  for (var i = 0; i < encoders.length; i++) {
+    encoders[i].encode(values[i], packed);
+  }
+
+  return keccak256(packed.asBytes());
+}
+
+Uint8List generateSessionHash(Uint8List sessionRequestHash, int challenge) {
+  final packed = LengthTrackingByteSink();
+
+  final List<AbiType> encoders = [
+    parseAbiType('bytes32'),
+    parseAbiType('uint256'),
+  ];
+
+  final List<dynamic> values = [
+    sessionRequestHash,
+    BigInt.from(challenge),
+  ];
+
+  for (var i = 0; i < encoders.length; i++) {
+    encoders[i].encode(values[i], packed);
+  }
+
+  return keccak256(packed.asBytes());
+}
+
 class SessionService {
   static final SessionService _instance = SessionService._internal();
   factory SessionService() => _instance;
@@ -16,65 +75,6 @@ class SessionService {
 
   EthereumAddress get provider =>
       EthereumAddress.fromHex(dotenv.get('SESSION_PROVIDER'));
-
-  /// Generates a salt from source and type
-  Uint8List generateSessionSalt(String source, String type) {
-    final saltString = '$source:$type';
-    return keccak256(utf8.encode(saltString));
-  }
-
-  /// Generates a hash for session request
-  Uint8List generateSessionRequestHash(
-    String sessionProvider,
-    String sessionOwner,
-    Uint8List salt,
-    int expiry,
-  ) {
-    final providerAddr = EthereumAddress.fromHex(sessionProvider);
-    final ownerAddr = EthereumAddress.fromHex(sessionOwner);
-
-    final packed = LengthTrackingByteSink();
-
-    final List<AbiType> encoders = [
-      parseAbiType('address'),
-      parseAbiType('address'),
-      parseAbiType('bytes32'),
-      parseAbiType('uint48'),
-    ];
-
-    final List<dynamic> values = [
-      providerAddr,
-      ownerAddr,
-      salt,
-      BigInt.from(expiry),
-    ];
-
-    for (var i = 0; i < encoders.length; i++) {
-      encoders[i].encode(values[i], packed);
-    }
-
-    return keccak256(packed.asBytes());
-  }
-
-  Uint8List generateSessionHash(Uint8List sessionRequestHash, int challenge) {
-    final packed = LengthTrackingByteSink();
-
-    final List<AbiType> encoders = [
-      parseAbiType('bytes32'),
-      parseAbiType('uint256'),
-    ];
-
-    final List<dynamic> values = [
-      sessionRequestHash,
-      BigInt.from(challenge),
-    ];
-
-    for (var i = 0; i < encoders.length; i++) {
-      encoders[i].encode(values[i], packed);
-    }
-
-    return keccak256(packed.asBytes());
-  }
 
   /// Creates a session request
   Future<(String, Uint8List)?> request(

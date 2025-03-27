@@ -11,6 +11,7 @@ import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/contracts/safe_account.dart';
 import 'package:pay_app/services/wallet/contracts/session_manager_module.dart';
 import 'package:pay_app/services/wallet/contracts/simple_account.dart';
+import 'package:pay_app/services/wallet/contracts/two_fa_factory.dart';
 import 'package:web3dart/web3dart.dart';
 
 const String defaultPrimary = '#A256FF';
@@ -551,6 +552,7 @@ class Config {
   late AccountFactoryService accountFactoryContract;
   late ProfileContract profileContract;
   late SessionManagerModuleService sessionManagerModuleContract;
+  late TwoFAFactoryService twoFAFactoryContract;
 
   late ERC20Contract token20Contract;
   late ERC1155Contract token1155Contract;
@@ -632,6 +634,13 @@ class Config {
       "0x10772bc224786D2743d2c8C41f4e946242Ebac04",
     );
     await sessionManagerModuleContract.init();
+
+    twoFAFactoryContract = TwoFAFactoryService(
+      chain.id,
+      ethClient,
+      "0xB5617ccd861Fa3A0eA66f063e239d0763C3C311A",
+    );
+    await twoFAFactoryContract.init();
   }
 
   Future<SimpleAccount> getSimpleAccount(String address) async {

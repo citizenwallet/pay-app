@@ -66,7 +66,9 @@ class TwoFAFactoryService {
   }
 
   Future<EthereumAddress> getAddress(
-      EthereumAddress owner, Uint8List salt) async {
+    EthereumAddress owner,
+    Uint8List salt,
+  ) async {
     // Convert salt to BigInt if needed
     BigInt saltAsBigInt = uint8ListToBigInt(salt);
 

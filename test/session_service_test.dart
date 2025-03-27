@@ -26,10 +26,10 @@ void main() {
           '0xe6d82f76be30881b9ea730417c9ab833c37357b26771d4c562ddcd8a18ae15ba';
 
       // Generate salt
-      final salt = sessionService.generateSessionSalt(source, type);
+      final salt = generateSessionSalt(source, type);
 
       // When
-      final hash = sessionService.generateSessionRequestHash(
+      final hash = generateSessionRequestHash(
         provider,
         owner,
         salt,
@@ -47,8 +47,8 @@ void main() {
       final type = 'sms';
 
       // When
-      final salt1 = sessionService.generateSessionSalt(source, type);
-      final salt2 = sessionService.generateSessionSalt(source, type);
+      final salt1 = generateSessionSalt(source, type);
+      final salt2 = generateSessionSalt(source, type);
 
       // Then
       expect(bytesToHex(salt1), equals(bytesToHex(salt2)));
@@ -67,10 +67,10 @@ void main() {
           '0xe6d82f76be30881b9ea730417c9ab833c37357b26771d4c562ddcd8a18ae15ba';
 
       // Step 1: Generate salt
-      final salt = sessionService.generateSessionSalt(source, type);
+      final salt = generateSessionSalt(source, type);
 
       // Step 2: Generate hash
-      final hash = sessionService.generateSessionRequestHash(
+      final hash = generateSessionRequestHash(
         provider,
         owner,
         salt,

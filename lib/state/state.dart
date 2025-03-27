@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/checkout.dart';
 import 'package:pay_app/state/community.dart';
+import 'package:pay_app/state/contacts/contacts.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
 import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
@@ -57,6 +58,10 @@ Widget provideAccountState(
       ChangeNotifierProvider(
         key: Key('profile-$account'),
         create: (_) => ProfileState(account),
+      ),
+      ChangeNotifierProvider(
+        key: Key('contacts'),
+        create: (_) => ContactsState(),
       ),
     ],
     child: child,

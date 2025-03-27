@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/routes/router.dart';
+import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
@@ -20,6 +21,7 @@ void main() async {
   await init();
 
   // await MainDB().init('main');
+  await AppDBService().openDB('main');
   await PreferencesService().init(await SharedPreferences.getInstance());
   await SecureService().init(await SharedPreferences.getInstance());
 

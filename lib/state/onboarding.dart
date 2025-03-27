@@ -156,7 +156,7 @@ class OnboardingState with ChangeNotifier {
         throw Exception('Failed to wait for session request tx to be mined');
       }
 
-      final salt = _sessionService.generateSessionSalt(source, 'sms');
+      final salt = generateSessionSalt(source, 'sms');
 
       final twoFAAddress = await _twoFAFactoryService.getAddress(
         _sessionService.provider,

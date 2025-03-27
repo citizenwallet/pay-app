@@ -6,6 +6,7 @@ import 'package:pay_app/services/indexer/pagination.dart';
 import 'package:pay_app/services/indexer/push_update_request.dart';
 import 'package:pay_app/services/indexer/signed_request.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
+import 'package:pay_app/services/session/session.dart';
 import 'package:pay_app/services/sigauth/sigauth.dart';
 import 'package:pay_app/services/wallet/contracts/accessControl.dart';
 import 'package:pay_app/services/wallet/contracts/cards/card_manager.dart';
@@ -1960,4 +1961,14 @@ Future<SUJSONRPCResponse> requestBundler(
   }
 
   return response;
+}
+
+Future<EthereumAddress> getTwoFAAddress(
+  Config config,
+  EthereumAddress provider,
+  String source,
+  String type,
+) async {
+  final salt = generateSessionSalt(source, type);
+  return await config.twoFAFactoryContract.getAddress(provider, salt);
 }

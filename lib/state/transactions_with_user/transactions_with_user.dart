@@ -5,15 +5,27 @@ import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/models/transaction.dart';
 import 'package:pay_app/models/user.dart';
+import 'package:pay_app/services/config/config.dart';
+import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/engine/utils.dart';
 import 'package:pay_app/services/pay/profile.dart';
 import 'package:pay_app/services/pay/transactions_with_user.dart';
+import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/contracts/erc20.dart';
 import 'package:pay_app/services/wallet/utils.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/utils/random.dart';
+import 'package:web3dart/credentials.dart';
 
 class TransactionsWithUserState with ChangeNotifier {
+  late Config _config;
+
+  final ConfigService _configService = ConfigService();
+  final SecureService _secureService = SecureService();
+  late ProfileService myProfileService;
+  late ProfileService withUserProfileService;
+  late TransactionsService transactionsWithUserService;
+
   String withUserAddress;
   User? withUser;
   String myAddress;
@@ -27,22 +39,31 @@ class TransactionsWithUserState with ChangeNotifier {
   double toSendAmount = 0.0;
   String toSendMessage = '';
 
-  ProfileService myProfileService;
-  ProfileService withUserProfileService;
-  TransactionsService transactionsWithUserService;
-
-  final WalletService _walletService = WalletService();
-
   bool loading = false;
   bool error = false;
 
   TransactionsWithUserState({
     required this.withUserAddress,
     required this.myAddress,
-  })  : myProfileService = ProfileService(account: myAddress),
-        withUserProfileService = ProfileService(account: withUserAddress),
-        transactionsWithUserService = TransactionsService(
-            firstAccount: myAddress, secondAccount: withUserAddress);
+  }) {
+    myProfileService = ProfileService(account: myAddress);
+    withUserProfileService = ProfileService(account: withUserAddress);
+    transactionsWithUserService = TransactionsService(
+        firstAccount: myAddress, secondAccount: withUserAddress);
+
+    init();
+  }
+
+  void init() async {
+    final config = await _configService.getLocalConfig();
+    if (config == null) {
+      throw Exception('Community not found in local asset');
+    }
+
+    await config.initContracts();
+
+    _config = config;
+  }
 
   bool _mounted = true;
   void safeNotifyListeners() {
@@ -73,25 +94,34 @@ class TransactionsWithUserState with ChangeNotifier {
       final doubleAmount = toSendAmount.toString().replaceAll(',', '.');
       final parsedAmount = toUnit(
         doubleAmount,
-        decimals: _walletService.currency.decimals,
+        decimals: _config.getPrimaryToken().decimals,
       );
 
       if (parsedAmount == BigInt.zero) {
         return null;
       }
 
+      final credentials = _secureService.getCredentials();
+      if (credentials == null) {
+        throw Exception('Credentials not found');
+      }
+
+      final (account, key) = credentials;
+
+      debugPrint('account: ${account.hexEip55}');
+      debugPrint('key: ${key.address.hexEip55}');
+
       final toAddress = withUserAddress;
-      final fromAddress = myAddress;
 
       final tempId = '${pendingTransactionId}_${generateRandomId()}';
       final sendingTransaction = Transaction(
         id: tempId,
         txHash: '',
         createdAt: DateTime.now(),
-        fromAccount: myAddress,
+        fromAccount: account.hexEip55,
         toAccount: toAddress,
         amount: parsedAmount /
-            BigInt.from(pow(10, _walletService.currency.decimals)),
+            BigInt.from(pow(10, _config.getPrimaryToken().decimals)),
         exchangeDirection: ExchangeDirection.sent,
         status: TransactionStatus.sending,
         description: toSendMessage.trim(),
@@ -99,21 +129,28 @@ class TransactionsWithUserState with ChangeNotifier {
       sendingQueue.add(sendingTransaction);
       safeNotifyListeners();
 
-      final calldata =
-          _walletService.tokenTransferCallData(toAddress, parsedAmount);
+      final calldata = tokenTransferCallData(
+        _config,
+        account,
+        toAddress,
+        parsedAmount,
+      );
 
-      final (_, userOp) = await _walletService.prepareUserop(
-        [_walletService.tokenAddress],
+      final (_, userOp) = await prepareUserop(
+        _config,
+        account,
+        key,
+        [_config.getPrimaryToken().address],
         [calldata],
       );
 
       final args = {
-        'from': fromAddress,
+        'from': account.hexEip55,
         'to': toAddress,
       };
 
-      if (_walletService.standard == 'erc1155') {
-        args['operator'] = _walletService.account.hexEip55;
+      if (_config.getPrimaryToken().standard == 'erc1155') {
+        args['operator'] = account.hexEip55;
         args['id'] = '0';
         args['amount'] = parsedAmount.toString();
       } else {
@@ -121,15 +158,18 @@ class TransactionsWithUserState with ChangeNotifier {
       }
 
       final eventData = createEventData(
-        stringSignature: _walletService.transferEventStringSignature,
-        topic: _walletService.transferEventSignature,
+        stringSignature: transferEventStringSignature(_config),
+        topic: transferEventSignature(_config),
         args: args,
       );
 
-      final txHash = await _walletService.submitUserop(userOp,
-          data: eventData,
-          extraData:
-              toSendMessage != '' ? TransferData(toSendMessage.trim()) : null);
+      final txHash = await submitUserop(
+        _config,
+        userOp,
+        data: eventData,
+        extraData:
+            toSendMessage != '' ? TransferData(toSendMessage.trim()) : null,
+      );
 
       if (txHash == null) return null;
 
