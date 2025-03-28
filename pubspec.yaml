@@ -68,6 +68,7 @@ dependencies:
   modal_bottom_sheet: ^3.0.0
   flutter_contacts: ^1.1.9+2
   url_launcher_web: ^2.4.0
+  dart_debouncer: ^1.1.1
 
 dev_dependencies:
   flutter_test:

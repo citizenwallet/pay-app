@@ -7,3 +7,15 @@ List<SimpleContact> selectFilteredContacts(ContactsState state) =>
             .toLowerCase()
             .contains(state.searchQuery.toLowerCase()))
         .toList();
+
+SimpleContact? selectCustomContact(ContactsState state) =>
+    state.customContactProfile != null &&
+            state.customContact != null &&
+            state.customContactProfile!.name.isNotEmpty
+        ? SimpleContact(
+            name:
+                '${state.customContactProfile?.name} (@${state.customContactProfile?.username})',
+            phone: state.customContact!.phone,
+            imageUrl: state.customContactProfile!.imageSmall,
+          )
+        : state.customContact;

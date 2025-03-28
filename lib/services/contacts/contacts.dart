@@ -5,14 +5,16 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 class SimpleContact {
   final String name;
   final String phone;
-  final String label;
+  final String? label;
   final Uint8List? photo;
+  final String? imageUrl;
 
   SimpleContact({
     required this.name,
     required this.phone,
-    required this.label,
+    this.label,
     this.photo,
+    this.imageUrl,
   });
 }
 

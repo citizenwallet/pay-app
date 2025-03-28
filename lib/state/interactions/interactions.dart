@@ -16,6 +16,8 @@ class InteractionState with ChangeNotifier {
   bool loading = false;
   bool error = false;
 
+  bool searching = false;
+
   bool _mounted = true;
   void safeNotifyListeners() {
     if (_mounted) {
@@ -30,7 +32,19 @@ class InteractionState with ChangeNotifier {
     super.dispose();
   }
 
+  void startSearching() {
+    searching = true;
+    safeNotifyListeners();
+  }
+
+  void clearSearch() {
+    searching = false;
+    searchQuery = '';
+    safeNotifyListeners();
+  }
+
   void setSearchQuery(String query) {
+    searching = false;
     searchQuery = query;
     safeNotifyListeners();
   }

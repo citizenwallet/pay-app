@@ -1,15 +1,15 @@
 import 'package:flutter/cupertino.dart';
-import 'package:pay_app/services/contacts/contacts.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
 
-class ContactListItem extends StatelessWidget {
-  final SimpleContact contact;
-  final Function(SimpleContact) onTap;
+class ProfileListItem extends StatelessWidget {
+  final ProfileV1 profile;
+  final Function(ProfileV1) onTap;
 
-  const ContactListItem({
+  const ProfileListItem({
     super.key,
-    required this.contact,
+    required this.profile,
     required this.onTap,
   });
 
@@ -19,7 +19,7 @@ class ContactListItem extends StatelessWidget {
 
     return CupertinoButton(
       padding: EdgeInsets.symmetric(vertical: 4),
-      onPressed: () => onTap(contact),
+      onPressed: () => onTap(profile),
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: 16,
@@ -27,31 +27,18 @@ class ContactListItem extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            if (contact.photo?.isNotEmpty == true)
-              ProfileCircle(
-                imageBytes: contact.photo!,
-                size: circleSize,
-                padding: 2,
-              ),
-            if (contact.imageUrl != null)
-              ProfileCircle(
-                imageUrl: contact.imageUrl!,
-                size: circleSize,
-                padding: 2,
-              ),
-            if (contact.photo?.isNotEmpty != true && contact.imageUrl == null)
-              ProfileCircle(
-                imageUrl: 'assets/icons/profile.png',
-                size: circleSize,
-                padding: 2,
-              ),
+            ProfileCircle(
+              imageUrl: profile.image,
+              size: circleSize,
+              padding: 2,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    contact.name,
+                    profile.name,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -64,7 +51,7 @@ class ContactListItem extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        contact.phone,
+                        profile.description,
                         style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF8F8A9D),
@@ -72,8 +59,8 @@ class ContactListItem extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 4),
-                      if (contact.label != null && contact.label!.isNotEmpty)
+                      if (profile.description.isNotEmpty) ...[
+                        const SizedBox(width: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -84,7 +71,7 @@ class ContactListItem extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            contact.label!,
+                            '@${profile.username}',
                             style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF8F8A9D),
@@ -92,6 +79,7 @@ class ContactListItem extends StatelessWidget {
                             ),
                           ),
                         ),
+                      ],
                     ],
                   ),
                 ],

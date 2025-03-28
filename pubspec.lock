@@ -130,6 +130,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.8"
+  dart_debouncer:
+    dependency: "direct main"
+    description:
+      name: dart_debouncer
+      sha256: f3ca0a13e9eb921ac11a16c3ab3c98c7a5f6d57e5716a4d98f4fc423d21f0731
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.1"
   dev_build:
     dependency: transitive
     description:

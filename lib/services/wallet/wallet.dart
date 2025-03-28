@@ -1495,6 +1495,25 @@ Future<ProfileV1?> getProfile(Config config, String addr) async {
   return null;
 }
 
+/// get profile data by username
+Future<ProfileV1?> getProfileByUsername(Config config, String username) async {
+  try {
+    final url = await config.profileContract.getURLFromUsername(username);
+
+    final profileData = await config.ipfsService.get(url: '/$url');
+
+    final profile = ProfileV1.fromJson(profileData);
+
+    profile.parseIPFSImageURLs(config.ipfs.url);
+
+    return profile;
+  } catch (exception) {
+    //
+  }
+
+  return null;
+}
+
 /// profileExists checks whether there is a profile for this username
 Future<bool> profileExists(Config config, String username) async {
   try {

@@ -1,12 +1,11 @@
+import 'package:dart_debouncer/dart_debouncer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:pay_app/models/interaction.dart';
-import 'package:pay_app/models/place.dart';
-import 'package:pay_app/models/user.dart';
 import 'package:pay_app/screens/home/contact_list_item.dart';
+import 'package:pay_app/screens/home/profile_list_item.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
 import 'package:pay_app/state/contacts/contacts.dart';
 import 'package:pay_app/state/contacts/selectors.dart';
@@ -41,6 +40,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   double _scrollOffset = 0.0;
   final double _maxScrollOffset = 100.0;
+
+  final Debouncer _debouncer =
+      Debouncer(timerDuration: const Duration(milliseconds: 300));
 
   late InteractionState _interactionState;
   late PlacesState _placesState;
@@ -83,6 +85,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _debouncer.dispose();
+
     _interactionState.stopPolling();
 
     _searchFocusNode.removeListener(_searchListener);
@@ -151,6 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     _contactsState.clearContacts();
+    clearSearch();
 
     final navigator = GoRouter.of(context);
 
@@ -164,6 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     _contactsState.clearContacts();
+    clearSearch();
 
     final account = await _contactsState.getContactAddress(
       contact.phone,
@@ -183,16 +189,29 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     _contactsState.clearContacts();
+    clearSearch();
 
     final navigator = GoRouter.of(context);
 
     navigator.push('/$myAddress/user/$account');
   }
 
+  void clearSearch() {
+    _searchController.clear();
+    _searchFocusNode.unfocus();
+
+    _interactionState.clearSearch();
+    _placesState.clearSearch();
+    _contactsState.clearSearch();
+  }
+
   void handleSearch(String query) {
-    _interactionState.setSearchQuery(query);
-    _placesState.setSearchQuery(query);
-    _contactsState.setSearchQuery(query);
+    _interactionState.startSearching();
+    _debouncer.resetDebounce(() {
+      _interactionState.setSearchQuery(query);
+      _placesState.setSearchQuery(query);
+      _contactsState.setSearchQuery(query);
+    });
   }
 
   void handleInteractionTap(String? myAddress, Interaction interaction) {
@@ -211,6 +230,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final interactions = context.select(sortByUnreadAndDate);
     final places = context.select(selectFilteredPlaces);
     final contacts = context.select(selectFilteredContacts);
+    final customContact = context.select(selectCustomContact);
+    final customContactProfileByUsername = context
+        .select((ContactsState state) => state.customContactProfileByUsername);
 
     final myAddress =
         context.select((WalletState state) => state.address?.hexEip55);
@@ -261,6 +283,32 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 10,
                       ),
                     ),
+                    if (customContact != null)
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          childCount: 1,
+                          (context, index) => ContactListItem(
+                            contact: customContact,
+                            onTap: (contact) => handleInteractionWithContact(
+                              myAddress,
+                              contact,
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (customContactProfileByUsername != null)
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          childCount: 1,
+                          (context, index) => ProfileListItem(
+                            profile: customContactProfileByUsername,
+                            onTap: (profile) => handleInteractionWithUser(
+                              myAddress,
+                              profile.account,
+                            ),
+                          ),
+                        ),
+                      ),
                     SliverList(
                       delegate: SliverChildBuilderDelegate(
                         childCount: interactions.length,

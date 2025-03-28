@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
 import 'package:pay_app/services/session/session.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -12,9 +14,26 @@ class ContactsState extends ChangeNotifier {
   final SessionService _sessionService = SessionService();
   final ContactsService _contactsService = ContactsService();
 
+  late Config _config;
+
   // private variables here
 
   // constructor here
+  ContactsState() {
+    init();
+  }
+
+  init() async {
+    final config = await _configService.getLocalConfig();
+    if (config == null) {
+      throw Exception('Community not found in local asset');
+    }
+
+    _config = config;
+
+    await _config.initContracts();
+  }
+
   bool _mounted = true;
   void safeNotifyListeners() {
     if (_mounted) {
@@ -31,6 +50,11 @@ class ContactsState extends ChangeNotifier {
   // state variables here
   List<SimpleContact> contacts = [];
   String searchQuery = '';
+  SimpleContact? customContact;
+  ProfileV1? customContactProfile;
+  ProfileV1? customContactProfileByUsername;
+
+  Future? backgroundFetch;
 
   // state methods here
   Future<void> fetchContacts() async {
@@ -40,11 +64,83 @@ class ContactsState extends ChangeNotifier {
 
   void clearContacts() {
     contacts = [];
+    customContact = null;
     safeNotifyListeners();
   }
 
-  void setSearchQuery(String query) {
+  void clearSearch() {
+    searchQuery = '';
+    customContact = null;
+    customContactProfile = null;
+    customContactProfileByUsername = null;
+    safeNotifyListeners();
+  }
+
+  void setSearchQuery(String query) async {
+    if (backgroundFetch != null) {
+      backgroundFetch!.ignore();
+    }
+
     searchQuery = query;
+    customContact = null;
+    customContactProfile = null;
+    customContactProfileByUsername = null;
+
+    if (query.isEmpty) {
+      customContact = null;
+      safeNotifyListeners();
+      return;
+    }
+
+    print('is username: ${query.startsWith('@')}');
+
+    if (!query.startsWith('@')) {
+      try {
+        final result = await parse(query);
+
+        customContact = SimpleContact(
+          name: 'Unknown number',
+          phone: result['e164'],
+        );
+
+        backgroundFetch = getContactAddress(
+          result['e164'],
+          'sms',
+        ).then((value) async {
+          if (value != null) {
+            customContactProfile = await getProfile(
+              _config,
+              value.hexEip55,
+            );
+
+            safeNotifyListeners();
+          }
+        });
+        return;
+      } catch (e, s) {
+        print('error: $e');
+        print('stack trace: $s');
+        customContact = null;
+      }
+    }
+
+    if (query.startsWith('@')) {
+      try {
+        final result = await getProfileByUsername(
+          _config,
+          query.trim().replaceFirst('@', ''),
+        );
+
+        print('result: $result');
+
+        customContactProfileByUsername = result;
+      } catch (e, s) {
+        print('error: $e');
+        print('stack trace: $s');
+        customContactProfileByUsername = null;
+      }
+    }
+
     safeNotifyListeners();
   }
 
@@ -53,13 +149,6 @@ class ContactsState extends ChangeNotifier {
     String type,
   ) async {
     try {
-      final config = await _configService.getLocalConfig();
-      if (config == null) {
-        throw Exception('Community not found in local asset');
-      }
-
-      await config.initContracts();
-
       final result = await parse(source);
       final parsedNumber = result['e164'];
       if (parsedNumber == null) {
@@ -67,7 +156,7 @@ class ContactsState extends ChangeNotifier {
       }
 
       return await getTwoFAAddress(
-        config,
+        _config,
         _sessionService.provider,
         parsedNumber,
         type,

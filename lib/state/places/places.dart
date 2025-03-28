@@ -28,6 +28,11 @@ class PlacesState with ChangeNotifier {
     safeNotifyListeners();
   }
 
+  void clearSearch() {
+    searchQuery = '';
+    safeNotifyListeners();
+  }
+
   Future<void> getAllPlaces() async {
     loading = true;
     error = false;

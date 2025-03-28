@@ -8,6 +8,7 @@ class CustomSearchBar extends StatelessWidget {
   final String placeholder;
   final VoidCallback? onTap;
   final bool autofocus;
+  final bool searching;
 
   const CustomSearchBar({
     super.key,
@@ -18,6 +19,7 @@ class CustomSearchBar extends StatelessWidget {
     this.placeholder = '',
     this.onTap,
     this.autofocus = false,
+    this.searching = false,
   });
 
   @override
@@ -62,10 +64,15 @@ class CustomSearchBar extends StatelessWidget {
       onTap: onTap,
       autofocus: autofocus,
       suffixInsets: EdgeInsets.only(right: 16),
-      suffixIcon: const Icon(
-        CupertinoIcons.search,
-        color: Color(0xFF4D4D4D),
-      ),
+      suffixIcon: searching
+          ? const Icon(
+              CupertinoIcons.hourglass_bottomhalf_fill,
+              color: Color(0xFF4D4D4D),
+            )
+          : const Icon(
+              CupertinoIcons.search,
+              color: Color(0xFF4D4D4D),
+            ),
       suffixMode: OverlayVisibilityMode.always,
       prefixIcon: const Icon(
         CupertinoIcons.search,
