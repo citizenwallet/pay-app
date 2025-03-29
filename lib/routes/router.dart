@@ -110,12 +110,22 @@ GoRouter createRouter(
                 final myAddress = state.pathParameters['account']!;
                 final userAddress = state.pathParameters['withUser']!;
 
+                final extra = state.extra as Map<String, dynamic>;
+
+                final customName = extra['name'] ?? '';
+                final customPhone = extra['phone'] ?? '';
+                final customPhoto = extra['photo'] as Uint8List?;
+
                 return ChangeNotifierProvider(
                   create: (_) => TransactionsWithUserState(
                     withUserAddress: userAddress,
                     myAddress: myAddress,
                   ),
-                  child: const InteractionWithUserScreen(),
+                  child: InteractionWithUserScreen(
+                    customName: customName,
+                    customPhone: customPhone,
+                    customPhoto: customPhoto,
+                  ),
                 );
               },
             ),

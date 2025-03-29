@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dart_debouncer/dart_debouncer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
@@ -8,7 +10,6 @@ import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/screens/home/contact_list_item.dart';
 import 'package:pay_app/screens/home/profile_list_item.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
-import 'package:pay_app/services/wallet/models/userop.dart';
 import 'package:pay_app/state/contacts/contacts.dart';
 import 'package:pay_app/state/contacts/selectors.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
@@ -19,7 +20,6 @@ import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
-import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
@@ -198,10 +198,17 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    handleInteractionWithUser(myAddress, account.hexEip55);
+    handleInteractionWithUser(
+      myAddress,
+      account.hexEip55,
+      name: contact.name,
+      phone: contact.phone,
+      photo: contact.photo,
+    );
   }
 
-  void handleInteractionWithUser(String? myAddress, String account) {
+  void handleInteractionWithUser(String? myAddress, String account,
+      {String? name, String? phone, Uint8List? photo}) {
     if (myAddress == null) {
       return;
     }
@@ -211,7 +218,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final navigator = GoRouter.of(context);
 
-    navigator.push('/$myAddress/user/$account');
+    navigator.push('/$myAddress/user/$account', extra: {
+      'name': name,
+      'phone': phone,
+      'photo': photo,
+    });
   }
 
   void handleProfileTap(String myAddress) async {

@@ -1,16 +1,22 @@
+import 'dart:typed_data';
+
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
 
 class ChatHeader extends StatelessWidget {
   final String? imageUrl;
-  final String username;
+  final Uint8List? photo;
+  final String? username;
+  final String? phone;
   final String? name;
   final VoidCallback? onTapLeading;
 
   const ChatHeader({
     super.key,
-    required this.username,
+    this.username,
+    this.phone,
     this.imageUrl,
+    this.photo,
     this.name,
     this.onTapLeading,
   });
@@ -40,10 +46,16 @@ class ChatHeader extends StatelessWidget {
     return Expanded(
       child: Row(
         children: [
-          ProfileCircle(
-            imageUrl: imageUrl,
-            size: 70,
-          ),
+          if (imageUrl != null)
+            ProfileCircle(
+              imageUrl: imageUrl,
+              size: 70,
+            ),
+          if (photo != null)
+            ProfileCircle(
+              imageBytes: photo,
+              size: 70,
+            ),
           const SizedBox(width: 15),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,13 +71,22 @@ class ChatHeader extends StatelessWidget {
                   ),
                 ],
               ),
-              Text(
-                '@$username',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+              if (username != null)
+                Text(
+                  '@$username',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
+              if (phone != null && phone!.isNotEmpty)
+                Text(
+                  phone ?? '',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
             ],
           ),
         ],

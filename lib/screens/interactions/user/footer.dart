@@ -6,6 +6,7 @@ import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/formatters.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/text_field.dart';
+import 'package:pay_app/widgets/wide_button.dart';
 import 'package:provider/provider.dart';
 
 class Footer extends StatefulWidget {
@@ -13,6 +14,7 @@ class Footer extends StatefulWidget {
   final Function() onTopUpPressed;
   final FocusNode amountFocusNode;
   final FocusNode messageFocusNode;
+  final String? phoneNumber;
 
   const Footer({
     super.key,
@@ -20,6 +22,7 @@ class Footer extends StatefulWidget {
     required this.onTopUpPressed,
     required this.amountFocusNode,
     required this.messageFocusNode,
+    this.phoneNumber,
   });
 
   @override
@@ -58,6 +61,10 @@ class _FooterState extends State<Footer> {
     });
   }
 
+  void shareInviteLink(String phoneNumber) {
+    _transactionsWithUserState.shareInviteLink(phoneNumber);
+  }
+
   updateAmount(double amount) {
     _transactionsWithUserState.updateAmount(amount);
   }
@@ -86,6 +93,7 @@ class _FooterState extends State<Footer> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
     final balance = context.watch<WalletState>().balance;
 
     final toSendAmount =
@@ -95,6 +103,7 @@ class _FooterState extends State<Footer> {
     final disabled = toSendAmount == 0.0 || error;
 
     return Container(
+      width: width,
       padding: const EdgeInsets.symmetric(
         horizontal: 10,
         vertical: 20,
@@ -109,38 +118,53 @@ class _FooterState extends State<Footer> {
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _showAmountField
-                    ? AmountFieldWithMessageToggle(
-                        disabled: disabled,
-                        error: error,
-                        onToggle: _toggleField,
-                        amountController: _amountController,
-                        focusNode: widget.amountFocusNode,
-                        onChange: updateAmount,
-                      )
-                    : MessageFieldWithAmountToggle(
-                        onToggle: _toggleField,
-                        messageController: _messageController,
-                        focusNode: widget.messageFocusNode,
-                        onChange: updateMessage,
-                      ),
+          if (widget.phoneNumber == null)
+            Row(
+              children: [
+                Expanded(
+                  child: _showAmountField
+                      ? AmountFieldWithMessageToggle(
+                          disabled: disabled,
+                          error: error,
+                          onToggle: _toggleField,
+                          amountController: _amountController,
+                          focusNode: widget.amountFocusNode,
+                          onChange: updateAmount,
+                        )
+                      : MessageFieldWithAmountToggle(
+                          onToggle: _toggleField,
+                          messageController: _messageController,
+                          focusNode: widget.messageFocusNode,
+                          onChange: updateMessage,
+                        ),
+                ),
+                SizedBox(width: 10),
+                SendButton(
+                  disabled: disabled,
+                  onTap: sendTransaction,
+                ),
+              ],
+            ),
+          if (widget.phoneNumber == null) SizedBox(height: 10),
+          if (widget.phoneNumber == null)
+            CurrentBalance(
+              balance: balance,
+              error: error,
+              onTopUpPressed: widget.onTopUpPressed,
+            ),
+          if (widget.phoneNumber != null)
+            WideButton(
+              child: Text(
+                'Share invite link',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: CupertinoColors.white,
+                ),
               ),
-              SizedBox(width: 10),
-              SendButton(
-                disabled: disabled,
-                onTap: sendTransaction,
-              ),
-            ],
-          ),
-          SizedBox(height: 10),
-          CurrentBalance(
-            balance: balance,
-            error: error,
-            onTopUpPressed: widget.onTopUpPressed,
-          ),
+              onPressed: () => shareInviteLink(widget.phoneNumber!),
+            ),
+          if (widget.phoneNumber != null) SizedBox(height: 10),
         ],
       ),
     );

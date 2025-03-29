@@ -8,6 +8,7 @@ import 'package:pay_app/models/user.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/engine/utils.dart';
+import 'package:pay_app/services/invite/invite.dart';
 import 'package:pay_app/services/pay/profile.dart';
 import 'package:pay_app/services/pay/transactions_with_user.dart';
 import 'package:pay_app/services/secure/secure.dart';
@@ -15,13 +16,13 @@ import 'package:pay_app/services/wallet/contracts/erc20.dart';
 import 'package:pay_app/services/wallet/utils.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/utils/random.dart';
-import 'package:web3dart/credentials.dart';
 
 class TransactionsWithUserState with ChangeNotifier {
   late Config _config;
 
   final ConfigService _configService = ConfigService();
   final SecureService _secureService = SecureService();
+  final InviteService _inviteService = InviteService();
   late ProfileService myProfileService;
   late ProfileService withUserProfileService;
   late TransactionsService transactionsWithUserService;
@@ -323,5 +324,9 @@ class TransactionsWithUserState with ChangeNotifier {
     }
 
     this.newTransactions = [...existingList];
+  }
+
+  void shareInviteLink(String phoneNumber) {
+    _inviteService.shareInviteLink(phoneNumber);
   }
 }

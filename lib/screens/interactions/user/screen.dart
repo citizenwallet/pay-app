@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/state/topup.dart';
@@ -5,6 +7,7 @@ import 'package:pay_app/state/transactions_with_user/selector.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
+import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
 
@@ -13,7 +16,16 @@ import 'transaction_list_item.dart';
 import 'footer.dart';
 
 class InteractionWithUserScreen extends StatefulWidget {
-  const InteractionWithUserScreen({super.key});
+  final String customName;
+  final String customPhone;
+  final Uint8List? customPhoto;
+
+  const InteractionWithUserScreen({
+    super.key,
+    required this.customName,
+    required this.customPhone,
+    this.customPhoto,
+  });
 
   @override
   State<InteractionWithUserScreen> createState() =>
@@ -132,6 +144,9 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
 
     final transactions = selectUserTransactions(transactionState);
 
+    final noUserAccount = withUser == null &&
+        widget.customName.isNotEmpty &&
+        widget.customPhone.isNotEmpty;
     return CupertinoPageScaffold(
       backgroundColor: whiteColor,
       child: GestureDetector(
@@ -143,8 +158,10 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
               ChatHeader(
                 onTapLeading: goBack,
                 imageUrl: withUser?.imageUrl,
-                name: withUser?.name,
-                username: withUser?.username ?? '',
+                photo: widget.customPhoto,
+                name: withUser?.name ?? widget.customName,
+                username: withUser?.username,
+                phone: withUser?.username == null ? widget.customPhone : null,
               ),
               Expanded(
                 child: Container(
@@ -161,19 +178,39 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
                           height: 10,
                         ),
                       ),
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          childCount: transactions.length,
-                          (context, index) {
-                            final transaction = transactions[index];
-
-                            return TransactionListItem(
-                              key: Key(transaction.id),
-                              transaction: transaction,
-                            );
-                          },
+                      if (noUserAccount)
+                        const SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: 30,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'This user does not have an account yet.',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.normal,
+                                    color: textMutedColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                      if (!noUserAccount)
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            childCount: transactions.length,
+                            (context, index) {
+                              final transaction = transactions[index];
+
+                              return TransactionListItem(
+                                key: Key(transaction.id),
+                                transaction: transaction,
+                              );
+                            },
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -183,6 +220,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
                 onTopUpPressed: handleTopUp,
                 amountFocusNode: amountFocusNode,
                 messageFocusNode: messageFocusNode,
+                phoneNumber: noUserAccount ? widget.customPhone : null,
               ),
             ],
           ),

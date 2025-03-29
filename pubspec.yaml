@@ -69,6 +69,7 @@ dependencies:
   flutter_contacts: ^1.1.9+2
   url_launcher_web: ^2.4.0
   dart_debouncer: ^1.1.1
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:
