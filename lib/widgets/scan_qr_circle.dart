@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/theme/colors.dart';
 
 // TODO: disabled styling
 
@@ -29,6 +30,13 @@ class ScanQrCircle extends StatelessWidget {
             color: theme.primaryColor,
             width: 3,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: blackColor.withAlpha(80),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
         ),
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
         child: Center(
