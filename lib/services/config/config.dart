@@ -631,14 +631,14 @@ class Config {
     sessionManagerModuleContract = SessionManagerModuleService(
       chain.id,
       ethClient,
-      "0xFd1c7E49806a4B8d89098d10dFFFFd1bA3D5306C",
+      "0x18C0F6b6C69EAA853BbE910E35881d3A5442bFc0",
     );
     await sessionManagerModuleContract.init();
 
     twoFAFactoryContract = TwoFAFactoryService(
       chain.id,
       ethClient,
-      "0x5c147cc0ea829eAA99F062eEf785e150afBd5D1f",
+      "0x700813c66a28E71749EB5D89797E1575D4305620",
     );
     await twoFAFactoryContract.init();
   }
