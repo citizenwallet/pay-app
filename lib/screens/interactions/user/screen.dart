@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/transactions_with_user/selector.dart';
@@ -133,6 +134,11 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
     );
   }
 
+  void retryTransaction(String id) {
+    HapticFeedback.heavyImpact();
+    _transactionsWithUserState.sendTransaction(retryId: id);
+  }
+
   void _dismissKeyboard() {
     FocusScope.of(context).unfocus();
   }
@@ -207,6 +213,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
                               return TransactionListItem(
                                 key: Key(transaction.id),
                                 transaction: transaction,
+                                onRetry: retryTransaction,
                               );
                             },
                           ),

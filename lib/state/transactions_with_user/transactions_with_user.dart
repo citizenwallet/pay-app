@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/models/transaction.dart';
 import 'package:pay_app/models/user.dart';
@@ -90,9 +92,19 @@ class TransactionsWithUserState with ChangeNotifier {
     safeNotifyListeners();
   }
 
-  Future<String?> sendTransaction() async {
+  Future<String?> sendTransaction({String? retryId}) async {
+    final tempId = retryId ?? '${pendingTransactionId}_${generateRandomId()}';
+    final toRetry = sendingQueue.firstWhereOrNull((tx) => tx.id == retryId);
+    if (retryId != null && toRetry == null) {
+      return null;
+    }
+
     try {
-      final doubleAmount = toSendAmount.toString().replaceAll(',', '.');
+      final token = _config.getPrimaryToken();
+
+      final doubleAmount = toRetry != null
+          ? toRetry.amount.toString().replaceAll(',', '.')
+          : toSendAmount.toString().replaceAll(',', '.');
       final parsedAmount = toUnit(
         doubleAmount,
         decimals: _config.getPrimaryToken().decimals,
@@ -112,23 +124,35 @@ class TransactionsWithUserState with ChangeNotifier {
       debugPrint('account: ${account.hexEip55}');
       debugPrint('key: ${key.address.hexEip55}');
 
-      final toAddress = withUserAddress;
+      final toAddress = toRetry != null ? toRetry.toAccount : withUserAddress;
+      final message =
+          toRetry != null ? toRetry.description : toSendMessage.trim();
 
-      final tempId = '${pendingTransactionId}_${generateRandomId()}';
-      final sendingTransaction = Transaction(
-        id: tempId,
-        txHash: '',
-        createdAt: DateTime.now(),
-        fromAccount: account.hexEip55,
-        toAccount: toAddress,
-        amount: parsedAmount /
-            BigInt.from(pow(10, _config.getPrimaryToken().decimals)),
-        exchangeDirection: ExchangeDirection.sent,
-        status: TransactionStatus.sending,
-        description: toSendMessage.trim(),
-      );
-      sendingQueue.add(sendingTransaction);
-      safeNotifyListeners();
+      if (toRetry != null) {
+        final index = sendingQueue.indexWhere((tx) => tx.id == toRetry.id);
+        if (index != -1) {
+          sendingQueue[index] = sendingQueue[index].copyWith(
+            status: TransactionStatus.sending,
+          );
+          safeNotifyListeners();
+        }
+      }
+
+      if (toRetry == null) {
+        final sendingTransaction = Transaction(
+          id: tempId,
+          txHash: '',
+          createdAt: DateTime.now(),
+          fromAccount: account.hexEip55,
+          toAccount: toAddress,
+          amount: parsedAmount / BigInt.from(pow(10, token.decimals)),
+          exchangeDirection: ExchangeDirection.sent,
+          status: TransactionStatus.sending,
+          description: message,
+        );
+        sendingQueue.add(sendingTransaction);
+        safeNotifyListeners();
+      }
 
       final calldata = tokenTransferCallData(
         _config,
@@ -169,7 +193,7 @@ class TransactionsWithUserState with ChangeNotifier {
         userOp,
         data: eventData,
         extraData:
-            toSendMessage != '' ? TransferData(toSendMessage.trim()) : null,
+            message != null && message != '' ? TransferData(message) : null,
       );
 
       if (txHash == null) return null;
@@ -190,11 +214,25 @@ class TransactionsWithUserState with ChangeNotifier {
     } catch (e, s) {
       debugPrint('Error sending transaction: $e');
       debugPrint('Stack trace: $s');
+
+      final index = sendingQueue.indexWhere((tx) => tx.id == tempId);
+      if (index != -1) {
+        sendingQueue[index] = sendingQueue[index].copyWith(
+          status: TransactionStatus.fail,
+        );
+      }
+
+      safeNotifyListeners();
+
+      HapticFeedback.lightImpact();
+
       return null;
     } finally {
       toSendAmount = 0.0;
       toSendMessage = '';
       safeNotifyListeners();
+
+      HapticFeedback.lightImpact();
     }
   }
 

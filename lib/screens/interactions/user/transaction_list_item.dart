@@ -9,11 +9,13 @@ import 'package:pay_app/widgets/coin_logo.dart';
 class TransactionListItem extends StatelessWidget {
   final Transaction transaction;
   final bool isSending;
+  final Function(String) onRetry;
 
   const TransactionListItem({
     super.key,
     required this.transaction,
     this.isSending = false,
+    required this.onRetry,
   });
 
   @override
@@ -24,10 +26,24 @@ class TransactionListItem extends StatelessWidget {
     const bubbleBorderRadius = 20.0;
     const bubbleCornerBorderRadius = 2.0;
 
+    final failed = transaction.status == TransactionStatus.fail;
+
     final rowChildren = [
       Expanded(
         child: const SizedBox(),
       ),
+      if (failed)
+        CupertinoButton(
+          color: whiteColor,
+          borderRadius: BorderRadius.circular(22),
+          padding: const EdgeInsets.all(5),
+          onPressed: () => onRetry(transaction.id),
+          child: Icon(
+            CupertinoIcons.arrow_counterclockwise,
+            color: dangerColor,
+          ),
+        ),
+      if (failed) const SizedBox(width: 10),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Container(
@@ -36,7 +52,9 @@ class TransactionListItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: isReceived
                 ? surfaceColor
-                : CupertinoTheme.of(context).primaryColor,
+                : failed
+                    ? primaryColor.withAlpha(200)
+                    : primaryColor,
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(bubbleBorderRadius),
               topRight: const Radius.circular(bubbleBorderRadius),
@@ -63,7 +81,8 @@ class TransactionListItem extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (transaction.description != null) ...[
+                    if (transaction.description != null &&
+                        transaction.description!.isNotEmpty) ...[
                       SizedBox(height: 4),
                       Description(
                         exchangeDirection: transaction.exchangeDirection,
