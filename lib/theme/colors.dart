@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 
 const whiteColor = Color(0xFFFFFFFF);
+const blackColor = Color(0xFF000000);
 
 const primaryColor = Color(0xFF3431c4);
 const warningColor = Color.fromARGB(255, 244, 200, 54);
