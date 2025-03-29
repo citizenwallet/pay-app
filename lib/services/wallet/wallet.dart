@@ -1798,13 +1798,14 @@ Future<(String, UserOp)> prepareUserop(
     userop.sender = account.hexEip55;
 
     // determine the appropriate nonce
-    BigInt nonce = customNonce ??
-        await config.entryPointContract.getNonce(account.hexEip55);
+    BigInt nonce = customNonce ?? await config.getNonce(account.hexEip55);
+
+    final paymasterType = config.getPaymasterType();
 
     // if it's the first user op from this account, we need to deploy the account contract
     if (nonce == BigInt.zero && deploy) {
       bool exists = false;
-      if (config.getPaymasterType() == 'payg') {
+      if (paymasterType == 'payg') {
         // solves edge case with legacy account migration
         exists = await accountExists(config, account);
       }
@@ -1828,7 +1829,7 @@ Future<(String, UserOp)> prepareUserop(
 
     // set the appropriate call data for the transfer
     // we need to call account.execute which will call token.transfer
-    switch (config.getPaymasterType()) {
+    switch (paymasterType) {
       case 'payg':
       case 'cw':
         {
@@ -1862,7 +1863,7 @@ Future<(String, UserOp)> prepareUserop(
     List<PaymasterData> paymasterOOData = [];
     Exception? paymasterErr;
     final useAccountNonce =
-        (nonce == BigInt.zero || config.getPaymasterType() == 'payg') && deploy;
+        (nonce == BigInt.zero || paymasterType == 'payg') && deploy;
 
     if (useAccountNonce) {
       // if it's the first user op, we should use a normal paymaster signature
@@ -1871,7 +1872,7 @@ Future<(String, UserOp)> prepareUserop(
         config,
         userop,
         config.entryPointContract.addr,
-        config.getPaymasterType(),
+        paymasterType,
       );
 
       if (paymasterData != null) {
@@ -1883,7 +1884,7 @@ Future<(String, UserOp)> prepareUserop(
         config,
         userop,
         config.entryPointContract.addr,
-        config.getPaymasterType(),
+        paymasterType,
       );
     }
 

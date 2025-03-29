@@ -49,6 +49,18 @@ class SafeAccount {
     return function.encodeCall([EthereumAddress.fromHex(implementation)]);
   }
 
+  Future<BigInt> getNonce() async {
+    final function = rcontract.function('nonce');
+
+    final result = await client.call(
+      contract: rcontract,
+      function: function,
+      params: [],
+    );
+
+    return result[0] as BigInt;
+  }
+
   void dispose() {
     // _sub?.cancel();
   }
