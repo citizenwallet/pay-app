@@ -8,6 +8,7 @@ import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/screens/home/contact_list_item.dart';
 import 'package:pay_app/screens/home/profile_list_item.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
+import 'package:pay_app/services/wallet/models/userop.dart';
 import 'package:pay_app/state/contacts/contacts.dart';
 import 'package:pay_app/state/contacts/selectors.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
@@ -144,14 +145,23 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void goToChatHistory(String? myAddress, Interaction interaction) {
+    if (interaction.isTreasury) {
+      handleInteractionWithPlace(
+        myAddress,
+        'topup',
+      );
+      return;
+    }
+
     if (interaction.isPlace && interaction.placeId != null) {
       handleInteractionWithPlace(
         myAddress,
         interaction.place?.slug ?? '',
       );
-    } else if (!interaction.isPlace) {
-      handleInteractionWithUser(myAddress, interaction.withAccount);
+      return;
     }
+
+    handleInteractionWithUser(myAddress, interaction.withAccount);
   }
 
   void handleInteractionWithPlace(

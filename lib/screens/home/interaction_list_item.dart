@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
+import 'package:pay_app/services/wallet/models/userop.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
@@ -30,21 +31,29 @@ class InteractionListItem extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            if (interaction.isPlace)
+            if (interaction.isPlace && !interaction.isTreasury)
               ProfileCircle(
                 imageUrl: interaction.imageUrl ?? 'assets/icons/shop.png',
                 size: circleSize,
                 padding: 2,
                 fit: BoxFit.cover,
               ),
-            if (!interaction.isPlace)
+            if (!interaction.isPlace && !interaction.isTreasury)
               ProfileCircle(
                 imageUrl: interaction.imageUrl,
                 size: circleSize,
                 padding: 2,
               ),
+            if (interaction.isTreasury)
+              ProfileCircle(
+                imageUrl: 'assets/logo.svg',
+                size: circleSize,
+                padding: 2,
+              ),
             const SizedBox(width: 12),
-            Details(interaction: interaction),
+            Details(
+              interaction: interaction,
+            ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -73,7 +82,10 @@ class InteractionListItem extends StatelessWidget {
 class Details extends StatelessWidget {
   final Interaction interaction;
 
-  const Details({super.key, required this.interaction});
+  const Details({
+    super.key,
+    required this.interaction,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +95,7 @@ class Details extends StatelessWidget {
         children: [
           Row(
             children: [
-              if (interaction.isPlace)
+              if (interaction.isPlace || interaction.isTreasury)
                 SvgPicture.asset(
                   'assets/icons/shop.svg',
                   height: 16,
@@ -91,7 +103,7 @@ class Details extends StatelessWidget {
                   semanticsLabel: 'shop',
                 ),
               const SizedBox(width: 4),
-              Name(name: interaction.name),
+              Name(name: interaction.isTreasury ? 'Top Up' : interaction.name),
             ],
           ),
           const SizedBox(height: 4),

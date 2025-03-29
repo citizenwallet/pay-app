@@ -10,12 +10,14 @@ import 'package:provider/provider.dart';
 
 class Footer extends StatefulWidget {
   final Function(double, String?) onSend;
+  final Function() onTopUpPressed;
   final FocusNode amountFocusNode;
   final FocusNode messageFocusNode;
 
   const Footer({
     super.key,
     required this.onSend,
+    required this.onTopUpPressed,
     required this.amountFocusNode,
     required this.messageFocusNode,
   });
@@ -137,6 +139,7 @@ class _FooterState extends State<Footer> {
           CurrentBalance(
             balance: balance,
             error: error,
+            onTopUpPressed: widget.onTopUpPressed,
           ),
         ],
       ),
@@ -334,11 +337,13 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
 class CurrentBalance extends StatelessWidget {
   final double balance;
   final bool error;
+  final Function() onTopUpPressed;
 
   const CurrentBalance({
     super.key,
     required this.balance,
     this.error = false,
+    required this.onTopUpPressed,
   });
 
   @override
@@ -369,7 +374,7 @@ class CurrentBalance extends StatelessWidget {
             ),
           ),
           SizedBox(width: 10),
-          TopUpButton(),
+          TopUpButton(onTopUpPressed: onTopUpPressed),
         ],
       ),
     );
@@ -377,7 +382,12 @@ class CurrentBalance extends StatelessWidget {
 }
 
 class TopUpButton extends StatelessWidget {
-  const TopUpButton({super.key});
+  final Function() onTopUpPressed;
+
+  const TopUpButton({
+    super.key,
+    required this.onTopUpPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -387,10 +397,7 @@ class TopUpButton extends StatelessWidget {
       color: theme.barBackgroundColor,
       borderRadius: BorderRadius.circular(8),
       minSize: 0,
-      onPressed: () {
-        // TODO: add a button to navigate to the top up screen
-        debugPrint('Top up');
-      },
+      onPressed: onTopUpPressed,
       child: Container(
         width: 60,
         height: 28,

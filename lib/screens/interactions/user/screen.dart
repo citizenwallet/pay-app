@@ -1,8 +1,11 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/transactions_with_user/selector.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
+import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
 
 import 'header.dart';
@@ -25,6 +28,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
 
   late TransactionsWithUserState _transactionsWithUserState;
   late WalletState _walletState;
+  late TopupState _topupState;
 
   @override
   void initState() {
@@ -35,6 +39,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _transactionsWithUserState = context.read<TransactionsWithUserState>();
       _walletState = context.read<WalletState>();
+      _topupState = context.read<TopupState>();
       onLoad();
     });
   }
@@ -84,6 +89,34 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
       const Duration(milliseconds: 100),
       () {
         scrollToTop();
+      },
+    );
+  }
+
+  void handleTopUp() async {
+    await _topupState.generateTopupUrl();
+
+    if (!mounted) {
+      return;
+    }
+
+    await showCupertinoModalPopup<String?>(
+      context: context,
+      barrierDismissible: true,
+      useRootNavigator: false,
+      builder: (modalContext) {
+        final topupUrl =
+            modalContext.select((TopupState state) => state.topupUrl);
+
+        if (topupUrl.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return ConnectedWebViewModal(
+          modalKey: 'connected-webview',
+          url: topupUrl,
+          redirectUrl: dotenv.env['APP_REDIRECT_URL'] ?? '',
+        );
       },
     );
   }
@@ -147,6 +180,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
               ),
               Footer(
                 onSend: sendMessage,
+                onTopUpPressed: handleTopUp,
                 amountFocusNode: amountFocusNode,
                 messageFocusNode: messageFocusNode,
               ),

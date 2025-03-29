@@ -1,9 +1,12 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/checkout.dart';
 
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
+import 'package:pay_app/state/topup.dart';
+import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
 import 'header.dart';
 import 'order_list_item.dart';
@@ -32,6 +35,7 @@ class _InteractionWithPlaceScreenState
   ScrollController scrollController = ScrollController();
 
   late OrdersWithPlaceState _ordersWithPlaceState;
+  late TopupState _topupState;
 
   @override
   void initState() {
@@ -42,6 +46,7 @@ class _InteractionWithPlaceScreenState
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ordersWithPlaceState = context.read<OrdersWithPlaceState>();
+      _topupState = context.read<TopupState>();
 
       onLoad();
     });
@@ -127,6 +132,34 @@ class _InteractionWithPlaceScreenState
     _ordersWithPlaceState.payOrder(checkout);
   }
 
+  void handleTopUp() async {
+    await _topupState.generateTopupUrl();
+
+    if (!mounted) {
+      return;
+    }
+
+    await showCupertinoModalPopup<String?>(
+      context: context,
+      barrierDismissible: true,
+      useRootNavigator: false,
+      builder: (modalContext) {
+        final topupUrl =
+            modalContext.select((TopupState state) => state.topupUrl);
+
+        if (topupUrl.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return ConnectedWebViewModal(
+          modalKey: 'connected-webview',
+          url: topupUrl,
+          redirectUrl: dotenv.env['APP_REDIRECT_URL'] ?? '',
+        );
+      },
+    );
+  }
+
   final List<Order> orders = [
 ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
@@ -185,6 +218,7 @@ class _InteractionWithPlaceScreenState
                 myAddress: widget.myAddress,
                 slug: widget.slug,
                 onSend: sendMessage,
+                onTopUpPressed: handleTopUp,
                 onMenuPressed: handleMenuPressed,
                 amountFocusNode: amountFocusNode,
                 messageFocusNode: messageFocusNode,

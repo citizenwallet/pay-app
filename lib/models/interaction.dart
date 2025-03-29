@@ -1,4 +1,5 @@
 import 'package:pay_app/models/place.dart';
+import 'package:pay_app/services/wallet/models/userop.dart';
 
 enum ExchangeDirection {
   sent,
@@ -19,6 +20,7 @@ class Interaction {
   final String? description;
 
   final bool isPlace;
+  final bool isTreasury;
   final int? placeId; // id from supabase
   final Place? place;
   final bool hasMenuItem;
@@ -34,6 +36,7 @@ class Interaction {
     required this.lastMessageAt,
     required this.amount,
     this.isPlace = false,
+    this.isTreasury = false,
     this.hasUnreadMessages = false,
     this.hasMenuItem = false,
     this.description,
@@ -46,8 +49,6 @@ class Interaction {
     final withProfile = json['with_profile'] as Map<String, dynamic>;
     final withPlace = json['with_place'] as Map<String, dynamic>?;
 
-    print('withPlace: $withPlace');
-
     return Interaction(
       id: json['id'],
       exchangeDirection: parseExchangeDirection(json['exchange_direction']),
@@ -57,6 +58,7 @@ class Interaction {
       amount: double.tryParse(transaction['value']) ?? 0,
       description: transaction['description'],
       isPlace: withPlace != null,
+      isTreasury: withProfile['account'] == zeroAddress,
       placeId: withPlace?['id'],
       hasUnreadMessages: json['new_interaction'],
       lastMessageAt: DateTime.parse(transaction['created_at']),
@@ -78,6 +80,7 @@ class Interaction {
       'amount': amount,
       'description': description,
       'isPlace': isPlace,
+      'isTreasury': isTreasury,
       'placeId': placeId,
       'hasUnreadMessages': hasUnreadMessages,
       'lastMessageAt': lastMessageAt.toIso8601String(),
@@ -107,6 +110,7 @@ class Interaction {
       amount: amount ?? this.amount,
       description: description ?? this.description,
       isPlace: isPlace,
+      isTreasury: isTreasury,
       placeId: placeId,
       hasUnreadMessages: hasUnreadMessages ?? this.hasUnreadMessages,
       lastMessageAt: lastMessageAt ?? this.lastMessageAt,

@@ -12,6 +12,7 @@ class Footer extends StatefulWidget {
   final String myAddress;
   final String slug;
   final Function(double, String?) onSend;
+  final Function() onTopUpPressed;
   final Function() onMenuPressed;
   final FocusNode amountFocusNode;
   final FocusNode messageFocusNode;
@@ -23,6 +24,7 @@ class Footer extends StatefulWidget {
     required this.myAddress,
     required this.slug,
     required this.onSend,
+    required this.onTopUpPressed,
     required this.onMenuPressed,
     required this.amountFocusNode,
     required this.messageFocusNode,
@@ -143,7 +145,7 @@ class _FooterState extends State<Footer> {
               ],
             ),
           SizedBox(height: 10),
-          CurrentBalance(),
+          CurrentBalance(onTopUpPressed: widget.onTopUpPressed),
         ],
       ),
     );
@@ -329,7 +331,12 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
 }
 
 class CurrentBalance extends StatelessWidget {
-  const CurrentBalance({super.key});
+  final Function() onTopUpPressed;
+
+  const CurrentBalance({
+    super.key,
+    required this.onTopUpPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -361,7 +368,7 @@ class CurrentBalance extends StatelessWidget {
             ),
           ),
           SizedBox(width: 10),
-          TopUpButton(),
+          TopUpButton(onTopUpPressed: onTopUpPressed),
         ],
       ),
     );
@@ -369,7 +376,12 @@ class CurrentBalance extends StatelessWidget {
 }
 
 class TopUpButton extends StatelessWidget {
-  const TopUpButton({super.key});
+  final Function() onTopUpPressed;
+
+  const TopUpButton({
+    super.key,
+    required this.onTopUpPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -379,10 +391,7 @@ class TopUpButton extends StatelessWidget {
       color: theme.primaryColor,
       borderRadius: BorderRadius.circular(8),
       minSize: 0,
-      onPressed: () {
-        // TODO: add a button to navigate to the top up screen
-        print('Top up');
-      },
+      onPressed: onTopUpPressed,
       child: SizedBox(
         width: 60,
         height: 28,
