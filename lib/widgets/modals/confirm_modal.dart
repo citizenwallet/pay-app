@@ -30,7 +30,7 @@ class ConfirmModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DismissibleModalPopup(
-      modaleKey: 'confirm-modal',
+      modalKey: 'confirm-modal',
       maxHeight: 300,
       paddingSides: 10,
       onUpdate: (details) {

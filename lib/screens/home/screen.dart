@@ -1,6 +1,7 @@
 import 'package:dart_debouncer/dart_debouncer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:pay_app/models/interaction.dart';
@@ -14,10 +15,12 @@ import 'package:pay_app/state/interactions/selectors.dart';
 import 'package:pay_app/state/places/places.dart';
 import 'package:pay_app/state/places/selectors.dart';
 import 'package:pay_app/state/profile.dart';
+import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
+import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
 
 import 'profile_bar.dart';
@@ -51,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late WalletState _walletState;
   late ProfileState _profileState;
   late ContactsState _contactsState;
+  late TopupState _topupState;
 
   @override
   void initState() {
@@ -65,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _walletState = context.read<WalletState>();
       _profileState = context.read<ProfileState>();
       _contactsState = context.read<ContactsState>();
+      _topupState = context.read<TopupState>();
       onLoad();
     });
   }
@@ -209,6 +214,34 @@ class _HomeScreenState extends State<HomeScreen> {
     clearSearch();
   }
 
+  void handleTopUp() async {
+    await _topupState.generateTopupUrl();
+
+    if (!mounted) {
+      return;
+    }
+
+    await showCupertinoModalPopup<String?>(
+      context: context,
+      barrierDismissible: true,
+      useRootNavigator: false,
+      builder: (modalContext) {
+        final topupUrl =
+            modalContext.select((TopupState state) => state.topupUrl);
+
+        if (topupUrl.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return ConnectedWebViewModal(
+          modalKey: 'connected-webview',
+          url: topupUrl,
+          redirectUrl: dotenv.env['APP_REDIRECT_URL'] ?? '',
+        );
+      },
+    );
+  }
+
   void clearSearch() {
     setState(() {
       isSearching = false;
@@ -251,8 +284,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final customContactProfileByUsername = context
         .select((ContactsState state) => state.customContactProfileByUsername);
 
-    print(interactions.length);
-
     final searching =
         context.select((InteractionState state) => state.searching);
 
@@ -284,6 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       delegate: ProfileBarDelegate(
                         accountAddress: myAddress ?? '',
                         onProfileTap: () => handleProfileTap(myAddress ?? ''),
+                        onTopUpTap: handleTopUp,
                       ),
                     ),
                     SliverPersistentHeader(
@@ -395,10 +427,12 @@ class _HomeScreenState extends State<HomeScreen> {
 class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
   final String accountAddress;
   final Function() onProfileTap;
+  final Function() onTopUpTap;
 
   ProfileBarDelegate({
     required this.accountAddress,
     required this.onProfileTap,
+    required this.onTopUpTap,
   });
 
   @override
@@ -407,6 +441,7 @@ class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
     return ProfileBar(
       accountAddress: accountAddress,
       onProfileTap: onProfileTap,
+      onTopUpTap: onTopUpTap,
     );
   }
 

@@ -8,11 +8,13 @@ import 'package:provider/provider.dart';
 class ProfileBar extends StatefulWidget {
   final String accountAddress;
   final Function() onProfileTap;
+  final Function() onTopUpTap;
 
   const ProfileBar({
     super.key,
     required this.accountAddress,
     required this.onProfileTap,
+    required this.onTopUpTap,
   });
 
   @override
@@ -66,7 +68,7 @@ class _ProfileBarState extends State<ProfileBar> {
                       children: [
                         Balance(balance: balance),
                         const SizedBox(width: 16),
-                        TopUpButton(),
+                        TopUpButton(onTopUpTap: widget.onTopUpTap),
                       ],
                     )
                   ],
@@ -122,7 +124,9 @@ class Balance extends StatelessWidget {
 }
 
 class TopUpButton extends StatelessWidget {
-  const TopUpButton({super.key});
+  final Function() onTopUpTap;
+
+  const TopUpButton({super.key, required this.onTopUpTap});
 
   @override
   Widget build(BuildContext context) {
@@ -133,10 +137,7 @@ class TopUpButton extends StatelessWidget {
       color: theme.primaryColor,
       borderRadius: BorderRadius.circular(8),
       minSize: 0,
-      onPressed: () {
-        // TODO: add a button to navigate to the top up screen
-        debugPrint('Top up');
-      },
+      onPressed: onTopUpTap,
       child: SizedBox(
         width: 60,
         height: 28,

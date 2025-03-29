@@ -9,6 +9,7 @@ import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/state/places/places.dart';
 import 'package:pay_app/state/profile.dart';
+import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:provider/provider.dart';
 
@@ -62,6 +63,10 @@ Widget provideAccountState(
       ChangeNotifierProvider(
         key: Key('contacts'),
         create: (_) => ContactsState(),
+      ),
+      ChangeNotifierProvider(
+        key: Key('topup'),
+        create: (_) => TopupState(),
       ),
     ],
     child: child,
