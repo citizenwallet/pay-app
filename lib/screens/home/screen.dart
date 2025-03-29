@@ -278,11 +278,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     CupertinoSliverRefreshControl(
                       onRefresh: onLoad,
                     ),
-                    SliverToBoxAdapter(
-                      child: SizedBox(
-                        height: 10,
-                      ),
-                    ),
                     if (customContact != null)
                       SliverList(
                         delegate: SliverChildBuilderDelegate(
