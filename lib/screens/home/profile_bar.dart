@@ -139,11 +139,11 @@ class TopUpButton extends StatelessWidget {
       minSize: 0,
       onPressed: onTopUpTap,
       child: SizedBox(
-        width: 60,
+        width: 70,
         height: 28,
         child: Center(
           child: Text(
-            '+ add',
+            '+ top up',
             style: TextStyle(
               color: Color(0xFFFFFFFF),
               fontSize: 14,
