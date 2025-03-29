@@ -167,17 +167,18 @@ class _HomeScreenState extends State<HomeScreen> {
   void handleInteractionWithPlace(
     String? myAddress,
     String slug,
-  ) {
+  ) async {
     if (myAddress == null) {
       return;
     }
 
     _contactsState.clearContacts();
-    clearSearch();
 
     final navigator = GoRouter.of(context);
 
-    navigator.push('/$myAddress/place/$slug');
+    await navigator.push('/$myAddress/place/$slug');
+
+    clearSearch();
   }
 
   Future<void> handleInteractionWithContact(
@@ -187,7 +188,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     _contactsState.clearContacts();
-    clearSearch();
 
     final account = await _contactsState.getContactAddress(
       contact.phone,
@@ -207,22 +207,28 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void handleInteractionWithUser(String? myAddress, String account,
-      {String? name, String? phone, Uint8List? photo}) {
+  void handleInteractionWithUser(
+    String? myAddress,
+    String account, {
+    String? name,
+    String? phone,
+    Uint8List? photo,
+  }) async {
     if (myAddress == null) {
       return;
     }
 
     _contactsState.clearContacts();
-    clearSearch();
 
     final navigator = GoRouter.of(context);
 
-    navigator.push('/$myAddress/user/$account', extra: {
+    await navigator.push('/$myAddress/user/$account', extra: {
       'name': name,
       'phone': phone,
       'photo': photo,
     });
+
+    clearSearch();
   }
 
   void handleProfileTap(String myAddress) async {
