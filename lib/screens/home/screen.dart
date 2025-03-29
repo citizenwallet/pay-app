@@ -37,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
 
   bool isKeyboardVisible = false;
+  bool isSearching = false;
 
   double _scrollOffset = 0.0;
   final double _maxScrollOffset = 100.0;
@@ -105,6 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _contactsState.fetchContacts();
       setState(() {
         isKeyboardVisible = true;
+        isSearching = true;
       });
     }
 
@@ -197,6 +199,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void clearSearch() {
+    setState(() {
+      isSearching = false;
+    });
+
     _searchController.clear();
     _searchFocusNode.unfocus();
 
@@ -234,6 +240,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final customContactProfileByUsername = context
         .select((ContactsState state) => state.customContactProfileByUsername);
 
+    final searching =
+        context.select((InteractionState state) => state.searching);
+
     final myAddress =
         context.select((WalletState state) => state.address?.hexEip55);
 
@@ -269,6 +278,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         controller: _searchController,
                         focusNode: _searchFocusNode,
                         onSearch: handleSearch,
+                        onCancel: clearSearch,
+                        isSearching: isSearching,
+                        searching: searching,
                       ),
                     ),
                     SliverPersistentHeader(
@@ -326,7 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
-                    if (contacts.isNotEmpty)
+                    if (contacts.isNotEmpty && isSearching)
                       SliverList(
                         delegate: SliverChildBuilderDelegate(
                           childCount: contacts.length,
@@ -392,24 +404,53 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
   final TextEditingController controller;
   final FocusNode focusNode;
   final Function(String) onSearch;
+  final Function() onCancel;
+  final bool isSearching;
+  final bool searching;
 
   SearchBarDelegate({
     required this.controller,
     required this.focusNode,
     required this.onSearch,
+    required this.onCancel,
+    this.isSearching = false,
+    this.searching = false,
   });
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: whiteColor,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: SearchBar(
-        controller: controller,
-        focusNode: focusNode,
-        onSearch: onSearch,
-      ),
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 77,
+            width: MediaQuery.of(context).size.width,
+            color: whiteColor,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: SearchBar(
+              controller: controller,
+              focusNode: focusNode,
+              onSearch: onSearch,
+              isFocused: isSearching,
+            ),
+          ),
+        ),
+        if (isSearching)
+          searching
+              ? const Padding(
+                  padding: EdgeInsets.fromLTRB(18, 0, 44, 0),
+                  child: CupertinoActivityIndicator(),
+                )
+              : CupertinoButton(
+                  padding: const EdgeInsets.fromLTRB(5, 0, 24, 0),
+                  onPressed: onCancel,
+                  child: const Text('Cancel'),
+                )
+      ],
     );
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/theme/colors.dart';
 
 class CustomSearchBar extends StatelessWidget {
   final TextEditingController controller;
@@ -8,7 +9,7 @@ class CustomSearchBar extends StatelessWidget {
   final String placeholder;
   final VoidCallback? onTap;
   final bool autofocus;
-  final bool searching;
+  final bool isFocused;
 
   const CustomSearchBar({
     super.key,
@@ -19,21 +20,19 @@ class CustomSearchBar extends StatelessWidget {
     this.placeholder = '',
     this.onTap,
     this.autofocus = false,
-    this.searching = false,
+    this.isFocused = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = CupertinoTheme.of(context);
-
     final defaultPlaceholderStyle = const TextStyle(
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: FontWeight.w500,
       color: Color(0xFFB7ADC4),
     );
 
     final defaultTextStyle = const TextStyle(
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: FontWeight.w500,
       color: Color(0xFF1D1D1D),
     );
@@ -45,7 +44,7 @@ class CustomSearchBar extends StatelessWidget {
 
     final BoxDecoration defaultDecoration = BoxDecoration(
       border: Border.all(
-        color: theme.primaryColor,
+        color: isFocused ? primaryColor : iconColor,
         width: 2,
       ),
       borderRadius: defaultBorderRadius,
@@ -64,15 +63,10 @@ class CustomSearchBar extends StatelessWidget {
       onTap: onTap,
       autofocus: autofocus,
       suffixInsets: EdgeInsets.only(right: 16),
-      suffixIcon: searching
-          ? const Icon(
-              CupertinoIcons.hourglass_bottomhalf_fill,
-              color: Color(0xFF4D4D4D),
-            )
-          : const Icon(
-              CupertinoIcons.search,
-              color: Color(0xFF4D4D4D),
-            ),
+      suffixIcon: const Icon(
+        CupertinoIcons.search,
+        color: Color(0xFF4D4D4D),
+      ),
       suffixMode: OverlayVisibilityMode.always,
       prefixIcon: const Icon(
         CupertinoIcons.search,

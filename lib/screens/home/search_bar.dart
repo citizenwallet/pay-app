@@ -1,25 +1,22 @@
 import 'package:flutter/cupertino.dart';
-import 'package:pay_app/state/interactions/interactions.dart';
 import 'package:pay_app/widgets/search_bar.dart';
-import 'package:provider/provider.dart';
 
 class SearchBar extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final Function(String) onSearch;
 
+  final bool isFocused;
   const SearchBar({
     super.key,
     required this.controller,
     required this.focusNode,
     required this.onSearch,
+    this.isFocused = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final searching =
-        context.select((InteractionState state) => state.searching);
-
     return Container(
       height: 57,
       decoration: BoxDecoration(
@@ -31,7 +28,7 @@ class SearchBar extends StatelessWidget {
         focusNode: focusNode,
         placeholder: 'Search for people or places',
         onChanged: onSearch,
-        searching: searching,
+        isFocused: isFocused,
       ),
     );
   }
