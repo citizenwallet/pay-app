@@ -92,9 +92,11 @@ class ContactsState extends ChangeNotifier {
       return;
     }
 
-    print('is username: ${query.startsWith('@')}');
+    final isPotentialNumber = query.startsWith('+') ||
+        query.startsWith('0') ||
+        double.tryParse(query) != null;
 
-    if (!query.startsWith('@')) {
+    if (isPotentialNumber) {
       try {
         final result = await parse(query);
 
@@ -124,7 +126,7 @@ class ContactsState extends ChangeNotifier {
       }
     }
 
-    if (query.startsWith('@')) {
+    if (!isPotentialNumber) {
       try {
         final result = await getProfileByUsername(
           _config,
