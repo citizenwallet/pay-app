@@ -433,6 +433,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        whiteColor.withValues(alpha: 0.0),
+                        whiteColor,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
                 left: 0,
                 right: 0,
                 bottom: 10 + safeBottomPadding,
@@ -440,7 +458,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   duration: const Duration(milliseconds: 100),
                   height: isKeyboardVisible ? 0 : (100 * heightFactor),
                   child: ScanQrCircle(
-                      handleQRScan: () {}, heightFactor: heightFactor),
+                    handleQRScan: () {},
+                    heightFactor: heightFactor,
+                  ),
                 ),
               ),
             ],
@@ -565,7 +585,7 @@ class WhiteBarDelegate extends SliverPersistentHeaderDelegate {
     return Column(
       children: [
         Container(
-          height: 20,
+          height: 40,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -579,10 +599,10 @@ class WhiteBarDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  double get maxExtent => 20.0; // Height of your SearchBar
+  double get maxExtent => 40.0; // Height of your SearchBar
 
   @override
-  double get minExtent => 20.0; // Same as maxExtent for fixed height
+  double get minExtent => 40.0; // Same as maxExtent for fixed height
 
   @override
   bool shouldRebuild(covariant WhiteBarDelegate oldDelegate) => true;
