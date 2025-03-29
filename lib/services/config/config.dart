@@ -631,14 +631,14 @@ class Config {
     sessionManagerModuleContract = SessionManagerModuleService(
       chain.id,
       ethClient,
-      "0x10772bc224786D2743d2c8C41f4e946242Ebac04",
+      "0xFd1c7E49806a4B8d89098d10dFFFFd1bA3D5306C",
     );
     await sessionManagerModuleContract.init();
 
     twoFAFactoryContract = TwoFAFactoryService(
       chain.id,
       ethClient,
-      "0xB5617ccd861Fa3A0eA66f063e239d0763C3C311A",
+      "0x5c147cc0ea829eAA99F062eEf785e150afBd5D1f",
     );
     await twoFAFactoryContract.init();
   }
@@ -667,6 +667,10 @@ class Config {
     await account.init();
 
     return account;
+  }
+
+  Future<BigInt> getNonce(String address) async {
+    return await entryPointContract.getNonce(address);
   }
 
   factory Config.fromLegacy(LegacyConfig legacy) {

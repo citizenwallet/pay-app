@@ -28,7 +28,6 @@ class OnboardingState with ChangeNotifier {
   final ConfigService _configService = ConfigService();
   final SecureService _secureService = SecureService();
   final SessionService _sessionService = SessionService();
-  late TwoFAFactoryService _twoFAFactoryService;
   late Config _config;
 
   // private variables here
@@ -58,11 +57,6 @@ class OnboardingState with ChangeNotifier {
 
     _config = config;
 
-    _twoFAFactoryService = await twoFAFactoryServiceFromConfig(
-      _config,
-      customTwoFAFactory: '0xB5617ccd861Fa3A0eA66f063e239d0763C3C311A',
-    );
-
     final credentials = _secureService.getCredentials();
     if (credentials != null) {
       final (account, key) = credentials;
@@ -70,8 +64,6 @@ class OnboardingState with ChangeNotifier {
       print('account: ${account.hexEip55}');
       print('key: ${key.address.hexEip55}');
     }
-
-    await _twoFAFactoryService.init();
   }
 
   bool _mounted = true;
@@ -158,7 +150,7 @@ class OnboardingState with ChangeNotifier {
 
       final salt = generateSessionSalt(source, 'sms');
 
-      final twoFAAddress = await _twoFAFactoryService.getAddress(
+      final twoFAAddress = await _config.twoFAFactoryContract.getAddress(
         _sessionService.provider,
         salt,
       );
