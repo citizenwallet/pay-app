@@ -200,11 +200,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void handleProfileTap(String myAddress) async {
-    clearSearch();
+    _searchFocusNode.unfocus();
 
     final navigator = GoRouter.of(context);
 
-    navigator.push('/$myAddress/my-account');
+    await navigator.push('/$myAddress/my-account');
+
+    clearSearch();
   }
 
   void clearSearch() {
@@ -248,6 +250,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final customContact = context.select(selectCustomContact);
     final customContactProfileByUsername = context
         .select((ContactsState state) => state.customContactProfileByUsername);
+
+    print(interactions.length);
 
     final searching =
         context.select((InteractionState state) => state.searching);
