@@ -16,6 +16,7 @@ import 'package:pay_app/state/places/selectors.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
+import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:provider/provider.dart';
 
@@ -198,6 +199,14 @@ class _HomeScreenState extends State<HomeScreen> {
     navigator.push('/$myAddress/user/$account');
   }
 
+  void handleProfileTap(String myAddress) async {
+    clearSearch();
+
+    final navigator = GoRouter.of(context);
+
+    navigator.push('/$myAddress/my-account');
+  }
+
   void clearSearch() {
     setState(() {
       isSearching = false;
@@ -270,6 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       pinned: true,
                       delegate: ProfileBarDelegate(
                         accountAddress: myAddress ?? '',
+                        onProfileTap: () => handleProfileTap(myAddress ?? ''),
                       ),
                     ),
                     SliverPersistentHeader(
@@ -380,13 +390,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
   final String accountAddress;
+  final Function() onProfileTap;
 
-  ProfileBarDelegate({required this.accountAddress});
+  ProfileBarDelegate({
+    required this.accountAddress,
+    required this.onProfileTap,
+  });
 
   @override
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return ProfileBar(accountAddress: accountAddress);
+    return ProfileBar(
+      accountAddress: accountAddress,
+      onProfileTap: onProfileTap,
+    );
   }
 
   @override

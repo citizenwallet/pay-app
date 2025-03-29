@@ -3,13 +3,17 @@ import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class ProfileBar extends StatefulWidget {
   final String accountAddress;
+  final Function() onProfileTap;
 
-  const ProfileBar({super.key, required this.accountAddress});
+  const ProfileBar({
+    super.key,
+    required this.accountAddress,
+    required this.onProfileTap,
+  });
 
   @override
   State<ProfileBar> createState() => _ProfileBarState();
@@ -19,14 +23,6 @@ class _ProfileBarState extends State<ProfileBar> {
   @override
   void initState() {
     super.initState();
-  }
-
-  void _goToMyAccount() async {
-    final myAddress = widget.accountAddress;
-
-    final navigator = GoRouter.of(context);
-
-    navigator.push('/$myAddress/my-account');
   }
 
   @override
@@ -39,7 +35,7 @@ class _ProfileBarState extends State<ProfileBar> {
     final profile = context.watch<ProfileState>().profile;
 
     return GestureDetector(
-      onTap: _goToMyAccount,
+      onTap: widget.onProfileTap,
       child: Container(
         height: 95,
         color: CupertinoColors.systemBackground,
