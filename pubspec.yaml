@@ -103,6 +103,8 @@ flutter:
     - assets/icons/profile.jpg
     - assets/icons/shop.svg
     - assets/icons/shop.png
+    - assets/icons/contact.png
+    - assets/icons/at.png
     - assets/icons/notification_bell.svg
     - assets/icons/term-and-condition.svg
     - assets/icons/menu-item-placeholder.svg

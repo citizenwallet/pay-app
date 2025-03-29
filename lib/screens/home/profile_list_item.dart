@@ -37,15 +37,26 @@ class ProfileListItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    profile.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF14023F),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Image.asset(
+                        'assets/icons/at.png',
+                        semanticLabel: 'at icon',
+                        height: 16,
+                        width: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        profile.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF14023F),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Row(

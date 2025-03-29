@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
@@ -50,15 +51,26 @@ class ContactListItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    contact.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF14023F),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Image.asset(
+                        'assets/icons/contact.png',
+                        semanticLabel: 'contact icon',
+                        height: 16,
+                        width: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        contact.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF14023F),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Row(
