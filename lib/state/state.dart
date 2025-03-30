@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pay_app/state/account.dart';
 import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/checkout.dart';
 import 'package:pay_app/state/community.dart';
@@ -67,6 +68,10 @@ Widget provideAccountState(
       ChangeNotifierProvider(
         key: Key('topup'),
         create: (_) => TopupState(),
+      ),
+      ChangeNotifierProvider(
+        key: Key('account-$account'),
+        create: (_) => AccountState(),
       ),
     ],
     child: child,

@@ -76,6 +76,12 @@ class SessionManagerModuleService {
     return result[0] as bool;
   }
 
+  Uint8List revokeCallData(EthereumAddress signer) {
+    final function = rcontract.function('revoke');
+
+    return function.encodeCall([signer]);
+  }
+
   void dispose() {
     // _sub?.cancel();
   }

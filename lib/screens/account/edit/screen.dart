@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:pay_app/widgets/wide_button.dart';
 
@@ -30,7 +31,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
   }
 
   void goBack() {
-    Navigator.pop(context);
+    GoRouter.of(context).pop();
   }
 
   void _dismissKeyboard() {

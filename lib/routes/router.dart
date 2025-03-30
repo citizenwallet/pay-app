@@ -54,7 +54,9 @@ GoRouter createRouter(
               name: 'MyAccount',
               path: '/:account/my-account',
               builder: (context, state) {
-                return const MyAccount();
+                final accountAddress = state.pathParameters['account']!;
+
+                return MyAccount(accountAddress: accountAddress);
               },
               routes: [
                 GoRoute(
