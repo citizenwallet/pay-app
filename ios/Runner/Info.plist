@@ -22,12 +22,40 @@
 		<string>$(FLUTTER_BUILD_NAME)</string>
 		<key>CFBundleSignature</key>
 		<string>????</string>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLName</key>
+				<string>brussels.pay.wallet</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>brusselspay</string>
+				</array>
+			</dict>
+		</array>
 		<key>CFBundleVersion</key>
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<key>FlutterDeepLinkingEnabled</key>
+		<true/>
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
+		<key>NSCameraUsageDescription</key>
+		<string>Brussels Pay needs camera access in order to scan QR codes. Scanning is done on device.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Brussels Pay needs photo library access in order to pick a profile photo.</string>
+		<key>UIApplicationSupportsIndirectInputEvents</key>
+		<true/>
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>fetch</string>
+			<string>remote-notification</string>
+		</array>
 		<key>NSContactsUsageDescription</key>
-		<string>We need access to your contacts in order for you to find people to send payments to. This information is kept private and never shared with anyone.</string>
+		<string>In Brussels Pay, phone numbers are user accounts. Use your contacts to search for people to send payments to. This information is never shared with anyone.</string>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UILaunchStoryboardName</key>
