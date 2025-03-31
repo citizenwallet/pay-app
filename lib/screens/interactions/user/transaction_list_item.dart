@@ -32,6 +32,8 @@ class TransactionListItem extends StatelessWidget {
 
     final failed = transaction.status == TransactionStatus.fail;
 
+    final iconColor = isReceived ? textMutedColor : textSurfaceMutedColor;
+
     final rowChildren = [
       Expanded(
         child: const SizedBox(),
@@ -110,7 +112,7 @@ class TransactionListItem extends StatelessWidget {
                             Icon(
                               CupertinoIcons.check_mark,
                               size: 10,
-                              color: whiteColor,
+                              color: iconColor,
                             ),
                           if (transaction.status == TransactionStatus.success)
                             SizedBox(
@@ -123,7 +125,7 @@ class TransactionListItem extends StatelessWidget {
                                     child: Icon(
                                       CupertinoIcons.check_mark,
                                       size: 10,
-                                      color: whiteColor,
+                                      color: iconColor,
                                     ),
                                   ),
                                   Positioned(
@@ -131,7 +133,7 @@ class TransactionListItem extends StatelessWidget {
                                     child: Icon(
                                       CupertinoIcons.check_mark,
                                       size: 10,
-                                      color: whiteColor,
+                                      color: iconColor,
                                     ),
                                   ),
                                 ],
@@ -141,7 +143,7 @@ class TransactionListItem extends StatelessWidget {
                             Icon(
                               CupertinoIcons.xmark,
                               size: 10,
-                              color: whiteColor,
+                              color: iconColor,
                             ),
                         ],
                       ),
