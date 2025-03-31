@@ -5,6 +5,12 @@ import 'package:web3dart/web3dart.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:pay_app/services/api/api.dart';
 
+class InvalidChallengeException implements Exception {
+  final String message = 'invalid challenge';
+
+  InvalidChallengeException();
+}
+
 /// Generates a salt from source and type
 Uint8List generateSessionSalt(String source, String type) {
   final saltString = '$source:$type';
@@ -121,6 +127,8 @@ class SessionService {
       );
 
       return (response['sessionRequestTxHash'] as String, hash);
+    } on BadRequestException {
+      throw InvalidChallengeException();
     } catch (e, s) {
       debugPrint('Failed to create session request: $e');
       debugPrint('Stack trace: $s');

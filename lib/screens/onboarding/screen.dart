@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/state/community.dart';
 import 'package:pay_app/state/onboarding.dart';
-import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
@@ -50,6 +49,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   final FocusNode _challengeFocusNode = FocusNode();
 
   String? _previousChallenge;
+  bool _navigating = false;
 
   void onLoad() async {
     final navigator = GoRouter.of(context);
@@ -91,7 +91,21 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   void handleConfirm(String challenge) async {
-    await _onboardingState.confirmSession(challenge);
+    final navigator = GoRouter.of(context);
+
+    await delay(const Duration(milliseconds: 50));
+
+    final account = await _onboardingState.confirmSession(challenge);
+
+    if (account != null && !_navigating) {
+      _navigating = true;
+      _onboardingState.reset();
+      navigator.go('/${account.hexEip55}');
+    }
+  }
+
+  void handleRetry() {
+    _onboardingState.retry();
   }
 
   void handlePhoneNumberChange(String phoneNumber) {
@@ -104,7 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = CupertinoTheme.of(context);
+    final width = MediaQuery.of(context).size.width;
 
     final community = context.select((CommunityState state) => state.community);
 
@@ -135,12 +149,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     _previousChallenge = challenge;
 
     return CupertinoPageScaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: whiteColor,
       child: GestureDetector(
         onTap: _dismissKeyboard,
         behavior: HitTestBehavior.opaque,
         child: SafeArea(
-          child: Padding(
+          child: Container(
+            width: width,
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
               children: [
@@ -204,13 +219,20 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                               color: !touched
                                   ? mutedColor
                                   : touched && isValidPhoneNumber
-                                      ? primaryColor
+                                      ? (sessionRequestStatus ==
+                                              SessionRequestStatus.pending
+                                          ? transparentColor
+                                          : primaryColor)
                                       : warningColor,
                             ),
                           ),
                           textAlign: TextAlign.start,
                           style: TextStyle(
                             fontSize: 22,
+                            color: sessionRequestStatus ==
+                                    SessionRequestStatus.pending
+                                ? textMutedColor
+                                : textColor,
                             fontWeight: touched && isValidPhoneNumber
                                 ? FontWeight.w700
                                 : FontWeight.w500,
@@ -257,7 +279,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           autofocus:
                               false, // We'll focus manually after animation
                           enabled: sessionRequestStatus ==
-                              SessionRequestStatus.challenge,
+                                  SessionRequestStatus.challenge ||
+                              sessionRequestStatus ==
+                                  SessionRequestStatus.confirmFailed,
                           maxLength: 6,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(30),
@@ -265,13 +289,20 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                               color: !challengeTouched
                                   ? mutedColor
                                   : challengeTouched && isValidChallenge
-                                      ? primaryColor
+                                      ? (sessionRequestStatus ==
+                                              SessionRequestStatus.confirming
+                                          ? transparentColor
+                                          : primaryColor)
                                       : warningColor,
                             ),
                           ),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 22,
+                            color: sessionRequestStatus ==
+                                    SessionRequestStatus.confirming
+                                ? textMutedColor
+                                : textColor,
                             fontWeight: challengeTouched && isValidChallenge
                                 ? FontWeight.w700
                                 : FontWeight.w500,
@@ -287,6 +318,19 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           onChanged: handleChallengeChange,
                         ),
                       const SizedBox(height: 16),
+                      if (sessionRequestStatus ==
+                          SessionRequestStatus.confirmFailed)
+                        Text(
+                          'Invalid code',
+                          style: TextStyle(
+                            color: dangerColor,
+                          ),
+                        ),
+                      if (sessionRequestStatus ==
+                          SessionRequestStatus.confirmFailed)
+                        const SizedBox(
+                          height: 16,
+                        ),
 
                       // Confirm Button
                       if (sessionRequestStatus == SessionRequestStatus.none ||
@@ -294,20 +338,40 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                               SessionRequestStatus.pending ||
                           sessionRequestStatus == SessionRequestStatus.failed)
                         WideButton(
-                          disabled: !isValidPhoneNumber,
+                          disabled: !isValidPhoneNumber ||
+                              sessionRequestStatus ==
+                                  SessionRequestStatus.pending,
                           onPressed: isValidPhoneNumber
                               ? () => handleRequest(
                                   phoneNumberController.value.text)
                               : null,
-                          child: Text(
-                            sessionRequestStatus == SessionRequestStatus.pending
-                                ? 'Confirming...'
-                                : 'Confirm',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: CupertinoColors.white,
-                            ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                sessionRequestStatus ==
+                                        SessionRequestStatus.pending
+                                    ? 'Sending SMS Code...'
+                                    : 'Confirm',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: sessionRequestStatus ==
+                                          SessionRequestStatus.pending
+                                      ? primaryColor.withAlpha(180)
+                                      : CupertinoColors.white,
+                                ),
+                              ),
+                              if (sessionRequestStatus ==
+                                  SessionRequestStatus.pending)
+                                const SizedBox(width: 8),
+                              if (sessionRequestStatus ==
+                                  SessionRequestStatus.pending)
+                                CupertinoActivityIndicator(
+                                  color: primaryColor.withAlpha(180),
+                                ),
+                            ],
                           ),
                         ),
                       // Challenge Confirm Button
@@ -318,24 +382,69 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           sessionRequestStatus ==
                               SessionRequestStatus.confirmFailed)
                         WideButton(
-                          disabled: !isValidChallenge,
+                          disabled: !isValidChallenge ||
+                              sessionRequestStatus ==
+                                  SessionRequestStatus.confirming,
                           onPressed: isValidChallenge
                               ? () =>
                                   handleConfirm(challengeController.value.text)
                               : null,
-                          child: Text(
-                            sessionRequestStatus ==
-                                    SessionRequestStatus.confirming
-                                ? 'Logging in...'
-                                : 'Login',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: CupertinoColors.white,
-                            ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                sessionRequestStatus ==
+                                        SessionRequestStatus.confirming
+                                    ? 'Logging in...'
+                                    : sessionRequestStatus ==
+                                            SessionRequestStatus.confirmFailed
+                                        ? 'Confirm code again'
+                                        : 'Confirm code',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: sessionRequestStatus ==
+                                          SessionRequestStatus.confirming
+                                      ? primaryColor.withAlpha(180)
+                                      : CupertinoColors.white,
+                                ),
+                              ),
+                              if (sessionRequestStatus ==
+                                  SessionRequestStatus.confirming)
+                                const SizedBox(width: 8),
+                              if (sessionRequestStatus ==
+                                  SessionRequestStatus.confirming)
+                                CupertinoActivityIndicator(
+                                  color: primaryColor.withAlpha(180),
+                                ),
+                            ],
                           ),
                         ),
                       const SizedBox(height: 16),
+                      if (sessionRequestStatus ==
+                          SessionRequestStatus.confirmFailed)
+                        WideButton(
+                          onPressed: handleRetry,
+                          color: whiteColor,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Send new code',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      if (sessionRequestStatus ==
+                          SessionRequestStatus.confirmFailed)
+                        const SizedBox(height: 16),
                     ],
                   ),
                 ),

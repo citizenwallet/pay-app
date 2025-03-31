@@ -81,20 +81,18 @@ class AccountState with ChangeNotifier {
       if (txHash == null) {
         throw Exception('Failed to revoke session');
       }
-
-      await _secureService.clearCredentials();
-
-      loggingOut = false;
-      safeNotifyListeners();
-
-      return true;
     } catch (e, s) {
       error = true;
       safeNotifyListeners();
       debugPrint('error: $e');
       debugPrint('stack trace: $s');
+    } finally {
+      await _secureService.clearCredentials();
+
+      loggingOut = false;
+      safeNotifyListeners();
     }
 
-    return false;
+    return true;
   }
 }

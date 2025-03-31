@@ -9,7 +9,6 @@ import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/session/session.dart';
 import 'package:pay_app/services/wallet/contracts/session_manager_module.dart';
-import 'package:pay_app/services/wallet/contracts/two_fa_factory.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -56,14 +55,6 @@ class OnboardingState with ChangeNotifier {
     await config.initContracts();
 
     _config = config;
-
-    final credentials = _secureService.getCredentials();
-    if (credentials != null) {
-      final (account, key) = credentials;
-
-      print('account: ${account.hexEip55}');
-      print('key: ${key.address.hexEip55}');
-    }
   }
 
   bool _mounted = true;
@@ -86,6 +77,33 @@ class OnboardingState with ChangeNotifier {
   String? challenge;
 
   SessionRequestStatus sessionRequestStatus = SessionRequestStatus.none;
+
+  void reset() {
+    sessionRequestStatus = SessionRequestStatus.none;
+    _sessionRequestHash = null;
+    _sessionRequestPrivateKey = null;
+
+    touched = false;
+    regionCode = null;
+    challengeTouched = false;
+    challenge = null;
+
+    phoneNumberController.clear();
+    challengeController.clear();
+  }
+
+  void retry() {
+    sessionRequestStatus = SessionRequestStatus.none;
+    _sessionRequestHash = null;
+    _sessionRequestPrivateKey = null;
+
+    challenge = null;
+    challengeTouched = false;
+
+    challengeController.clear();
+
+    safeNotifyListeners();
+  }
 
   EthereumAddress? getAccountAddress() {
     final credentials = _secureService.getCredentials();
@@ -114,8 +132,6 @@ class OnboardingState with ChangeNotifier {
       privateKey.address,
     );
 
-    print('isExpired: $isExpired');
-
     if (isExpired) {
       return null;
     }
@@ -130,11 +146,23 @@ class OnboardingState with ChangeNotifier {
       _sessionRequestHash = null;
       safeNotifyListeners();
 
+      String? parsedSource;
+      try {
+        final result = await parse(source);
+
+        parsedSource = result['e164'];
+      } catch (e) {
+        throw Exception('Invalid phone number');
+      }
+      if (parsedSource == null) {
+        throw Exception('Invalid phone number');
+      }
+
       final random = Random.secure();
       _sessionRequestPrivateKey = EthPrivateKey.createRandom(random);
 
-      final response =
-          await _sessionService.request(_sessionRequestPrivateKey!, source);
+      final response = await _sessionService.request(
+          _sessionRequestPrivateKey!, parsedSource);
 
       if (response == null) {
         throw Exception('Failed to request session');
@@ -148,7 +176,7 @@ class OnboardingState with ChangeNotifier {
         throw Exception('Failed to wait for session request tx to be mined');
       }
 
-      final salt = generateSessionSalt(source, 'sms');
+      final salt = generateSessionSalt(parsedSource, 'sms');
 
       final twoFAAddress = await _config.twoFAFactoryContract.getAddress(
         _sessionService.provider,
@@ -170,7 +198,7 @@ class OnboardingState with ChangeNotifier {
     }
   }
 
-  Future<void> confirmSession(String challenge) async {
+  Future<EthereumAddress?> confirmSession(String challenge) async {
     try {
       if (_sessionRequestPrivateKey == null) {
         throw Exception('Session request private key not found');
@@ -179,9 +207,6 @@ class OnboardingState with ChangeNotifier {
       if (_sessionRequestHash == null) {
         throw Exception('Session request hash not found');
       }
-
-      print('confirming session');
-      print('challenge: $challenge');
 
       sessionRequestStatus = SessionRequestStatus.confirming;
       safeNotifyListeners();
@@ -207,11 +232,22 @@ class OnboardingState with ChangeNotifier {
       safeNotifyListeners();
 
       _sessionRequestPrivateKey = null;
+
+      final credentials = _secureService.getCredentials();
+      if (credentials == null) {
+        throw Exception('No credentials found');
+      }
+
+      final (account, _) = credentials;
+
+      return account;
     } catch (e, s) {
       debugPrint('error: $e');
       debugPrint('stack trace: $s');
       sessionRequestStatus = SessionRequestStatus.confirmFailed;
       safeNotifyListeners();
+
+      return null;
     }
   }
 
