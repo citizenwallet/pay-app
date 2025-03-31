@@ -20,7 +20,9 @@ import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
+import 'package:pay_app/utils/qr.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
+import 'package:pay_app/widgets/scanner/scanner_modal.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
 
@@ -213,6 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
     String? name,
     String? phone,
     Uint8List? photo,
+    String? imageUrl,
   }) async {
     if (myAddress == null) {
       return;
@@ -226,6 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'name': name,
       'phone': phone,
       'photo': photo,
+      'imageUrl': imageUrl,
     });
 
     clearSearch();
@@ -267,6 +271,71 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
     );
+  }
+
+  void handleQRScan(String myAddress) async {
+    final result = await showCupertinoModalPopup<String?>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => const ScannerModal(
+        modalKey: 'home-qr-scanner',
+      ),
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    final (address, _, _, _) = parseQRCode(result);
+    if (address.isEmpty) {
+      // invalid QR code
+      return;
+    }
+
+    final format = parseQRFormat(result);
+
+    switch (format) {
+      case QRFormat.checkoutUrl:
+        handleInteractionWithPlace(myAddress, address);
+        break;
+      case QRFormat.accountUrl:
+        final profile = address.startsWith('0x')
+            ? await _contactsState.getContactProfileFromAddress(address)
+            : await _contactsState.getContactProfileFromUsername(address);
+
+        if (profile != null) {
+          handleInteractionWithUser(
+            myAddress,
+            profile.account,
+            name: profile.name,
+            imageUrl: profile.image,
+          );
+        } else {
+          _searchController.text = address;
+          _searchFocusNode.requestFocus();
+          handleSearch(address);
+        }
+        break;
+      case QRFormat.voucher:
+        // TODO: vouchers need to be handled by the voucher screen
+        break;
+      case QRFormat.url:
+        // TODO: urls need to be handled by the webview
+        break;
+      default:
+        final profile =
+            await _contactsState.getContactProfileFromAddress(address);
+
+        if (profile != null) {
+          handleInteractionWithUser(
+            myAddress,
+            profile.account,
+            name: profile.name,
+            imageUrl: profile.image,
+          );
+        }
+        break;
+    }
   }
 
   void clearSearch() {
@@ -318,6 +387,11 @@ class _HomeScreenState extends State<HomeScreen> {
         context.select((WalletState state) => state.address?.hexEip55);
 
     final safeBottomPadding = MediaQuery.of(context).padding.bottom;
+
+    final nothingFound = _searchController.text.isNotEmpty &&
+        interactions.isEmpty &&
+        places.isEmpty &&
+        contacts.isEmpty;
 
     return CupertinoPageScaffold(
       backgroundColor: whiteColor,
@@ -424,6 +498,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
+                    if (nothingFound)
+                      SliverToBoxAdapter(
+                        child: Center(
+                          child: Text('No results found'),
+                        ),
+                      ),
                     SliverToBoxAdapter(
                       child: SizedBox(
                         height: 10,
@@ -458,7 +538,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   duration: const Duration(milliseconds: 100),
                   height: isKeyboardVisible ? 0 : (100 * heightFactor),
                   child: ScanQrCircle(
-                    handleQRScan: () {},
+                    handleQRScan: () => handleQRScan(myAddress ?? ''),
                     heightFactor: heightFactor,
                   ),
                 ),

@@ -1,4 +1,5 @@
 import 'package:pay_app/services/wallet/utils.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // enum that represents the different qr code formats
 enum QRFormat {
@@ -9,6 +10,8 @@ enum QRFormat {
   receiveUrl,
   sendtoUrl,
   sendtoUrlWithEIP681,
+  checkoutUrl,
+  accountUrl,
   url,
   unsupported,
 }
@@ -30,6 +33,10 @@ QRFormat parseQRFormat(String raw) {
     return QRFormat.receiveUrl;
   } else if (raw.contains('voucher=')) {
     return QRFormat.voucher;
+  } else if (raw.startsWith(dotenv.env['CHECKOUT_URL'] ?? '')) {
+    return QRFormat.checkoutUrl;
+  } else if (raw.startsWith(dotenv.env['APP_REDIRECT_URL'] ?? '')) {
+    return QRFormat.accountUrl;
   } else if (raw.startsWith('https://') || raw.startsWith('http://')) {
     return QRFormat.url;
   } else {
@@ -101,6 +108,36 @@ QRFormat parseQRFormat(String raw) {
   return (address, amountParam, descriptionParam, alias);
 }
 
+(String, String?, String?, String?) parseCheckoutUrl(String raw) {
+  final cleanRaw = raw.replaceFirst('/#/', '/');
+  final decodedRaw = Uri.decodeComponent(cleanRaw);
+
+  final receiveUrl = Uri.parse(decodedRaw);
+
+  final placeSlug = receiveUrl.pathSegments.last;
+
+  if (placeSlug == '') {
+    return ('', null, null, null);
+  }
+
+  return (placeSlug, null, null, null);
+}
+
+(String, String?, String?, String?) parseAccountUrl(String raw) {
+  final cleanRaw = raw.replaceFirst('/#/', '/');
+  final decodedRaw = Uri.decodeComponent(cleanRaw);
+
+  final receiveUrl = Uri.parse(decodedRaw);
+
+  final userAccount = receiveUrl.pathSegments.last;
+
+  if (userAccount == '') {
+    return ('', null, null, null);
+  }
+
+  return (userAccount, null, null, null);
+}
+
 (String, String?, String?, String?) parseReceiveUrl(String raw) {
   final receiveUrl = Uri.parse(raw.split('/#/').last);
 
@@ -139,6 +176,10 @@ QRFormat parseQRFormat(String raw) {
       return parseSendtoUrl(raw);
     case QRFormat.sendtoUrlWithEIP681:
       return parseSendtoUrlWithEIP681(raw);
+    case QRFormat.checkoutUrl:
+      return parseCheckoutUrl(raw);
+    case QRFormat.accountUrl:
+      return parseAccountUrl(raw);
     case QRFormat.url:
     // nothing to parse
     case QRFormat.voucher:

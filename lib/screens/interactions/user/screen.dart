@@ -20,12 +20,14 @@ class InteractionWithUserScreen extends StatefulWidget {
   final String customName;
   final String customPhone;
   final Uint8List? customPhoto;
+  final String? customImageUrl;
 
   const InteractionWithUserScreen({
     super.key,
     required this.customName,
     required this.customPhone,
     this.customPhoto,
+    this.customImageUrl,
   });
 
   @override
@@ -163,7 +165,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
             children: [
               ChatHeader(
                 onTapLeading: goBack,
-                imageUrl: withUser?.imageUrl,
+                imageUrl: widget.customImageUrl ?? withUser?.imageUrl,
                 photo: widget.customPhoto,
                 name: withUser?.name ?? widget.customName,
                 username: withUser?.username,

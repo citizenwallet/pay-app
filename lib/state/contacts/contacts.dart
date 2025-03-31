@@ -146,6 +146,36 @@ class ContactsState extends ChangeNotifier {
     safeNotifyListeners();
   }
 
+  Future<ProfileV1?> getContactProfileFromUsername(String query) async {
+    try {
+      final result = await getProfileByUsername(
+        _config,
+        query.trim().replaceFirst('@', ''),
+      );
+
+      return result;
+    } catch (e, s) {
+      print('error: $e');
+      print('stack trace: $s');
+      return null;
+    }
+  }
+
+  Future<ProfileV1?> getContactProfileFromAddress(String address) async {
+    try {
+      final result = await getProfile(
+        _config,
+        address,
+      );
+
+      return result;
+    } catch (e, s) {
+      print('error: $e');
+      print('stack trace: $s');
+      return null;
+    }
+  }
+
   Future<EthereumAddress?> getContactAddress(
     String source,
     String type,

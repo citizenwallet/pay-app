@@ -117,6 +117,7 @@ GoRouter createRouter(
                 final customName = extra['name'] ?? '';
                 final customPhone = extra['phone'] ?? '';
                 final customPhoto = extra['photo'] as Uint8List?;
+                final customImageUrl = extra['imageUrl'] as String?;
 
                 return ChangeNotifierProvider(
                   create: (_) => TransactionsWithUserState(
@@ -127,6 +128,7 @@ GoRouter createRouter(
                     customName: customName,
                     customPhone: customPhone,
                     customPhoto: customPhoto,
+                    customImageUrl: customImageUrl,
                   ),
                 );
               },
