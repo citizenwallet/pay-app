@@ -150,7 +150,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
     final transactionState = context.watch<TransactionsWithUserState>();
     final withUser = transactionState.withUser;
 
-    final transactions = selectUserTransactions(transactionState);
+    final transactions = context.select(selectUserTransactions);
 
     final noUserAccount = withUser == null &&
         widget.customName.isNotEmpty &&

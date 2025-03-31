@@ -132,6 +132,7 @@ class TransactionsWithUserState with ChangeNotifier {
         final index = sendingQueue.indexWhere((tx) => tx.id == toRetry.id);
         if (index != -1) {
           sendingQueue[index] = sendingQueue[index].copyWith(
+            createdAt: DateTime.now(),
             status: TransactionStatus.sending,
           );
           safeNotifyListeners();
@@ -197,17 +198,6 @@ class TransactionsWithUserState with ChangeNotifier {
       );
 
       if (txHash == null) return null;
-
-      final index = sendingQueue.indexWhere((tx) => tx.id == tempId);
-
-      if (index != -1) {
-        sendingQueue[index] = sendingQueue[index].copyWith(
-          txHash: txHash,
-          status: TransactionStatus.success,
-        );
-
-        safeNotifyListeners();
-      }
 
       debugPrint('txHash: $txHash');
       return txHash;
