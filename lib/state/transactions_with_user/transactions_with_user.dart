@@ -121,9 +121,6 @@ class TransactionsWithUserState with ChangeNotifier {
 
       final (account, key) = credentials;
 
-      debugPrint('account: ${account.hexEip55}');
-      debugPrint('key: ${key.address.hexEip55}');
-
       final toAddress = toRetry != null ? toRetry.toAccount : withUserAddress;
       final message =
           toRetry != null ? toRetry.description : toSendMessage.trim();
@@ -357,6 +354,12 @@ class TransactionsWithUserState with ChangeNotifier {
       } else {
         existingList.insert(0, newTransaction);
       }
+
+      existingList.removeWhere((element) =>
+          element.exchangeDirection == ExchangeDirection.received &&
+          element.status == TransactionStatus.pending &&
+          element.createdAt
+              .isBefore(DateTime.now().subtract(Duration(seconds: 20))));
     }
 
     this.newTransactions = [...existingList];

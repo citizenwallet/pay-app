@@ -105,7 +105,8 @@ class _FooterState extends State<Footer> {
                 child: CupertinoActivityIndicator(),
               ),
             ),
-          if (widget.display == Display.menu)
+          if (widget.display == Display.menu ||
+              widget.display == Display.amountAndMenu)
             WideButton(
               onPressed: widget.onMenuPressed,
               child: Text(
@@ -117,7 +118,9 @@ class _FooterState extends State<Footer> {
                 ),
               ),
             ),
-          if (widget.display == Display.amount)
+          if (widget.display == Display.amountAndMenu) SizedBox(height: 10),
+          if (widget.display == Display.amount ||
+              widget.display == Display.amountAndMenu)
             Row(
               children: [
                 Expanded(

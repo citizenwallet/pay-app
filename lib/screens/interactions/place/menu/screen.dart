@@ -44,6 +44,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
   double get _scrollThreshold => headerHeight * (1 + detectionSensitivity);
 
   late OrdersWithPlaceState _ordersWithPlaceState;
+  late CheckoutState _checkoutState;
 
   @override
   void initState() {
@@ -55,6 +56,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ordersWithPlaceState = context.read<OrdersWithPlaceState>();
+      _checkoutState = context.read<CheckoutState>();
 
       onLoad();
     });
@@ -75,6 +77,8 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
     _scrollThrottle?.cancel();
     _menuScrollController.removeListener(_throttledOnScroll);
     _menuScrollController.dispose();
+
+    _checkoutState.clear();
 
     super.dispose();
   }

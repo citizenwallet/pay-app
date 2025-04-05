@@ -5,19 +5,24 @@ import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/place_menu.dart';
 import 'package:pay_app/models/place_with_menu.dart';
+import 'package:pay_app/services/config/config.dart';
+import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/engine/utils.dart';
 import 'package:pay_app/services/pay/orders.dart';
 import 'package:pay_app/services/pay/places.dart';
+import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/contracts/erc20.dart';
 import 'package:pay_app/services/wallet/utils.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
-import 'package:pay_app/utils/random.dart';
 
 class OrdersWithPlaceState with ChangeNotifier {
   // instantiate services here
+  late Config _config;
+
+  final ConfigService _configService = ConfigService();
+  final SecureService _secureService = SecureService();
   final PlacesService _placesService = PlacesService();
-  final OrdersService _ordersService;
-  final WalletService _walletService = WalletService();
+  late OrdersService _ordersService;
 
   // private variables here
   bool _mounted = true;
@@ -27,7 +32,22 @@ class OrdersWithPlaceState with ChangeNotifier {
   OrdersWithPlaceState({
     required this.slug,
     required this.myAddress,
-  }) : _ordersService = OrdersService(account: myAddress);
+  }) {
+    _ordersService = OrdersService(account: myAddress);
+
+    init();
+  }
+
+  void init() async {
+    final config = await _configService.getLocalConfig();
+    if (config == null) {
+      throw Exception('Community not found in local asset');
+    }
+
+    await config.initContracts();
+
+    _config = config;
+  }
 
   void safeNotifyListeners() {
     if (_mounted) {
@@ -126,6 +146,8 @@ class OrdersWithPlaceState with ChangeNotifier {
         return null;
       }
 
+      final token = _config.getPrimaryToken();
+
       final total = checkout.total;
 
       final message = checkout.message ??
@@ -141,7 +163,7 @@ class OrdersWithPlaceState with ChangeNotifier {
       final doubleAmount = total.toString().replaceAll(',', '.');
       final parsedAmount = toUnit(
         doubleAmount,
-        decimals: _walletService.currency.decimals,
+        decimals: token.decimals,
       );
 
       if (parsedAmount == BigInt.zero) {
@@ -167,11 +189,25 @@ class OrdersWithPlaceState with ChangeNotifier {
       payingOrder = order;
       safeNotifyListeners();
 
-      final calldata =
-          _walletService.tokenTransferCallData(toAddress, parsedAmount);
+      final credentials = _secureService.getCredentials();
+      if (credentials == null) {
+        throw Exception('Credentials not found');
+      }
 
-      final (_, userOp) = await _walletService.prepareUserop(
-        [_walletService.tokenAddress],
+      final (account, key) = credentials;
+
+      final calldata = tokenTransferCallData(
+        _config,
+        account,
+        toAddress,
+        parsedAmount,
+      );
+
+      final (_, userOp) = await prepareUserop(
+        _config,
+        account,
+        key,
+        [_config.getPrimaryToken().address],
         [calldata],
       );
 
@@ -180,8 +216,8 @@ class OrdersWithPlaceState with ChangeNotifier {
         'to': toAddress,
       };
 
-      if (_walletService.standard == 'erc1155') {
-        args['operator'] = _walletService.account.hexEip55;
+      if (_config.getPrimaryToken().standard == 'erc1155') {
+        args['operator'] = account.hexEip55;
         args['id'] = '0';
         args['amount'] = parsedAmount.toString();
       } else {
@@ -189,14 +225,13 @@ class OrdersWithPlaceState with ChangeNotifier {
       }
 
       final eventData = createEventData(
-        stringSignature: _walletService.transferEventStringSignature,
-        topic: _walletService.transferEventSignature,
+        stringSignature: transferEventStringSignature(_config),
+        topic: transferEventSignature(_config),
         args: args,
       );
 
-      print('sending message: ${message.trim()}');
-
-      final txHash = await _walletService.submitUserop(
+      final txHash = await submitUserop(
+        _config,
         userOp,
         data: eventData,
         extraData:
