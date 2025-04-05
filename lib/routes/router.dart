@@ -58,15 +58,15 @@ GoRouter createRouter(
 
                 return MyAccount(accountAddress: accountAddress);
               },
-              routes: [
-                GoRoute(
-                  name: 'EditMyAccount',
-                  path: '/edit',
-                  builder: (context, state) {
-                    return const EditAccountScreen();
-                  },
-                ),
-              ],
+            ),
+            GoRoute(
+              name: 'EditMyAccount',
+              path: '/:account/my-account/edit',
+              builder: (context, state) {
+                final accountAddress = state.pathParameters['account']!;
+
+                return const EditAccountScreen();
+              },
             ),
             ShellRoute(
               builder: (context, state, child) =>

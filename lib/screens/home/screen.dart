@@ -240,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final navigator = GoRouter.of(context);
 
-    await navigator.push('/$myAddress/my-account');
+    await navigator.push('/$myAddress/my-account/edit');
 
     clearSearch();
   }
@@ -271,6 +271,16 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
     );
+  }
+
+  void handleSettingsTap(String myAddress) async {
+    _searchFocusNode.unfocus();
+
+    final navigator = GoRouter.of(context);
+
+    await navigator.push('/$myAddress/my-account');
+
+    clearSearch();
   }
 
   void handleQRScan(String myAddress) async {
@@ -417,6 +427,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         accountAddress: myAddress ?? '',
                         onProfileTap: () => handleProfileTap(myAddress ?? ''),
                         onTopUpTap: handleTopUp,
+                        onSettingsTap: () => handleSettingsTap(myAddress ?? ''),
                       ),
                     ),
                     SliverPersistentHeader(
@@ -555,11 +566,13 @@ class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
   final String accountAddress;
   final Function() onProfileTap;
   final Function() onTopUpTap;
+  final Function() onSettingsTap;
 
   ProfileBarDelegate({
     required this.accountAddress,
     required this.onProfileTap,
     required this.onTopUpTap,
+    required this.onSettingsTap,
   });
 
   @override
@@ -569,6 +582,7 @@ class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
       accountAddress: accountAddress,
       onProfileTap: onProfileTap,
       onTopUpTap: onTopUpTap,
+      onSettingsTap: onSettingsTap,
     );
   }
 

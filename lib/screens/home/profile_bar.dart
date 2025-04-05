@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/wallet.dart';
+import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:provider/provider.dart';
@@ -9,12 +10,14 @@ class ProfileBar extends StatefulWidget {
   final String accountAddress;
   final Function() onProfileTap;
   final Function() onTopUpTap;
+  final Function() onSettingsTap;
 
   const ProfileBar({
     super.key,
     required this.accountAddress,
     required this.onProfileTap,
     required this.onTopUpTap,
+    required this.onSettingsTap,
   });
 
   @override
@@ -29,8 +32,6 @@ class _ProfileBarState extends State<ProfileBar> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = CupertinoTheme.of(context);
-
     final walletState = context.watch<WalletState>();
     final balance = walletState.balance.toStringAsFixed(2);
 
@@ -53,7 +54,7 @@ class _ProfileBarState extends State<ProfileBar> {
                 ProfileCircle(
                   size: 70,
                   borderWidth: 3,
-                  borderColor: theme.primaryColor,
+                  borderColor: primaryColor,
                   imageUrl: profile.imageMedium,
                 ),
                 const SizedBox(width: 16),
@@ -75,7 +76,18 @@ class _ProfileBarState extends State<ProfileBar> {
                 )
               ],
             ),
-            RightChevron(),
+            Padding(
+              padding: EdgeInsets.only(right: 16),
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: widget.onSettingsTap,
+                child: Icon(
+                  CupertinoIcons.settings,
+                  color: primaryColor,
+                  size: 24,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -130,11 +142,9 @@ class TopUpButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = CupertinoTheme.of(context);
-
     return CupertinoButton(
       padding: EdgeInsets.zero,
-      color: theme.primaryColor,
+      color: primaryColor,
       borderRadius: BorderRadius.circular(8),
       minSize: 0,
       onPressed: onTopUpTap,
@@ -152,21 +162,6 @@ class TopUpButton extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class RightChevron extends StatelessWidget {
-  const RightChevron({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = CupertinoTheme.of(context);
-
-    return Icon(
-      CupertinoIcons.chevron_right,
-      color: theme.primaryColor,
-      size: 16,
     );
   }
 }
