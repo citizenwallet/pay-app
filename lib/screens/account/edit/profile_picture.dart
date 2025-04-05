@@ -1,7 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:pay_app/state/profile.dart';
+import 'package:pay_app/theme/colors.dart';
 
 import 'package:pay_app/widgets/profile_circle.dart';
+import 'package:provider/provider.dart';
 
 class ProfilePicture extends StatefulWidget {
   const ProfilePicture({super.key});
@@ -11,16 +14,34 @@ class ProfilePicture extends StatefulWidget {
 }
 
 class _ProfilePictureState extends State<ProfilePicture> {
-  Uint8List? editingImage;
+  late ProfileState _profileState;
 
-  void _handleSelectPhoto() {
-    debugPrint('select photo');
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _profileState = context.read<ProfileState>();
+
+      onLoad();
+    });
   }
 
-  String image = 'https://robohash.org/ZZZ.png?set=set2';
+  void onLoad() {
+    _profileState.startEditing();
+  }
+
+  void _handleSelectPhoto() {
+    _profileState.selectPhoto();
+  }
+
+  String image = 'assets/icons/profile.png';
 
   @override
   Widget build(BuildContext context) {
+    final profile = context.select((ProfileState p) => p.profile);
+    final editingImage = context.select((ProfileState p) => p.editingImage);
+
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -31,7 +52,7 @@ class _ProfilePictureState extends State<ProfilePicture> {
               )
             : ProfileCircle(
                 size: 160,
-                imageUrl: image,
+                imageUrl: profile.imageMedium,
               ),
         CupertinoButton(
           onPressed: _handleSelectPhoto,
@@ -47,7 +68,7 @@ class _ProfilePictureState extends State<ProfilePicture> {
             child: Center(
               child: Icon(
                 CupertinoIcons.photo,
-                color: Color.fromARGB(255, 0, 0, 0),
+                color: editingImage != null ? transparentColor : blackColor,
                 size: 40,
               ),
             ),

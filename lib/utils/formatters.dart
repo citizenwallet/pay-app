@@ -80,7 +80,7 @@ class NameFormatter extends TextInputFormatter {
       return newValue;
     }
 
-    final r = RegExp("^[a-zA-Z\\-'\u00C0-\u00FF ]*\$");
+    final r = RegExp("^[a-zA-Z0-9_\\-'\u00C0-\u00FF ]*\$");
 
     if (!r.hasMatch(text)) {
       return oldValue;

@@ -1,6 +1,7 @@
 // import 'package:citizenwallet/theme/provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:pay_app/theme/colors.dart';
 import 'package:simple_animations/simple_animations.dart';
 
 class ProgressBar extends StatelessWidget {
@@ -43,8 +44,7 @@ class ProgressBar extends StatelessWidget {
               height: height,
               width: progressWidth,
               decoration: BoxDecoration(
-                color:
-                    const Color(0xFF42A5F5),
+                color: surfaceColor,
                 borderRadius: BorderRadius.circular(borderRadius),
               ),
               child: child,
@@ -64,8 +64,8 @@ class ProgressBar extends StatelessWidget {
                 child: child,
               ),
               tween: ColorTween(
-                begin: const Color(0xFF42A5F5),
-                end: const Color(0xFF42A5F5),
+                begin: primaryColor,
+                end: primaryColor,
               ),
               duration: const Duration(milliseconds: 750),
             ),

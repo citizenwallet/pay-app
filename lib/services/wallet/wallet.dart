@@ -1609,6 +1609,60 @@ Future<String?> setProfile(
   return null;
 }
 
+/// update profile data
+Future<String?> updateProfile(Config config, EthereumAddress account,
+    EthPrivateKey credentials, ProfileV1 profile) async {
+  try {
+    final url =
+        '/v1/profiles/${config.profileContract.addr}/${account.hexEip55}';
+
+    final json = jsonEncode(
+      profile.toJson(),
+    );
+
+    final body = SignedRequest(convertBytesToUint8List(utf8.encode(json)));
+
+    final sig = await compute(
+        generateSignature, (jsonEncode(body.toJson()), credentials));
+
+    final resp = await config.engineIPFSService.patch(
+      url: url,
+      headers: {
+        'X-Signature': sig,
+        'X-Address': account.hexEip55,
+      },
+      body: body.toJson(),
+    );
+
+    final String profileUrl = resp['object']['ipfs_url'];
+
+    final calldata = config.profileContract
+        .setCallData(account.hexEip55, profile.username, profileUrl);
+
+    final (_, userop) = await prepareUserop(
+      config,
+      account,
+      credentials,
+      [config.profileContract.addr],
+      [calldata],
+    );
+
+    final txHash = await submitUserop(config, userop);
+    if (txHash == null) {
+      throw Exception('profile update failed');
+    }
+
+    final success = await waitForTxSuccess(config, txHash);
+    if (!success) {
+      throw Exception('transaction failed');
+    }
+
+    return profileUrl;
+  } catch (_) {}
+
+  return null;
+}
+
 /// check if an account exists
 Future<bool> accountExists(
   Config config,

@@ -35,6 +35,21 @@ class ProfileRequest {
     description = profile.description;
   }
 
+  // copy with
+  ProfileRequest copyWith({
+    String? account,
+    String? username,
+    String? name,
+    String? description,
+  }) {
+    return ProfileRequest(
+      account: account ?? this.account,
+      username: username ?? this.username,
+      name: name ?? this.name,
+      description: description ?? this.description,
+    );
+  }
+
   // to json
   Map<String, dynamic> toJson() => {
         'account': account,

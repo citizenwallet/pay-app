@@ -117,7 +117,7 @@ class CustomTextField extends StatelessWidget {
   final defaultBorderRadius = BorderRadius.circular(100);
 
   final defaultPlaceholderStyle = const TextStyle(
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: FontWeight.w500,
     color: Color(0xFFB7ADC4),
   );
@@ -178,12 +178,12 @@ class CustomTextField extends StatelessWidget {
         ),
         if (isError && errorText != null)
           Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.only(top: 8, left: 16),
             child: Text(
               errorText!,
               style: const TextStyle(
                 color: CupertinoColors.systemRed,
-                fontSize: 12,
+                fontSize: 14,
               ),
             ),
           ),
