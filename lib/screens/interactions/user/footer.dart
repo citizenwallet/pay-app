@@ -80,7 +80,7 @@ class _FooterState extends State<Footer> {
     super.dispose();
   }
 
-  void _toggleField() {
+  void _toggleField() async {
     setState(() {
       _showAmountField = !_showAmountField;
       if (_showAmountField) {
@@ -120,19 +120,51 @@ class _FooterState extends State<Footer> {
         children: [
           if (widget.phoneNumber == null)
             Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                if (!_showAmountField) CoinLogo(size: 22),
+                if (!_showAmountField) SizedBox(width: 4),
+                if (!_showAmountField)
+                  Text(
+                    _amountController.value.text,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color:
+                          error ? CupertinoColors.systemRed : Color(0xFF171717),
+                    ),
+                  ),
+                if (!_showAmountField)
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: disabled ? null : _toggleField,
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Icon(
+                          CupertinoIcons.back,
+                          color: disabled ? mutedColor : primaryColor,
+                          size: 35,
+                        ),
+                      ),
+                    ),
+                  ),
                 Expanded(
                   child: _showAmountField
                       ? AmountFieldWithMessageToggle(
                           disabled: disabled,
                           error: error,
-                          onToggle: _toggleField,
                           amountController: _amountController,
                           focusNode: widget.amountFocusNode,
                           onChange: updateAmount,
+                          onTopUpPressed: widget.onTopUpPressed,
                         )
                       : MessageFieldWithAmountToggle(
-                          onToggle: _toggleField,
                           messageController: _messageController,
                           focusNode: widget.messageFocusNode,
                           onChange: updateMessage,
@@ -141,16 +173,11 @@ class _FooterState extends State<Footer> {
                 SizedBox(width: 10),
                 SendButton(
                   disabled: disabled,
+                  showingAmountField: _showAmountField,
+                  onToggle: _toggleField,
                   onTap: sendTransaction,
                 ),
               ],
-            ),
-          if (widget.phoneNumber == null) SizedBox(height: 10),
-          if (widget.phoneNumber == null)
-            CurrentBalance(
-              balance: balance,
-              error: error,
-              onTopUpPressed: widget.onTopUpPressed,
             ),
           if (widget.phoneNumber != null)
             WideButton(
@@ -173,17 +200,45 @@ class _FooterState extends State<Footer> {
 
 class SendButton extends StatelessWidget {
   final VoidCallback onTap;
+  final VoidCallback onToggle;
+  final bool showingAmountField;
   final bool disabled;
 
   const SendButton({
     super.key,
     required this.onTap,
+    required this.onToggle,
     this.disabled = false,
+    this.showingAmountField = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = CupertinoTheme.of(context);
+    if (disabled) {
+      return SizedBox.shrink();
+    }
+
+    if (showingAmountField) {
+      return CupertinoButton(
+        padding: EdgeInsets.zero,
+        onPressed: disabled ? null : onToggle,
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Icon(
+              CupertinoIcons.forward,
+              color: disabled ? mutedColor : primaryColor,
+              size: 35,
+            ),
+          ),
+        ),
+      );
+    }
+
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: disabled ? null : onTap,
@@ -191,7 +246,7 @@ class SendButton extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: disabled ? mutedColor : theme.primaryColor,
+          color: disabled ? mutedColor : primaryColor,
           shape: BoxShape.circle,
         ),
         child: const Center(
@@ -209,91 +264,99 @@ class SendButton extends StatelessWidget {
 class AmountFieldWithMessageToggle extends StatelessWidget {
   final TextEditingController amountController;
   final FocusNode focusNode;
-  final VoidCallback onToggle;
   final AmountFormatter amountFormatter = AmountFormatter();
   final Function(double) onChange;
+  final Function() onTopUpPressed;
   final bool isSending;
   final bool disabled;
   final bool error;
 
   AmountFieldWithMessageToggle({
     super.key,
-    required this.onToggle,
     required this.amountController,
     required this.focusNode,
     required this.onChange,
     this.isSending = false,
     this.disabled = false,
     this.error = false,
+    required this.onTopUpPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = CupertinoTheme.of(context);
     return Row(
       children: [
         Expanded(
-          child: CustomTextField(
-            controller: amountController,
-            enabled: !isSending,
-            isError: error,
-            placeholder: 'Enter amount',
-            placeholderStyle: TextStyle(
-              color: Color(0xFFB7ADC4),
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 11.0, vertical: 12.0),
-            maxLines: 1,
-            maxLength: 25,
-            autocorrect: false,
-            enableSuggestions: false,
-            keyboardType: TextInputType.numberWithOptions(
-              decimal: true,
-              signed: false,
-            ),
-            inputFormatters: [amountFormatter],
-            focusNode: focusNode,
-            textInputAction: TextInputAction.done,
-            prefix: Padding(
-              padding: EdgeInsets.only(left: 11.0),
-              child: CoinLogo(size: 33),
-            ),
-            onChanged: (value) {
-              if (value.isEmpty) {
-                onChange(0);
-                return;
-              }
-              onChange(double.tryParse(value) ?? 0);
-            },
+          child: Stack(
+            children: [
+              CustomTextField(
+                controller: amountController,
+                enabled: !isSending,
+                isError: error,
+                placeholder: 'Enter amount',
+                placeholderStyle: TextStyle(
+                  color: Color(0xFFB7ADC4),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 11.0, vertical: 12.0),
+                maxLines: 1,
+                maxLength: 25,
+                autocorrect: false,
+                enableSuggestions: false,
+                keyboardType: TextInputType.numberWithOptions(
+                  decimal: true,
+                  signed: false,
+                ),
+                inputFormatters: [amountFormatter],
+                focusNode: focusNode,
+                textInputAction: TextInputAction.done,
+                prefix: Padding(
+                  padding: EdgeInsets.only(left: 11.0),
+                  child: CoinLogo(size: 33),
+                ),
+                onChanged: (value) {
+                  if (value.isEmpty) {
+                    onChange(0);
+                    return;
+                  }
+                  onChange(double.tryParse(value) ?? 0);
+                },
+              ),
+              if (error)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: primaryColor,
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    child: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: onTopUpPressed,
+                      child: Text(
+                        '+ top up',
+                        style: TextStyle(
+                          color: CupertinoColors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+            ],
           ),
         ),
-        SizedBox(width: 10),
-        CupertinoButton(
-          padding: EdgeInsets.zero,
-          onPressed: disabled ? null : onToggle,
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Icon(
-                CupertinoIcons.text_bubble,
-                color: disabled ? mutedColor : theme.primaryColor,
-                size: 35,
-              ),
-            ),
-          ),
-        )
       ],
     );
   }
 }
 
 class MessageFieldWithAmountToggle extends StatelessWidget {
-  final VoidCallback onToggle;
   final TextEditingController messageController;
   final FocusNode focusNode;
   final Function(String) onChange;
@@ -301,7 +364,6 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
 
   const MessageFieldWithAmountToggle({
     super.key,
-    required this.onToggle,
     required this.messageController,
     required this.focusNode,
     required this.onChange,
@@ -310,7 +372,6 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = CupertinoTheme.of(context);
     return Row(
       children: [
         Expanded(
@@ -335,115 +396,7 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
             onChanged: onChange,
           ),
         ),
-        SizedBox(width: 10),
-        CupertinoButton(
-          padding: EdgeInsets.zero,
-          onPressed: onToggle,
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Icon(
-                CupertinoIcons.back,
-                color: theme.primaryColor,
-              ),
-            ),
-          ),
-        )
       ],
-    );
-  }
-}
-
-class CurrentBalance extends StatelessWidget {
-  final double balance;
-  final bool error;
-  final Function() onTopUpPressed;
-
-  const CurrentBalance({
-    super.key,
-    required this.balance,
-    this.error = false,
-    required this.onTopUpPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'Current balance',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF000000),
-            ),
-          ),
-          SizedBox(width: 10),
-          CoinLogo(size: 22),
-          SizedBox(width: 4),
-          Text(
-            balance.toString(),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: error ? CupertinoColors.systemRed : Color(0xFF171717),
-            ),
-          ),
-          SizedBox(width: 10),
-          TopUpButton(onTopUpPressed: onTopUpPressed),
-        ],
-      ),
-    );
-  }
-}
-
-class TopUpButton extends StatelessWidget {
-  final Function() onTopUpPressed;
-
-  const TopUpButton({
-    super.key,
-    required this.onTopUpPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = CupertinoTheme.of(context);
-    return CupertinoButton(
-      padding: EdgeInsets.zero,
-      color: theme.barBackgroundColor,
-      borderRadius: BorderRadius.circular(8),
-      minSize: 0,
-      onPressed: onTopUpPressed,
-      child: Container(
-        width: 70,
-        height: 28,
-        decoration: BoxDecoration(
-          color: theme.barBackgroundColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: theme.primaryColor,
-            width: 1,
-          ),
-        ),
-        child: Center(
-          child: Text(
-            '+ top up',
-            style: TextStyle(
-              color: theme.primaryColor,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
