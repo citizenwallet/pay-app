@@ -148,6 +148,7 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 20),
                 Container(
                   height: 1,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -155,6 +156,7 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
                     color: Color(0xFFD9D9D9),
                   ),
                 ),
+                const SizedBox(height: 20),
                 WideButton(
                   color: const Color(0xFFFC4343),
                   onPressed: handleDeleteAccount,
