@@ -148,28 +148,28 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                Container(
-                  height: 1,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFD9D9D9),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                WideButton(
-                  color: const Color(0xFFFC4343),
-                  onPressed: handleDeleteAccount,
-                  disabled: isLoggingOut,
-                  child: Text(
-                    'Delete account',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: CupertinoColors.white,
-                    ),
-                  ),
-                ),
+                // const SizedBox(height: 20),
+                // Container(
+                //   height: 1,
+                //   padding: const EdgeInsets.symmetric(horizontal: 16),
+                //   decoration: BoxDecoration(
+                //     color: Color(0xFFD9D9D9),
+                //   ),
+                // ),
+                // const SizedBox(height: 20),
+                // WideButton(
+                //   color: const Color(0xFFFC4343),
+                //   onPressed: handleDeleteAccount,
+                //   disabled: isLoggingOut,
+                //   child: Text(
+                //     'Delete account',
+                //     style: TextStyle(
+                //       fontSize: 16,
+                //       fontWeight: FontWeight.w700,
+                //       color: CupertinoColors.white,
+                //     ),
+                //   ),
+                // ),
                 SizedBox(height: safeAreaBottom),
               ],
             ),
