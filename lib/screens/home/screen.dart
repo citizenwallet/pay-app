@@ -20,6 +20,7 @@ import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
+import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/utils/qr.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:pay_app/widgets/scanner/scanner_modal.dart';
@@ -355,13 +356,15 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void clearSearch() {
+  void clearSearch() async {
     setState(() {
       isSearching = false;
     });
 
     _searchController.clear();
     _searchFocusNode.unfocus();
+
+    await delay(const Duration(milliseconds: 500));
 
     _interactionState.clearSearch();
     _placesState.clearSearch();
