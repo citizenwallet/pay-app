@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
@@ -35,6 +36,7 @@ class WalletState with ChangeNotifier {
   bool loading = false;
   bool error = false;
 
+  Timer? _pollingTimer;
   bool _mounted = true;
   void safeNotifyListeners() {
     if (_mounted) {
@@ -253,6 +255,22 @@ class WalletState with ChangeNotifier {
       safeNotifyListeners();
     }
     return false;
+  }
+
+  Future<void> startBalancePolling() async {
+    stopBalancePolling();
+
+    _pollingTimer = Timer.periodic(
+      Duration(seconds: 1),
+      (_) {
+        updateBalance();
+      },
+    );
+  }
+
+  Future<void> stopBalancePolling() async {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
   }
 
   Future<void> updateBalance() async {

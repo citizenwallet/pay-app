@@ -2,11 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/screens/interactions/place/header.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
+import 'package:pay_app/state/topup.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
+import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -45,6 +49,8 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
 
   late OrdersWithPlaceState _ordersWithPlaceState;
   late CheckoutState _checkoutState;
+  late WalletState _walletState;
+  late TopupState _topupState;
 
   @override
   void initState() {
@@ -57,13 +63,17 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ordersWithPlaceState = context.read<OrdersWithPlaceState>();
       _checkoutState = context.read<CheckoutState>();
-
+      _walletState = context.read<WalletState>();
+      _topupState = context.read<TopupState>();
       onLoad();
     });
   }
 
   void onLoad() {
     _ordersWithPlaceState.fetchPlaceAndMenu();
+
+    _walletState.updateBalance();
+    _walletState.startBalancePolling();
 
     final placeMenu = _ordersWithPlaceState.placeMenu;
     if (placeMenu == null) return;
@@ -79,6 +89,8 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
     _menuScrollController.dispose();
 
     _checkoutState.clear();
+
+    _walletState.stopBalancePolling();
 
     super.dispose();
   }
@@ -162,6 +174,34 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
     final navigator = GoRouter.of(context);
 
     navigator.pop(checkout);
+  }
+
+  void handleTopUp() async {
+    await _topupState.generateTopupUrl();
+
+    if (!mounted) {
+      return;
+    }
+
+    await showCupertinoModalPopup<String?>(
+      context: context,
+      barrierDismissible: true,
+      useRootNavigator: false,
+      builder: (modalContext) {
+        final topupUrl =
+            modalContext.select((TopupState state) => state.topupUrl);
+
+        if (topupUrl.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return ConnectedWebViewModal(
+          modalKey: 'connected-webview',
+          url: topupUrl,
+          redirectUrl: dotenv.env['APP_REDIRECT_URL'] ?? '',
+        );
+      },
+    );
   }
 
   @override
@@ -267,6 +307,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
             Footer(
               checkout: checkout,
               onPay: handlePay,
+              onTopUp: handleTopUp,
             ),
           ],
         ),

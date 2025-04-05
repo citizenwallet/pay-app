@@ -9,10 +9,12 @@ import 'package:provider/provider.dart';
 class Footer extends StatelessWidget {
   final Checkout checkout;
   final Function(Checkout) onPay;
+  final Function() onTopUp;
 
   const Footer({
     required this.checkout,
     required this.onPay,
+    required this.onTopUp,
     super.key,
   });
 
@@ -76,9 +78,16 @@ class Footer extends StatelessWidget {
           ),
           if (insufficientBalance) const SizedBox(height: 10),
           if (insufficientBalance)
-            Text(
-              'Insufficient balance',
-              style: TextStyle(color: dangerColor),
+            WideButton(
+              onPressed: onTopUp,
+              child: Text(
+                'Top up',
+                style: TextStyle(
+                  color: CupertinoColors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
         ],
       ),
