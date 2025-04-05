@@ -240,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final navigator = GoRouter.of(context);
 
-    await navigator.push('/$myAddress/my-account/edit');
+    await navigator.push('/$myAddress/my-account');
 
     clearSearch();
   }
@@ -278,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final navigator = GoRouter.of(context);
 
-    await navigator.push('/$myAddress/my-account');
+    await navigator.push('/$myAddress/my-account/settings');
 
     clearSearch();
   }

@@ -1,27 +1,32 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:pay_app/state/profile.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
+import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/qr/qr.dart';
-import 'package:provider/provider.dart';
 
 class AccountCard extends StatelessWidget {
+  final ProfileV1 profile;
+  final String alias;
   final String appRedirectUrl;
 
   AccountCard({
     super.key,
+    required this.profile,
+    required this.alias,
   }) : appRedirectUrl = dotenv.get('APP_REDIRECT_URL');
 
   @override
   Widget build(BuildContext context) {
-    final profile = context.select((ProfileState p) => p.profile);
-    final alias = context.select((ProfileState p) => p.alias);
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+
+    final size = (width > height ? height : width) * 0.8;
 
     return Stack(
       alignment: Alignment.center,
       children: [
         Container(
-          width: 280,
-          height: 280,
+          width: size,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(30),
           ),
@@ -31,10 +36,13 @@ class AccountCard extends StatelessWidget {
             children: [
               QR(
                 data: '$appRedirectUrl/?sendto=${profile.username}@$alias',
-                size: 230,
+                size: size - 20,
                 padding: EdgeInsets.all(20),
-                logo: 'assets/icons/profile.png',
+                logo: profile.imageSmall.isNotEmpty
+                    ? profile.imageSmall
+                    : 'assets/icons/profile.png',
               ),
+              const SizedBox(height: 10),
               Text(
                 '@${profile.username}',
                 maxLines: 1,
@@ -42,7 +50,7 @@ class AccountCard extends StatelessWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 17,
-                  color: Color(0xFF171717),
+                  color: textMutedColor,
                 ),
               ),
             ],

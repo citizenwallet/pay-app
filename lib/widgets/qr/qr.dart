@@ -20,6 +20,14 @@ class QR extends StatelessWidget {
   Widget build(BuildContext context) {
     final imageSize = size * 0.2;
 
+    ImageProvider<Object>? embeddedImage;
+
+    if (logo != null && logo!.startsWith('https')) {
+      embeddedImage = NetworkImage(logo!);
+    } else if (logo != null && logo!.startsWith('assets')) {
+      embeddedImage = AssetImage(logo!);
+    }
+
     return Container(
       height: size,
       width: size,
@@ -48,7 +56,7 @@ class QR extends StatelessWidget {
             dataModuleShape: QrDataModuleShape.circle,
             color: blackColor,
           ),
-          embeddedImage: logo != null ? AssetImage(logo!) : null,
+          embeddedImage: embeddedImage,
           embeddedImageStyle: QrEmbeddedImageStyle(
             size: Size(imageSize, imageSize),
           ),

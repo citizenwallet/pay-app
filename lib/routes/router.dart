@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/order.dart';
+import 'package:pay_app/screens/account/settings/screen.dart';
 import 'package:pay_app/screens/interactions/place/order/screen.dart';
 import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/state.dart';
@@ -57,6 +58,15 @@ GoRouter createRouter(
                 final accountAddress = state.pathParameters['account']!;
 
                 return MyAccount(accountAddress: accountAddress);
+              },
+            ),
+            GoRoute(
+              name: 'MyAccountSettings',
+              path: '/:account/my-account/settings',
+              builder: (context, state) {
+                final accountAddress = state.pathParameters['account']!;
+
+                return MyAccountSettings(accountAddress: accountAddress);
               },
             ),
             GoRoute(
