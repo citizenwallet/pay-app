@@ -88,10 +88,13 @@ GoRouter createRouter(
                   builder: (context, state) {
                     final myAddress = state.pathParameters['account']!;
                     final slug = state.pathParameters['slug']!;
+                    final extra = state.extra as Map<String, dynamic>;
+                    final openMenu = extra['openMenu'] as bool? ?? false;
 
                     return InteractionWithPlaceScreen(
                       slug: slug,
                       myAddress: myAddress,
+                      openMenu: openMenu,
                     );
                   },
                   routes: [

@@ -169,8 +169,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void handleInteractionWithPlace(
     String? myAddress,
-    String slug,
-  ) async {
+    String slug, {
+    bool openMenu = false,
+  }) async {
     if (myAddress == null) {
       return;
     }
@@ -179,7 +180,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final navigator = GoRouter.of(context);
 
-    await navigator.push('/$myAddress/place/$slug');
+    await navigator.push('/$myAddress/place/$slug', extra: {
+      'openMenu': openMenu,
+    });
 
     clearSearch();
   }
@@ -312,7 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     switch (format) {
       case QRFormat.checkoutUrl:
-        handleInteractionWithPlace(myAddress, address);
+        handleInteractionWithPlace(myAddress, address, openMenu: true);
         break;
       case QRFormat.sendtoUrl:
       case QRFormat.sendtoUrlWithEIP681:

@@ -1,10 +1,11 @@
 import 'package:flutter/cupertino.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/place.dart';
+import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/utils/formatters.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/text_field.dart';
+import 'package:pay_app/widgets/transaction_input_row.dart';
 import 'package:pay_app/widgets/wide_button.dart';
 import 'package:provider/provider.dart';
 
@@ -40,6 +41,8 @@ class _FooterState extends State<Footer> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
 
+  late OrdersWithPlaceState _ordersWithPlaceState;
+
   bool _showAmountField = true;
 
   @override
@@ -47,6 +50,7 @@ class _FooterState extends State<Footer> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.amountFocusNode.requestFocus();
+      _ordersWithPlaceState = context.read<OrdersWithPlaceState>();
     });
   }
 
@@ -68,6 +72,10 @@ class _FooterState extends State<Footer> {
     });
   }
 
+  void updateAmount(double amount) {
+    _ordersWithPlaceState.updateAmount(amount);
+  }
+
   void handleSend(double amount, String? message) {
     widget.amountFocusNode.unfocus();
     widget.messageFocusNode.unfocus();
@@ -75,14 +83,15 @@ class _FooterState extends State<Footer> {
     widget.onSend(amount, message);
   }
 
-  // void _onMenuPressed() {
-  //   final navigator = GoRouter.of(context);
-
-  //   navigator.push('/${widget.myAddress}/place/${widget.slug}/menu');
-  // }
-
   @override
   Widget build(BuildContext context) {
+    final balance = context.watch<WalletState>().balance;
+
+    final toSendAmount = context.watch<OrdersWithPlaceState>().toSendAmount;
+
+    final error = toSendAmount > balance;
+    final disabled = toSendAmount == 0.0 || error;
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 10,
@@ -121,34 +130,22 @@ class _FooterState extends State<Footer> {
           if (widget.display == Display.amountAndMenu) SizedBox(height: 10),
           if (widget.display == Display.amount ||
               widget.display == Display.amountAndMenu)
-            Row(
-              children: [
-                Expanded(
-                  child: _showAmountField
-                      ? AmountFieldWithMessageToggle(
-                          onToggle: _toggleField,
-                          amountController: _amountController,
-                          focusNode: widget.amountFocusNode,
-                        )
-                      : MessageFieldWithAmountToggle(
-                          onToggle: _toggleField,
-                          messageController: _messageController,
-                          focusNode: widget.messageFocusNode,
-                        ),
-                ),
-                SizedBox(width: 10),
-                SendButton(
-                  amountController: _amountController,
-                  messageController: _messageController,
-                  onTap: () => handleSend(
-                    double.parse(_amountController.text),
-                    _messageController.text,
-                  ),
-                ),
-              ],
+            TransactionInputRow(
+              showAmountField: _showAmountField,
+              amountController: _amountController,
+              messageController: _messageController,
+              amountFocusNode: widget.amountFocusNode,
+              messageFocusNode: widget.messageFocusNode,
+              onAmountChange: updateAmount,
+              onToggleField: _toggleField,
+              onSend: () => handleSend(
+                double.parse(_amountController.text),
+                _messageController.text,
+              ),
+              onTopUpPressed: widget.onTopUpPressed,
+              disabled: disabled,
+              error: error,
             ),
-          SizedBox(height: 10),
-          CurrentBalance(onTopUpPressed: widget.onTopUpPressed),
         ],
       ),
     );
@@ -329,86 +326,6 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
           ),
         )
       ],
-    );
-  }
-}
-
-class CurrentBalance extends StatelessWidget {
-  final Function() onTopUpPressed;
-
-  const CurrentBalance({
-    super.key,
-    required this.onTopUpPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final balance = context.watch<WalletState>().balance;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'Current balance',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF000000),
-            ),
-          ),
-          SizedBox(width: 10),
-          CoinLogo(size: 22),
-          SizedBox(width: 4),
-          Text(
-            balance.toString(),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF171717),
-            ),
-          ),
-          SizedBox(width: 10),
-          TopUpButton(onTopUpPressed: onTopUpPressed),
-        ],
-      ),
-    );
-  }
-}
-
-class TopUpButton extends StatelessWidget {
-  final Function() onTopUpPressed;
-
-  const TopUpButton({
-    super.key,
-    required this.onTopUpPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = CupertinoTheme.of(context);
-    return CupertinoButton(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      color: theme.primaryColor,
-      borderRadius: BorderRadius.circular(8),
-      minSize: 0,
-      onPressed: onTopUpPressed,
-      child: SizedBox(
-        width: 70,
-        height: 28,
-        child: Center(
-          child: Text(
-            '+ top up',
-            style: TextStyle(
-              color: Color(0xFFFFFFFF),
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

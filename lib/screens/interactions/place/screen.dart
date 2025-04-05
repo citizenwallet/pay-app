@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/checkout.dart';
 
 import 'package:pay_app/models/order.dart';
+import 'package:pay_app/models/place.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
@@ -15,11 +16,13 @@ import 'footer.dart';
 class InteractionWithPlaceScreen extends StatefulWidget {
   final String slug;
   final String myAddress;
+  final bool openMenu;
 
   const InteractionWithPlaceScreen({
     super.key,
     required this.slug,
     required this.myAddress,
+    this.openMenu = false,
   });
 
   @override
@@ -53,7 +56,14 @@ class _InteractionWithPlaceScreenState
   }
 
   void onLoad() async {
-    _ordersWithPlaceState.fetchPlaceAndMenu();
+    final placeWithMenu = await _ordersWithPlaceState.fetchPlaceAndMenu();
+
+    if (widget.openMenu &&
+        placeWithMenu != null &&
+        (placeWithMenu.place.display == Display.menu ||
+            placeWithMenu.place.display == Display.amountAndMenu)) {
+      handleMenuPressed();
+    }
   }
 
   void _onAmountFocus() {

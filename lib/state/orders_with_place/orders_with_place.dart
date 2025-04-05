@@ -69,6 +69,7 @@ class OrdersWithPlaceState with ChangeNotifier {
   List<GlobalKey<State<StatefulWidget>>> categoryKeys = [];
   String myAddress;
   List<Order> orders = [];
+  double toSendAmount = 0.0;
   int total = 0;
   bool loading = false;
   bool error = false;
@@ -98,7 +99,7 @@ class OrdersWithPlaceState with ChangeNotifier {
   }
 
   static const pollingInterval = 2000; // ms
-  Future<void> fetchPlaceAndMenu() async {
+  Future<PlaceWithMenu?> fetchPlaceAndMenu() async {
     try {
       loading = true;
       error = false;
@@ -115,6 +116,11 @@ class OrdersWithPlaceState with ChangeNotifier {
 
       _fetchOrders(placeWithMenu.place.id);
       startPolling();
+
+      loading = false;
+      safeNotifyListeners();
+
+      return placeWithMenu;
     } catch (e, s) {
       print('fetchPlaceAndMenu error: $e');
       print('fetchPlaceAndMenu stack trace: $s');
@@ -124,6 +130,8 @@ class OrdersWithPlaceState with ChangeNotifier {
       loading = false;
       safeNotifyListeners();
     }
+
+    return null;
   }
 
   Future<void> _fetchOrders(int placeId) async {
@@ -250,5 +258,10 @@ class OrdersWithPlaceState with ChangeNotifier {
       safeNotifyListeners();
       return null;
     }
+  }
+
+  void updateAmount(double amount) {
+    toSendAmount = amount;
+    safeNotifyListeners();
   }
 }
