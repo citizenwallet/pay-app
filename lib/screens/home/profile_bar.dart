@@ -41,9 +41,17 @@ class _ProfileBarState extends State<ProfileBar> {
       onTap: widget.onProfileTap,
       child: Container(
         height: 95,
-        color: CupertinoColors.systemBackground,
         padding: const EdgeInsets.symmetric(
           horizontal: 16,
+        ),
+        decoration: BoxDecoration(
+          color: CupertinoColors.systemBackground,
+          border: Border(
+            bottom: BorderSide(
+              color: Color(0xFFD9D9D9),
+              width: 1,
+            ),
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

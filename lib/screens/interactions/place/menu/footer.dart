@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/checkout.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/wide_button.dart';
+import 'package:provider/provider.dart';
 
 class Footer extends StatelessWidget {
   final Checkout checkout;
@@ -16,7 +18,10 @@ class Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final disabled = checkout.total == 0;
+    final balance = context.watch<WalletState>().balance;
+    final insufficientBalance = balance < checkout.total;
+
+    final disabled = checkout.total == 0 || balance < checkout.total;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -31,41 +36,51 @@ class Footer extends StatelessWidget {
           ),
         ),
       ),
-      child: WideButton(
-        onPressed: () => onPay(checkout),
-        color: disabled
-            ? surfaceDarkColor.withValues(alpha: 0.8)
-            : surfaceDarkColor,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+      child: Column(
+        children: [
+          WideButton(
+            onPressed: () => onPay(checkout),
+            color: disabled
+                ? surfaceDarkColor.withValues(alpha: 0.8)
+                : surfaceDarkColor,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Pay',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: disabled
+                        ? CupertinoColors.white.withValues(alpha: 0.7)
+                        : CupertinoColors.white,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                CoinLogo(
+                  size: 20,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  checkout.total.toStringAsFixed(2),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: disabled
+                        ? CupertinoColors.white.withValues(alpha: 0.7)
+                        : CupertinoColors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (insufficientBalance) const SizedBox(height: 10),
+          if (insufficientBalance)
             Text(
-              'Pay',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: disabled
-                    ? CupertinoColors.white.withValues(alpha: 0.7)
-                    : CupertinoColors.white,
-              ),
+              'Insufficient balance',
+              style: TextStyle(color: dangerColor),
             ),
-            const SizedBox(width: 8),
-            CoinLogo(
-              size: 20,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              checkout.total.toStringAsFixed(2),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: disabled
-                    ? CupertinoColors.white.withValues(alpha: 0.7)
-                    : CupertinoColors.white,
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }

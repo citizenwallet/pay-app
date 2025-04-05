@@ -75,8 +75,10 @@ class Details extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Location(location: place.description),
+          Description(description: place.description),
           const SizedBox(height: 4),
+          // Location(location: null),
+          // const SizedBox(height: 4),
         ],
       ),
     );
@@ -96,6 +98,30 @@ class Name extends StatelessWidget {
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: Color(0xFF14023F),
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+}
+
+class Description extends StatelessWidget {
+  final String? description;
+
+  const Description({super.key, this.description});
+
+  @override
+  Widget build(BuildContext context) {
+    if (description == null || description!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Text(
+      description ?? '',
+      style: const TextStyle(
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF8F8A9D),
       ),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,

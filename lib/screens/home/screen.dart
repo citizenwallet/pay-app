@@ -448,10 +448,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         searching: searching,
                       ),
                     ),
-                    SliverPersistentHeader(
-                      pinned: true,
-                      delegate: WhiteBarDelegate(),
-                    ),
                     CupertinoSliverRefreshControl(
                       onRefresh: onLoad,
                     ),
@@ -666,45 +662,4 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant SearchBarDelegate oldDelegate) => true;
-}
-
-class WhiteBarDelegate extends SliverPersistentHeaderDelegate {
-  final bool reverse;
-
-  WhiteBarDelegate({
-    this.reverse = false,
-  });
-
-  @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    final gradientList = [
-      whiteColor,
-      whiteColor.withValues(alpha: 0.0),
-    ];
-
-    return Column(
-      children: [
-        Container(
-          height: 40,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: reverse ? gradientList.reversed.toList() : gradientList,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  @override
-  double get maxExtent => 40.0; // Height of your SearchBar
-
-  @override
-  double get minExtent => 40.0; // Same as maxExtent for fixed height
-
-  @override
-  bool shouldRebuild(covariant WhiteBarDelegate oldDelegate) => true;
 }
