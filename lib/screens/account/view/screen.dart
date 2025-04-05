@@ -115,8 +115,8 @@ class _MyAccountState extends State<MyAccount> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Notifications(),
-                const SizedBox(height: 20),
+                // Notifications(),
+                // const SizedBox(height: 20),
                 About(),
                 const SizedBox(height: 60),
                 WideButton(

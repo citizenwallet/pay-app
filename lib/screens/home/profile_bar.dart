@@ -63,7 +63,7 @@ class _ProfileBarState extends State<ProfileBar> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Name(name: profile.name),
+                    Name(name: '@${profile.username}'),
                     const SizedBox(height: 4),
                     Row(
                       children: [

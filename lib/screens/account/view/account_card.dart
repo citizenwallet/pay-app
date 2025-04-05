@@ -1,14 +1,20 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/widgets/qr/qr.dart';
 import 'package:provider/provider.dart';
 
 class AccountCard extends StatelessWidget {
-  const AccountCard({super.key});
+  final String appRedirectUrl;
+
+  AccountCard({
+    super.key,
+  }) : appRedirectUrl = dotenv.get('APP_REDIRECT_URL');
 
   @override
   Widget build(BuildContext context) {
     final profile = context.select((ProfileState p) => p.profile);
+    final alias = context.select((ProfileState p) => p.alias);
 
     return Stack(
       alignment: Alignment.center,
@@ -24,7 +30,7 @@ class AccountCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               QR(
-                data: 'https://brussels.pay.wallet',
+                data: '$appRedirectUrl/?sendto=${profile.username}@$alias',
                 size: 230,
                 padding: EdgeInsets.all(20),
                 logo: 'assets/icons/profile.png',

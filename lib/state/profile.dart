@@ -53,6 +53,7 @@ class ProfileState with ChangeNotifier {
   bool loading = false;
   bool error = false;
   ProfileV1 profile = ProfileV1();
+  String get alias => _config.community.alias;
 
   // state methods here
   Future<String?> _generateProfileUsername() async {

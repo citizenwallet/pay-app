@@ -296,9 +296,14 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    final (address, _, _, _) = parseQRCode(result);
+    final (address, _, _, alias) = parseQRCode(result);
     if (address.isEmpty) {
       // invalid QR code
+      return;
+    }
+
+    if (alias != null && alias.isNotEmpty && alias != _profileState.alias) {
+      // TODO: toast with invalid alias message
       return;
     }
 
@@ -308,6 +313,8 @@ class _HomeScreenState extends State<HomeScreen> {
       case QRFormat.checkoutUrl:
         handleInteractionWithPlace(myAddress, address);
         break;
+      case QRFormat.sendtoUrl:
+      case QRFormat.sendtoUrlWithEIP681:
       case QRFormat.accountUrl:
         final profile = address.startsWith('0x')
             ? await _contactsState.getContactProfileFromAddress(address)
