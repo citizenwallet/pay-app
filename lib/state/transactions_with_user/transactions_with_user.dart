@@ -199,6 +199,14 @@ class TransactionsWithUserState with ChangeNotifier {
 
       if (txHash == null) return null;
 
+      final index = sendingQueue.indexWhere((tx) => tx.id == tempId);
+      if (index != -1) {
+        sendingQueue[index] = sendingQueue[index].copyWith(
+          txHash: txHash,
+          status: TransactionStatus.sending,
+        );
+      }
+
       debugPrint('txHash: $txHash');
       return txHash;
     } catch (e, s) {
