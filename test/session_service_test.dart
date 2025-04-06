@@ -4,12 +4,9 @@ import 'package:pay_app/services/session/session.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() {
-  late SessionService sessionService;
-
   setUp(() async {
     // Initialize dotenv if needed for tests
     await dotenv.load(fileName: '.env');
-    sessionService = SessionService();
   });
 
   group('SessionService', () {

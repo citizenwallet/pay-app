@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:pay_app/services/api/api.dart';
@@ -71,16 +72,16 @@ Uint8List generateSessionHash(Uint8List sessionRequestHash, int challenge) {
 }
 
 class SessionService {
-  static final SessionService _instance = SessionService._internal();
-  factory SessionService() => _instance;
-  SessionService._internal();
+  final EthereumAddress _provider;
+
+  SessionService(Config config)
+      : _provider = EthereumAddress.fromHex(
+          config.getPrimarySessionManager().providerAddress,
+        );
 
   final APIService _apiService = APIService(
     baseURL: dotenv.env['DASHBOARD_API_BASE_URL'] ?? '',
   );
-
-  EthereumAddress get provider =>
-      EthereumAddress.fromHex(dotenv.get('SESSION_PROVIDER'));
 
   /// Creates a session request
   Future<(String, Uint8List)?> request(
@@ -100,7 +101,7 @@ class SessionService {
 
       // Generate hash
       final hash = generateSessionRequestHash(
-        provider.hexEip55,
+        _provider.hexEip55,
         sessionOwner,
         salt,
         expiry,
@@ -112,7 +113,7 @@ class SessionService {
 
       // Create request body
       final requestBody = {
-        'provider': provider.hexEip55,
+        'provider': _provider.hexEip55,
         'owner': sessionOwner,
         'source': source,
         'type': sessionType,
@@ -166,7 +167,7 @@ class SessionService {
 
       // Create request body
       final requestBody = {
-        'provider': provider.hexEip55,
+        'provider': _provider.hexEip55,
         'owner': sessionOwner,
         'sessionRequestHash': sessionRequestHashHex,
         'sessionHash': sessionHashHex,

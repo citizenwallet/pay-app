@@ -3,7 +3,6 @@ import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
-import 'package:pay_app/services/session/session.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:web3dart/web3dart.dart';
@@ -11,7 +10,6 @@ import 'package:web3dart/web3dart.dart';
 class ContactsState extends ChangeNotifier {
   // instantiate services here
   final ConfigService _configService = ConfigService();
-  final SessionService _sessionService = SessionService();
   final ContactsService _contactsService = ContactsService();
 
   late Config _config;
@@ -189,7 +187,6 @@ class ContactsState extends ChangeNotifier {
 
       return await getTwoFAAddress(
         _config,
-        _sessionService.provider,
         parsedNumber,
         type,
       );

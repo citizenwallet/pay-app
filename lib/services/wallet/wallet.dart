@@ -2039,10 +2039,11 @@ Future<SUJSONRPCResponse> requestBundler(
 
 Future<EthereumAddress> getTwoFAAddress(
   Config config,
-  EthereumAddress provider,
   String source,
   String type,
 ) async {
+  final provider = EthereumAddress.fromHex(
+      config.getPrimarySessionManager().providerAddress);
   final salt = generateSessionSalt(source, type);
   return await config.twoFAFactoryContract.getAddress(provider, salt);
 }

@@ -8,7 +8,6 @@ import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/session/session.dart';
-import 'package:pay_app/services/wallet/contracts/session_manager_module.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -26,7 +25,7 @@ class OnboardingState with ChangeNotifier {
   // instantiate services here
   final ConfigService _configService = ConfigService();
   final SecureService _secureService = SecureService();
-  final SessionService _sessionService = SessionService();
+  late SessionService _sessionService;
   late Config _config;
 
   // private variables here
@@ -55,6 +54,8 @@ class OnboardingState with ChangeNotifier {
     await config.initContracts();
 
     _config = config;
+
+    _sessionService = SessionService(_config);
   }
 
   bool _mounted = true;
@@ -124,10 +125,7 @@ class OnboardingState with ChangeNotifier {
 
     final (account, privateKey) = credentials;
 
-    final sessionManagerModuleService =
-        await sessionManagerModuleServiceFromConfig(_config);
-
-    final isExpired = await sessionManagerModuleService.isExpired(
+    final isExpired = await _config.sessionManagerModuleContract.isExpired(
       account,
       privateKey.address,
     );
@@ -178,8 +176,12 @@ class OnboardingState with ChangeNotifier {
 
       final salt = generateSessionSalt(parsedSource, 'sms');
 
+      final provider = EthereumAddress.fromHex(
+        _config.getPrimarySessionManager().providerAddress,
+      );
+
       final twoFAAddress = await _config.twoFAFactoryContract.getAddress(
-        _sessionService.provider,
+        provider,
         salt,
       );
 

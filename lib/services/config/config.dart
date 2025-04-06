@@ -79,6 +79,7 @@ class CommunityConfig {
   final ContractLocation profile;
   final ContractLocation primaryToken;
   final ContractLocation primaryAccountFactory;
+  final ContractLocation? primarySessionManager;
   final ContractLocation? primaryCardManager;
 
   CommunityConfig({
@@ -93,6 +94,7 @@ class CommunityConfig {
     required this.profile,
     required this.primaryToken,
     required this.primaryAccountFactory,
+    this.primarySessionManager,
     this.primaryCardManager,
   });
 
@@ -114,6 +116,9 @@ class CommunityConfig {
       primaryToken: ContractLocation.fromJson(json['primary_token']),
       primaryAccountFactory:
           ContractLocation.fromJson(json['primary_account_factory']),
+      primarySessionManager: json['primary_session_manager'] != null
+          ? ContractLocation.fromJson(json['primary_session_manager'])
+          : null,
       primaryCardManager: json['primary_card_manager'] != null
           ? ContractLocation.fromJson(json['primary_card_manager'])
           : null,
@@ -134,6 +139,8 @@ class CommunityConfig {
       'profile': profile.toJson(),
       'primary_token': primaryToken.toJson(),
       'primary_account_factory': primaryAccountFactory.toJson(),
+      if (primarySessionManager != null)
+        'primary_session_manager': primarySessionManager!.toJson(),
       if (primaryCardManager != null)
         'primary_card_manager': primaryCardManager!.toJson(),
     };
@@ -504,6 +511,45 @@ class CardsConfig extends ContractLocation {
   }
 }
 
+class SessionsConfig {
+  final int chainId;
+  final String moduleAddress;
+  final String factoryAddress;
+  final String providerAddress;
+
+  SessionsConfig({
+    required this.chainId,
+    required this.moduleAddress,
+    required this.factoryAddress,
+    required this.providerAddress,
+  });
+
+  factory SessionsConfig.fromJson(Map<String, dynamic> json) {
+    return SessionsConfig(
+      chainId: json['chain_id'],
+      moduleAddress: json['module_address'],
+      factoryAddress: json['factory_address'],
+      providerAddress: json['provider_address'],
+    );
+  }
+
+  // to json
+  Map<String, dynamic> toJson() {
+    return {
+      'chain_id': chainId,
+      'module_address': moduleAddress,
+      'factory_address': factoryAddress,
+      'provider_address': providerAddress,
+    };
+  }
+
+  // to string
+  @override
+  String toString() {
+    return 'SessionsConfig{chainId: $chainId, moduleAddress: $moduleAddress, factoryAddress: $factoryAddress, providerAddress: $providerAddress}';
+  }
+}
+
 class ChainConfig {
   final int id;
   final NodeConfig node;
@@ -533,6 +579,7 @@ class Config {
   final Map<String, TokenConfig> tokens;
   final ScanConfig scan;
   final Map<String, ERC4337Config> accounts;
+  final Map<String, SessionsConfig>? sessions;
   final Map<String, CardsConfig>? cards;
   final Map<String, ChainConfig> chains;
   final IPFSConfig ipfs;
@@ -562,6 +609,7 @@ class Config {
     required this.tokens,
     required this.scan,
     required this.accounts,
+    required this.sessions,
     required this.cards,
     required this.chains,
     required this.ipfs,
@@ -631,14 +679,14 @@ class Config {
     sessionManagerModuleContract = SessionManagerModuleService(
       chain.id,
       ethClient,
-      "0x3f504c5CafF17e5bDD5664F47266e13f046488db",
+      getPrimarySessionManager().moduleAddress,
     );
     await sessionManagerModuleContract.init();
 
     twoFAFactoryContract = TwoFAFactoryService(
       chain.id,
       ethClient,
-      "0x7a59dECdd0841bBBfBEf83611D04a403eE54F695",
+      getPrimarySessionManager().factoryAddress,
     );
     await twoFAFactoryContract.init();
   }
@@ -757,6 +805,7 @@ class Config {
       tokens: tokens,
       scan: ScanConfig(name: legacy.scan.name, url: legacy.scan.url),
       accounts: accounts,
+      sessions: null,
       cards: cards,
       chains: chains,
       ipfs: IPFSConfig(url: legacy.ipfs.url),
@@ -779,6 +828,8 @@ class Config {
       scan: ScanConfig.fromJson(json['scan']),
       accounts: (json['accounts'] as Map<String, dynamic>)
           .map((key, value) => MapEntry(key, ERC4337Config.fromJson(value))),
+      sessions: (json['sessions'] as Map<String, dynamic>)
+          .map((key, value) => MapEntry(key, SessionsConfig.fromJson(value))),
       cards: (json['cards'] as Map<String, dynamic>?)
           ?.map((key, value) => MapEntry(key, CardsConfig.fromJson(value))),
       chains: (json['chains'] as Map<String, dynamic>)
@@ -799,6 +850,9 @@ class Config {
       'tokens': tokens.map((key, value) => MapEntry(key, value.toJson())),
       'scan': scan.toJson(),
       'accounts': accounts.map((key, value) => MapEntry(key, value.toJson())),
+      if (sessions != null)
+        'sessions':
+            sessions!.map((key, value) => MapEntry(key, value.toJson())),
       if (cards != null)
         'cards': cards!.map((key, value) => MapEntry(key, value.toJson())),
       'chains': chains.map((key, value) => MapEntry(key, value.toJson())),
@@ -841,6 +895,21 @@ class Config {
     }
 
     return primaryAccountAbstraction;
+  }
+
+  SessionsConfig getPrimarySessionManager() {
+    if (sessions == null) {
+      throw Exception('Sessions not found');
+    }
+
+    final primarySessionManager =
+        sessions![community.primarySessionManager!.fullAddress];
+
+    if (primarySessionManager == null) {
+      throw Exception('Primary Session Manager Config not found');
+    }
+
+    return primarySessionManager;
   }
 
   String getPaymasterType() {
