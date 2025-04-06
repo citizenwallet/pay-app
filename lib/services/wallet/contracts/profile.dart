@@ -70,7 +70,7 @@ class ProfileV1 {
 
   ProfileV1({
     this.account = '',
-    this.username = '@anonymous',
+    this.username = 'anonymous',
     this.name = 'Anonymous',
     this.description = '',
     this.image = 'assets/icons/profile.png',

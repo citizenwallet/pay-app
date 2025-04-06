@@ -1663,6 +1663,46 @@ Future<String?> updateProfile(Config config, EthereumAddress account,
   return null;
 }
 
+/// set profile data
+Future<bool> deleteCurrentProfile(
+  Config config,
+  EthereumAddress account,
+  EthPrivateKey credentials,
+) async {
+  try {
+    final url =
+        '/v1/profiles/${config.profileContract.addr}/${account.hexEip55}';
+
+    final encoded = jsonEncode(
+      {
+        'account': account.hexEip55,
+        'date': DateTime.now().toUtc().toIso8601String(),
+      },
+    );
+
+    final body = SignedRequest(convertStringToUint8List(encoded));
+
+    final sig = await compute(
+        generateSignature, (jsonEncode(body.toJson()), credentials));
+
+    await config.engineIPFSService.delete(
+      url: url,
+      headers: {
+        'X-Signature': sig,
+        'X-Address': account.hexEip55,
+      },
+      body: body.toJson(),
+    );
+
+    return true;
+  } catch (e, s) {
+    debugPrint('error: $e');
+    debugPrint('stack trace: $s');
+  }
+
+  return false;
+}
+
 /// check if an account exists
 Future<bool> accountExists(
   Config config,

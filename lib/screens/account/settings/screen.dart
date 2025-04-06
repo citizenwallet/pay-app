@@ -52,14 +52,69 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
   void handleLogout() async {
     final navigator = GoRouter.of(context);
 
+    // show a confirmation modal
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text('Log out'),
+        content: Text('Are you sure you want to log out?'),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Cancel'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Log out'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == null || !confirmed) {
+      return;
+    }
+
     final success = await _accountState.logout();
     if (success) {
       navigator.go('/');
     }
   }
 
-  void handleDeleteAccount() {
-    debugPrint('delete account');
+  void handleDeleteData() async {
+    final navigator = GoRouter.of(context);
+
+    // show a confirmation modal
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text('Delete data & log out'),
+        content:
+            Text('Your profile will be cleared and you will be logged out.'),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Cancel'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == null || !confirmed) {
+      return;
+    }
+
+    final success = await _accountState.deleteData();
+    if (success) {
+      navigator.go('/');
+    }
   }
 
   @override
@@ -70,6 +125,7 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
     final alias = context.select((ProfileState p) => p.alias);
 
     final isLoggingOut = context.select((AccountState a) => a.loggingOut);
+    final isDeletingData = context.select((AccountState a) => a.deletingData);
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
@@ -128,7 +184,7 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
                 WideButton(
                   color: const Color(0xFF4D4D4D),
                   onPressed: handleLogout,
-                  disabled: isLoggingOut,
+                  disabled: isLoggingOut || isDeletingData,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -148,28 +204,38 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
                     ],
                   ),
                 ),
-                // const SizedBox(height: 20),
-                // Container(
-                //   height: 1,
-                //   padding: const EdgeInsets.symmetric(horizontal: 16),
-                //   decoration: BoxDecoration(
-                //     color: Color(0xFFD9D9D9),
-                //   ),
-                // ),
-                // const SizedBox(height: 20),
-                // WideButton(
-                //   color: const Color(0xFFFC4343),
-                //   onPressed: handleDeleteAccount,
-                //   disabled: isLoggingOut,
-                //   child: Text(
-                //     'Delete account',
-                //     style: TextStyle(
-                //       fontSize: 16,
-                //       fontWeight: FontWeight.w700,
-                //       color: CupertinoColors.white,
-                //     ),
-                //   ),
-                // ),
+                const SizedBox(height: 20),
+                Container(
+                  height: 1,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFD9D9D9),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                WideButton(
+                  color: dangerColor,
+                  onPressed: handleDeleteData,
+                  disabled: isDeletingData || isLoggingOut,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Delete data & log out',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: CupertinoColors.white,
+                        ),
+                      ),
+                      if (isDeletingData)
+                        CupertinoActivityIndicator(
+                          color: CupertinoColors.white,
+                        ),
+                    ],
+                  ),
+                ),
                 SizedBox(height: safeAreaBottom),
               ],
             ),
