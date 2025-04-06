@@ -39,7 +39,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
@@ -74,6 +74,9 @@ class _HomeScreenState extends State<HomeScreen> {
       _profileState = context.read<ProfileState>();
       _contactsState = context.read<ContactsState>();
       _topupState = context.read<TopupState>();
+
+      // Start listening to lifecycle changes.
+      WidgetsBinding.instance.addObserver(this);
       onLoad();
     });
   }
@@ -95,7 +98,30 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    super.didChangeAppLifecycleState(state);
+
+    switch (state) {
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+        return;
+      case AppLifecycleState.resumed:
+        // Restart the scanner when the app is resumed.
+        // Don't forget to resume listening to the barcode events.
+        onLoad();
+      case AppLifecycleState.inactive:
+        // Stop the scanner when the app is paused.
+        // Also stop the barcode events subscription.
+        _interactionState.stopPolling();
+    }
+  }
+
+  @override
   void dispose() {
+    // Stop listening to lifecycle changes.
+    WidgetsBinding.instance.removeObserver(this);
+
     _debouncer.dispose();
 
     _interactionState.stopPolling();
@@ -285,6 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await navigator.push('/$myAddress/my-account/settings');
 
     clearSearch();
+    onLoad();
   }
 
   void handleQRScan(String myAddress) async {
