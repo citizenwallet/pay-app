@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/checkout.dart';
@@ -111,14 +112,18 @@ class _InteractionWithPlaceScreenState
     Navigator.pop(context);
   }
 
-  void sendMessage(double amount, String? message) {
+  Future<bool> sendMessage(double amount, String? message) async {
+    HapticFeedback.heavyImpact();
+
     final checkout = Checkout(
       items: [],
       manualAmount: amount,
       message: message,
     );
 
-    _ordersWithPlaceState.payOrder(checkout);
+    final txHash = await _ordersWithPlaceState.payOrder(checkout);
+
+    HapticFeedback.lightImpact();
 
     Future.delayed(
       const Duration(milliseconds: 100),
@@ -126,6 +131,8 @@ class _InteractionWithPlaceScreenState
         scrollToTop();
       },
     );
+
+    return txHash != null;
   }
 
   void handleMenuPressed() async {

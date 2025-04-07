@@ -12,7 +12,7 @@ import 'package:provider/provider.dart';
 class Footer extends StatefulWidget {
   final String myAddress;
   final String slug;
-  final Function(double, String?) onSend;
+  final Future<bool> Function(double, String?) onSend;
   final Function() onTopUpPressed;
   final Function() onMenuPressed;
   final FocusNode amountFocusNode;
@@ -76,11 +76,20 @@ class _FooterState extends State<Footer> {
     _ordersWithPlaceState.updateAmount(amount);
   }
 
-  void handleSend(double amount, String? message) {
+  void handleSend(double amount, String? message) async {
     widget.amountFocusNode.unfocus();
     widget.messageFocusNode.unfocus();
 
-    widget.onSend(amount, message);
+    final success = await widget.onSend(amount, message);
+
+    if (success) {
+      _amountController.clear();
+      _messageController.clear();
+
+      setState(() {
+        _showAmountField = true;
+      });
+    }
   }
 
   @override
@@ -91,6 +100,9 @@ class _FooterState extends State<Footer> {
 
     final error = toSendAmount > balance;
     final disabled = toSendAmount == 0.0 || error;
+
+    final paying = context.watch<OrdersWithPlaceState>().paying;
+    final payError = context.watch<OrdersWithPlaceState>().payError;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -143,6 +155,7 @@ class _FooterState extends State<Footer> {
                 _messageController.text,
               ),
               onTopUpPressed: widget.onTopUpPressed,
+              loading: paying,
               disabled: disabled,
               error: error,
             ),

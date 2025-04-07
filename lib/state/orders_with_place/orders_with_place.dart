@@ -74,6 +74,9 @@ class OrdersWithPlaceState with ChangeNotifier {
   bool loading = false;
   bool error = false;
 
+  bool paying = false;
+  bool payError = false;
+
   Order? payingOrder;
 
   // state methods here
@@ -153,6 +156,10 @@ class OrdersWithPlaceState with ChangeNotifier {
       if (place == null || place?.place == null) {
         return null;
       }
+
+      paying = true;
+      payError = false;
+      safeNotifyListeners();
 
       final token = _config.getPrimaryToken();
 
@@ -250,11 +257,17 @@ class OrdersWithPlaceState with ChangeNotifier {
         throw Exception('Failed to pay order');
       }
 
+      paying = false;
+      payError = false;
+      safeNotifyListeners();
+
       return txHash;
     } catch (e, s) {
       print('payOrder error: $e');
       print('payOrder stack trace: $s');
       payingOrder = null;
+      paying = false;
+      payError = true;
       safeNotifyListeners();
       return null;
     }

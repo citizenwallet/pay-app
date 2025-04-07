@@ -14,6 +14,7 @@ class TransactionInputRow extends StatelessWidget {
   final Function(String)? onMessageChange;
   final VoidCallback onToggleField;
   final VoidCallback onSend;
+  final bool loading;
   final bool disabled;
   final bool error;
   final Function() onTopUpPressed;
@@ -29,6 +30,7 @@ class TransactionInputRow extends StatelessWidget {
     this.onMessageChange,
     required this.onToggleField,
     required this.onSend,
+    this.loading = false,
     this.disabled = false,
     this.error = false,
     required this.onTopUpPressed,
@@ -88,6 +90,7 @@ class TransactionInputRow extends StatelessWidget {
         ),
         SizedBox(width: 10),
         SendButton(
+          loading: loading,
           disabled: disabled,
           showingAmountField: showAmountField,
           onToggle: onToggleField,
@@ -102,6 +105,7 @@ class SendButton extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onToggle;
   final bool showingAmountField;
+  final bool loading;
   final bool disabled;
 
   const SendButton({
@@ -110,12 +114,29 @@ class SendButton extends StatelessWidget {
     required this.onToggle,
     this.disabled = false,
     this.showingAmountField = true,
+    this.loading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     if (disabled) {
       return SizedBox.shrink();
+    }
+
+    if (loading) {
+      return Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: disabled ? mutedColor : primaryColor,
+          shape: BoxShape.circle,
+        ),
+        child: const Center(
+          child: CupertinoActivityIndicator(
+            color: whiteColor,
+          ),
+        ),
+      );
     }
 
     if (showingAmountField) {
