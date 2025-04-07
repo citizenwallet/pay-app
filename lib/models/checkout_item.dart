@@ -37,4 +37,11 @@ class CheckoutItem {
       quantity: map['quantity'],
     );
   }
+
+  Map<String, dynamic> toListMap() {
+    return {
+      'id': menuItem.id,
+      'quantity': quantity,
+    };
+  }
 }

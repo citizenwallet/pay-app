@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/services/api/api.dart';
+import 'package:pay_app/services/sigauth/sigauth.dart';
 
 class OrdersService {
   final APIService apiService =
@@ -57,6 +59,37 @@ class OrdersService {
       debugPrint('Failed to fetch order: $e');
       debugPrint('Stack trace: $s');
       throw Exception('Failed to fetch order');
+    }
+  }
+
+  Future<int?> createOrder(
+    SigAuthConnection connection,
+    int placeId,
+    Checkout checkout,
+    String txHash,
+  ) async {
+    try {
+      final body = {
+        'txHash': txHash,
+        'items': checkout.items.map((item) => item.toListMap()).toList(),
+        'total': checkout.decimalTotal,
+        'description': checkout.message,
+        'account': account,
+      };
+
+      final response = await apiService.post(
+        url: '/app/places/$placeId/orders',
+        body: body,
+        headers: connection.toMap(),
+      );
+
+      final orderId = response['orderId'] as int?;
+
+      return orderId;
+    } catch (e, s) {
+      debugPrint('Failed to create order: $e');
+      debugPrint('Stack trace: $s');
+      throw Exception('Failed to create order');
     }
   }
 }

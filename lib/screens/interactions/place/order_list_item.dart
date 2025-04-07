@@ -95,7 +95,7 @@ class Items extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty && description == null) {
+    if (items.isEmpty && (description == null || description!.trim().isEmpty)) {
       return const SizedBox.shrink();
     }
 
@@ -113,7 +113,7 @@ class Items extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         SizedBox(height: 4),
-        if (description != null && description!.isNotEmpty)
+        if (description != null && description!.isNotEmpty && items.isEmpty)
           Text(
             description!,
             overflow: TextOverflow.ellipsis,

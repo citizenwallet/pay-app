@@ -11,6 +11,7 @@ import 'package:pay_app/services/engine/utils.dart';
 import 'package:pay_app/services/pay/orders.dart';
 import 'package:pay_app/services/pay/places.dart';
 import 'package:pay_app/services/secure/secure.dart';
+import 'package:pay_app/services/sigauth/sigauth.dart';
 import 'package:pay_app/services/wallet/contracts/erc20.dart';
 import 'package:pay_app/services/wallet/utils.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
@@ -255,6 +256,21 @@ class OrdersWithPlaceState with ChangeNotifier {
 
       if (txHash == null) {
         throw Exception('Failed to pay order');
+      }
+
+      final sigAuthService = SigAuthService(credentials: key, address: account);
+
+      final sigAuthConnection = sigAuthService.connect();
+
+      final orderId = await _ordersService.createOrder(
+        sigAuthConnection,
+        place!.place.id,
+        checkout,
+        txHash,
+      );
+
+      if (orderId == null) {
+        throw Exception('Failed to create order');
       }
 
       paying = false;

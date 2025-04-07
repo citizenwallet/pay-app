@@ -15,6 +15,8 @@ class Checkout {
   double get total =>
       manualAmount ?? items.fold(0, (sum, item) => sum + item.subtotal);
 
+  double get decimalTotal => total * 100;
+
   bool get isEmpty => items.isEmpty;
 
   int get itemCount => items.fold(
