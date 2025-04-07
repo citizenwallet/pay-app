@@ -9,6 +9,7 @@ import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/wide_button.dart';
 import 'package:pay_app/widgets/text_field.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -102,6 +103,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       _onboardingState.reset();
       navigator.go('/${account.hexEip55}');
     }
+  }
+
+  void handleTermsAndConditions() {
+    launchUrl(
+      Uri.parse('https://www.pay.brussels/terms-and-conditions'),
+      mode: LaunchMode.inAppWebView,
+    );
   }
 
   void handleRetry() {
@@ -200,6 +208,40 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'By signing in, you agree to the ',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: textMutedColor,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: handleTermsAndConditions,
+                            child: Text(
+                              'terms and conditions',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: textMutedColor,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: textMutedColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
                       // Phone Number Input
                       if (sessionRequestStatus == SessionRequestStatus.none ||
                           sessionRequestStatus ==
