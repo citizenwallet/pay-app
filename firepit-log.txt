@@ -1,0 +1,13 @@
+Welcome to firepit v1.1.0!
+Doing JSON parses for version checks at /snapshot/firepit/vendor/node_modules/firebase-tools/package.json
+firebase-tools
+Installed ft@11.25.2 and packaged ft@11.25.2
+Checking for npm/bin/npm-cli install at /Users/kevin/.cache/firebase/tools/lib/node_modules/npm/bin/npm-cli
+Checking for npm/bin/npm-cli install at /Users/kevin/.cache/firebase/tools/node_modules/npm/bin/npm-cli
+Checking for npm/bin/npm-cli install at /snapshot/firepit/node_modules/npm/bin/npm-cli
+Found npm/bin/npm-cli install.
+Checking for npm/bin/npm-cli install at /Users/kevin/.cache/firebase/tools/lib/node_modules/npm/bin/npm-cli
+Checking for npm/bin/npm-cli install at /Users/kevin/.cache/firebase/tools/node_modules/npm/bin/npm-cli
+Checking for npm/bin/npm-cli install at /snapshot/firepit/node_modules/npm/bin/npm-cli
+Found npm/bin/npm-cli install.
+ShellJSInternalError: ENOENT: no such file or directory, chmod '/Users/kevin/.cache/firebase/runtime/npm.bat'
