@@ -51,7 +51,7 @@ class ChatHeader extends StatelessWidget {
               imageUrl: imageUrl,
               size: 70,
             ),
-          if (photo != null)
+          if (imageUrl == null && photo != null)
             ProfileCircle(
               imageBytes: photo,
               size: 70,
