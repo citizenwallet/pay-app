@@ -105,35 +105,35 @@ class _OrderScreenState extends State<OrderScreen> {
                 ),
 
               // Order items
-              if (order.items.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                const Text(
-                  'Items',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: order.items.length,
-                  itemBuilder: (context, index) {
-                    final item = order.items[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Item #${item.id}'),
-                          Text('Quantity: ${item.quantity}'),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ],
+              // if (order.items.isNotEmpty) ...[
+              //   const SizedBox(height: 24),
+              //   const Text(
+              //     'Items',
+              //     style: TextStyle(
+              //       fontSize: 20,
+              //       fontWeight: FontWeight.bold,
+              //     ),
+              //   ),
+              //   const SizedBox(height: 8),
+              //   ListView.builder(
+              //     shrinkWrap: true,
+              //     physics: const NeverScrollableScrollPhysics(),
+              //     itemCount: order.items.length,
+              //     itemBuilder: (context, index) {
+              //       final item = order.items[index];
+              //       return Padding(
+              //         padding: const EdgeInsets.symmetric(vertical: 8.0),
+              //         child: Row(
+              //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //           children: [
+              //             Text('Item #${item.id}'),
+              //             Text('Quantity: ${item.quantity}'),
+              //           ],
+              //         ),
+              //       );
+              //     },
+              //   ),
+              // ],
 
               // Additional order details
               const SizedBox(height: 24),
@@ -210,13 +210,13 @@ class Amount extends StatelessWidget {
     return Row(
       children: [
         CoinLogo(
-          size: 16,
+          size: 24,
         ),
         const SizedBox(width: 4),
         Text(
           '${amount >= 0 ? '+' : '-'}${amount.toStringAsFixed(2)}',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 24,
             fontWeight: FontWeight.w600,
             color: theme.primaryColor,
           ),
