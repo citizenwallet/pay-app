@@ -78,7 +78,8 @@ class _MyAppState extends State<MyApp> {
   );
 
   final _rootNavigatorKey = GlobalKey<NavigatorState>();
-  final _shellNavigatorKey = GlobalKey<NavigatorState>();
+  final _appShellNavigatorKey = GlobalKey<NavigatorState>();
+  final _placeShellNavigatorKey = GlobalKey<NavigatorState>();
   final observers = <NavigatorObserver>[];
   late GoRouter router;
 
@@ -94,7 +95,8 @@ class _MyAppState extends State<MyApp> {
 
     router = createRouter(
       _rootNavigatorKey,
-      _shellNavigatorKey,
+      _appShellNavigatorKey,
+      _placeShellNavigatorKey,
       observers,
       accountAddress: accountAddress?.hexEip55,
     );

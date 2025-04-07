@@ -112,7 +112,7 @@ class _InteractionWithPlaceScreenState
     Navigator.pop(context);
   }
 
-  Future<bool> sendMessage(double amount, String? message) async {
+  Future<Order?> sendMessage(double amount, String? message) async {
     HapticFeedback.heavyImpact();
 
     final checkout = Checkout(
@@ -121,7 +121,7 @@ class _InteractionWithPlaceScreenState
       message: message,
     );
 
-    final txHash = await _ordersWithPlaceState.payOrder(checkout);
+    final order = await _ordersWithPlaceState.payOrder(checkout);
 
     HapticFeedback.lightImpact();
 
@@ -132,7 +132,11 @@ class _InteractionWithPlaceScreenState
       },
     );
 
-    return txHash != null;
+    if (order != null) {
+      handleOrderPressed(order);
+    }
+
+    return order;
   }
 
   void handleMenuPressed() async {
@@ -146,7 +150,20 @@ class _InteractionWithPlaceScreenState
       return;
     }
 
-    _ordersWithPlaceState.payOrder(checkout);
+    final order = await _ordersWithPlaceState.payOrder(checkout);
+
+    HapticFeedback.lightImpact();
+
+    Future.delayed(
+      const Duration(milliseconds: 100),
+      () {
+        scrollToTop();
+      },
+    );
+
+    if (order != null) {
+      handleOrderPressed(order);
+    }
   }
 
   void handleTopUp() async {

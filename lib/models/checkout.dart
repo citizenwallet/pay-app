@@ -4,9 +4,9 @@ import 'package:pay_app/models/menu_item.dart';
 class Checkout {
   final List<CheckoutItem> items;
   final double? manualAmount;
-  final String? message;
+  String? message;
 
-  const Checkout({
+  Checkout({
     required this.items,
     this.manualAmount,
     this.message,

@@ -152,7 +152,7 @@ class OrdersWithPlaceState with ChangeNotifier {
     }
   }
 
-  Future<String?> payOrder(Checkout checkout) async {
+  Future<Order?> payOrder(Checkout checkout) async {
     try {
       if (place == null || place?.place == null) {
         return null;
@@ -175,6 +175,8 @@ class OrdersWithPlaceState with ChangeNotifier {
 
             return '$acc\n$line';
           });
+
+      checkout.message ??= message;
 
       final doubleAmount = total.toString().replaceAll(',', '.');
       final parsedAmount = toUnit(
@@ -262,14 +264,14 @@ class OrdersWithPlaceState with ChangeNotifier {
 
       final sigAuthConnection = sigAuthService.connect();
 
-      final orderId = await _ordersService.createOrder(
+      final newOrder = await _ordersService.createOrder(
         sigAuthConnection,
         place!.place.id,
         checkout,
         txHash,
       );
 
-      if (orderId == null) {
+      if (newOrder == null) {
         throw Exception('Failed to create order');
       }
 
@@ -277,7 +279,7 @@ class OrdersWithPlaceState with ChangeNotifier {
       payError = false;
       safeNotifyListeners();
 
-      return txHash;
+      return newOrder;
     } catch (e, s) {
       print('payOrder error: $e');
       print('payOrder stack trace: $s');

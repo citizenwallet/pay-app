@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/place.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/state/wallet.dart';
@@ -12,7 +13,7 @@ import 'package:provider/provider.dart';
 class Footer extends StatefulWidget {
   final String myAddress;
   final String slug;
-  final Future<bool> Function(double, String?) onSend;
+  final Future<Order?> Function(double, String?) onSend;
   final Function() onTopUpPressed;
   final Function() onMenuPressed;
   final FocusNode amountFocusNode;
@@ -80,9 +81,9 @@ class _FooterState extends State<Footer> {
     widget.amountFocusNode.unfocus();
     widget.messageFocusNode.unfocus();
 
-    final success = await widget.onSend(amount, message);
+    final order = await widget.onSend(amount, message);
 
-    if (success) {
+    if (order != null) {
       _amountController.clear();
       _messageController.clear();
 
@@ -130,6 +131,7 @@ class _FooterState extends State<Footer> {
               widget.display == Display.amountAndMenu)
             WideButton(
               onPressed: widget.onMenuPressed,
+              disabled: paying,
               child: Text(
                 'Menu',
                 style: TextStyle(

@@ -75,7 +75,7 @@ class TransactionInputRow extends StatelessWidget {
         Expanded(
           child: showAmountField
               ? AmountFieldWithMessageToggle(
-                  disabled: disabled,
+                  disabled: disabled || loading,
                   error: error,
                   amountController: amountController,
                   focusNode: amountFocusNode,
@@ -86,6 +86,7 @@ class TransactionInputRow extends StatelessWidget {
                   messageController: messageController,
                   focusNode: messageFocusNode,
                   onChange: onMessageChange ?? (_) {},
+                  isSending: loading,
                 ),
         ),
         SizedBox(width: 10),

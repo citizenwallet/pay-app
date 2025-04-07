@@ -62,7 +62,7 @@ class OrdersService {
     }
   }
 
-  Future<int?> createOrder(
+  Future<Order?> createOrder(
     SigAuthConnection connection,
     int placeId,
     Checkout checkout,
@@ -83,9 +83,9 @@ class OrdersService {
         headers: connection.toMap(),
       );
 
-      final orderId = response['orderId'] as int?;
+      final order = Order.fromJson(response);
 
-      return orderId;
+      return order;
     } catch (e, s) {
       debugPrint('Failed to create order: $e');
       debugPrint('Stack trace: $s');
