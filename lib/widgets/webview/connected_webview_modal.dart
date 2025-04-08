@@ -4,6 +4,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ConnectedWebViewModal extends StatefulWidget {
   final String? modalKey;
@@ -75,7 +76,7 @@ class _WebViewModalState extends State<ConnectedWebViewModal> {
     final uri = Uri.parse(action.request.url.toString());
 
     if (uri.scheme != 'http' && uri.scheme != 'https') {
-      // widget.walletLogic.launchPluginUrl(uri.toString());
+      launchUrl(uri);
 
       return NavigationActionPolicy.CANCEL;
     }
