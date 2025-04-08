@@ -1,0 +1,2089 @@
+import 'dart:convert';
+
+import 'package:pay_app/services/api/api.dart';
+import 'package:pay_app/services/config/config.dart';
+import 'package:pay_app/services/indexer/pagination.dart';
+import 'package:pay_app/services/indexer/push_update_request.dart';
+import 'package:pay_app/services/indexer/signed_request.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
+import 'package:pay_app/services/session/session.dart';
+import 'package:pay_app/services/sigauth/sigauth.dart';
+import 'package:pay_app/services/wallet/contracts/accessControl.dart';
+import 'package:pay_app/services/wallet/contracts/cards/card_manager.dart';
+import 'package:pay_app/services/wallet/contracts/cards/safe_card_manager.dart';
+import 'package:pay_app/services/wallet/contracts/communityModule.dart';
+import 'package:pay_app/services/wallet/contracts/entrypoint.dart';
+import 'package:pay_app/services/wallet/contracts/erc1155.dart';
+import 'package:pay_app/services/wallet/contracts/erc20.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
+import 'package:pay_app/services/wallet/contracts/safe_account.dart';
+import 'package:pay_app/services/wallet/contracts/simpleFaucet.dart';
+import 'package:pay_app/services/wallet/contracts/simple_account.dart';
+import 'package:pay_app/services/wallet/contracts/account_factory.dart';
+import 'package:pay_app/services/wallet/contracts/cards/interface.dart';
+import 'package:pay_app/services/engine/utils.dart';
+import 'package:pay_app/services/wallet/gas.dart';
+import 'package:pay_app/services/wallet/models/chain.dart';
+import 'package:pay_app/services/wallet/models/json_rpc.dart';
+import 'package:pay_app/services/wallet/models/paymaster_data.dart';
+import 'package:pay_app/services/wallet/models/userop.dart';
+import 'package:pay_app/services/wallet/utils.dart';
+import 'package:pay_app/utils/delay.dart';
+import 'package:pay_app/utils/uint8.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart';
+import 'package:web3dart/crypto.dart';
+import 'package:web3dart/web3dart.dart';
+
+class WalletService {
+  static final WalletService _instance = WalletService._internal();
+
+  factory WalletService() {
+    return _instance;
+  }
+
+  final PreferencesService _pref = PreferencesService();
+
+  BigInt? _chainId;
+  late NativeCurrency currency;
+
+  late Client _client;
+
+  late String _alias;
+  late String _url;
+  late String _wsurl;
+  late Web3Client _ethClient;
+
+  late String ipfsUrl;
+  late APIService _ipfs;
+  late APIService _indexer;
+  late APIService _indexerIPFS;
+
+  late APIService _rpc;
+  late APIService _bundlerRPC;
+  late APIService _paymasterRPC;
+  late String _paymasterType;
+
+  late EIP1559GasPriceEstimator _gasPriceEstimator;
+
+  late Map<String, String> erc4337Headers;
+
+  WalletService._internal() {
+    _client = Client();
+  }
+
+  // Declare variables using the `late` keyword, which means they will be initialized at a later time.
+// The variables are related to Ethereum blockchain development.
+  late EthPrivateKey
+      _credentials; // Represents a private key for an Ethereum account.
+  late EthereumAddress _account; // Represents an Ethereum address.
+  late SigAuthService _sigAuth;
+
+  late StackupEntryPoint
+      _contractEntryPoint; // Represents the entry point for a smart contract on the Ethereum blockchain.
+  late CommunityModule _contractCommunityModule;
+  late AccountFactoryService
+      _contractAccountFactory; // Represents a factory for creating Ethereum accounts.
+  String _tokenStandard = 'erc20';
+  ERC20Contract?
+      _contractToken; // Represents a smart contract for an ERC20 token on the Ethereum blockchain.
+  ERC1155Contract?
+      _contract1155Token; // Represents a smart contract for an ERC1155 token on the Ethereum blockchain.
+  late AccessControlUpgradeableContract _contractAccessControl;
+  late SimpleAccount _contractAccount; // Represents a simple Ethereum account.
+  late SafeAccount _contractSafeAccount;
+  late ProfileContract
+      _contractProfile; // Represents a smart contract for a user profile on the Ethereum blockchain.
+  AbstractCardManagerContract? _cardManager;
+
+  EthPrivateKey get credentials => _credentials;
+  EthereumAddress get address => _credentials.address;
+  EthereumAddress get account => _account;
+
+  /// retrieves the current balance of the address
+  Future<String> getBalance({String? addr, BigInt? tokenId}) async {
+    try {
+      BigInt b = BigInt.zero;
+      if (_tokenStandard == 'erc20') {
+        b = await _contractToken!.getBalance(addr ?? _account.hexEip55).timeout(
+              const Duration(seconds: 4),
+            );
+      } else if (_tokenStandard == 'erc1155') {
+        b = await _contract1155Token!
+            .getBalance(addr ?? _account.hexEip55, tokenId ?? BigInt.zero)
+            .timeout(
+              const Duration(seconds: 4),
+            );
+      }
+
+      // TODO: figure out why the returned balance is sometimes out of bounds
+      _pref.setBalance(_account.hexEip55, b.toString());
+
+      return b.toString();
+    } catch (_) {}
+
+    return _pref.getBalance(_account.hexEip55) ?? '0';
+  }
+
+  String get standard => _tokenStandard;
+
+  Future<bool> get minter async {
+    return _contractAccessControl.isMinter(_account.hexEip55);
+  }
+
+  /// retrieve chain id
+  int get chainId => _chainId != null ? _chainId!.toInt() : 0;
+  String? get alias {
+    try {
+      return _alias;
+    } catch (_) {}
+
+    return null;
+  }
+
+  String get tokenAddress => _tokenStandard == 'erc20'
+      ? _contractToken!.addr
+      : _contract1155Token!.addr;
+  String get profileAddress => _contractProfile.addr;
+
+  SigAuthConnection get connection => _sigAuth.connect();
+
+  Future<BigInt> get accountNonce async =>
+      getEntryPointContract().getNonce(_account.hexEip55);
+
+  Future<void> init(
+    EthereumAddress account,
+    EthPrivateKey privateKey,
+    NativeCurrency currency,
+    Config config, {
+    void Function(String)? onNotify,
+    void Function(bool)? onFinished,
+  }) async {
+    _alias = config.community.alias;
+
+    final token = config.getPrimaryToken();
+    final accountAbstractionConfig =
+        config.getPrimaryAccountAbstractionConfig();
+    final chain = config.chains[token.chainId.toString()];
+
+    _url = chain!.node.url;
+    _wsurl = chain.node.wsUrl;
+
+    final rpcUrl = config.getRpcUrl(token.chainId.toString());
+
+    _ethClient = Web3Client(
+      rpcUrl,
+      _client,
+      // socketConnector: () =>
+      //     WebSocketChannel.connect(Uri.parse(_wsurl)).cast<String>(),
+    );
+
+    ipfsUrl = config.ipfs.url;
+    _ipfs = APIService(baseURL: ipfsUrl);
+    _indexer = APIService(baseURL: _url);
+    _indexerIPFS = APIService(baseURL: _url);
+
+    _rpc = APIService(baseURL: rpcUrl);
+
+    _bundlerRPC = APIService(baseURL: rpcUrl);
+    _paymasterRPC = APIService(baseURL: rpcUrl);
+    _paymasterType = accountAbstractionConfig.paymasterType;
+
+    _gasPriceEstimator = EIP1559GasPriceEstimator(
+      _rpc,
+      _ethClient,
+      gasExtraPercentage: accountAbstractionConfig.gasExtraPercentage,
+    );
+
+    erc4337Headers = {};
+    if (!kIsWeb || kDebugMode) {
+      // on native, we need to set the origin header
+      erc4337Headers['Origin'] = dotenv.get('ORIGIN_HEADER');
+    }
+
+    _credentials = privateKey;
+    _sigAuth = SigAuthService(
+      credentials: privateKey,
+      address: account,
+      redirect: dotenv.get('ORIGIN_HEADER'),
+    );
+
+    final cachedChainId = _pref.getChainIdForAlias(config.community.alias);
+    _chainId = cachedChainId != null
+        ? BigInt.parse(cachedChainId)
+        : BigInt.from(token.chainId);
+    await _pref.setChainIdForAlias(
+        config.community.alias, _chainId!.toString());
+
+    this.currency = currency;
+
+    final primaryCardManager = config.getPrimaryCardManager();
+
+    if (primaryCardManager != null &&
+        primaryCardManager.type == CardManagerType.classic) {
+      _cardManager = CardManagerContract(
+        _chainId!.toInt(),
+        _ethClient,
+        primaryCardManager.address,
+      );
+    }
+
+    if (primaryCardManager != null &&
+        primaryCardManager.type == CardManagerType.safe &&
+        primaryCardManager.instanceId != null) {
+      final instanceId = primaryCardManager.instanceId!;
+      _cardManager = SafeCardManagerContract(
+        keccak256(convertStringToUint8List(instanceId)),
+        _chainId!.toInt(),
+        _ethClient,
+        primaryCardManager.address,
+      );
+    }
+
+    await _cardManager?.init();
+
+    await _initContracts(
+      account,
+      config.community.alias,
+      accountAbstractionConfig.entrypointAddress,
+      accountAbstractionConfig.accountFactoryAddress,
+      token,
+      config.community.profile.address,
+    );
+
+    onFinished?.call(true);
+  }
+
+  Future<Uint8List> getCardHash(String serial, {bool local = true}) async {
+    if (_cardManager == null) {
+      throw Exception('Card manager not initialized');
+    }
+
+    return _cardManager!.getCardHash(serial, local: local);
+  }
+
+  Future<EthereumAddress> getCardAddress(Uint8List hash) async {
+    if (_cardManager == null) {
+      throw Exception('Card manager not initialized');
+    }
+    return _cardManager!.getCardAddress(hash);
+  }
+
+  /// Initializes the Ethereum smart contracts used by the wallet.
+  ///
+  /// [account] The account address
+  /// [alias] The community alias
+  /// [eaddr] The Ethereum address of the entry point for the smart contract.
+  /// [afaddr] The Ethereum address of the account factory smart contract.
+  /// [taddr] The Ethereum address of the ERC20 token smart contract.
+  /// [prfaddr] The Ethereum address of the user profile smart contract.
+  Future<void> _initContracts(
+    EthereumAddress account,
+    String alias,
+    String eaddr,
+    String afaddr,
+    TokenConfig token,
+    String prfaddr,
+  ) async {
+    // Get the Ethereum address for the current account.
+    // _account = EthereumAddress.fromHex(account);
+    _account = account;
+
+    await _pref.setAccountAddress(
+      _credentials.address.hexEip55,
+      address.hexEip55,
+    );
+
+    // Create a new simple account instance and initialize it.
+    _contractAccount = SimpleAccount(chainId, _ethClient, _account.hexEip55);
+    await _contractAccount.init();
+
+    // Create a new safe account instance and initialize it.
+    _contractSafeAccount = SafeAccount(chainId, _ethClient, _account.hexEip55);
+    await _contractSafeAccount.init();
+
+    // Create a new entry point instance and initialize it.
+    _contractEntryPoint = StackupEntryPoint(chainId, _ethClient, eaddr);
+    await _contractEntryPoint.init();
+
+    // Create a new community module instance and initialize it.
+    _contractCommunityModule = CommunityModule(chainId, _ethClient, eaddr);
+    await _contractCommunityModule.init();
+
+    // Create a new account factory instance and initialize it.
+    _contractAccountFactory =
+        AccountFactoryService(chainId, _ethClient, afaddr);
+    await _contractAccountFactory.init();
+
+    _tokenStandard = token.standard;
+
+    switch (token.standard) {
+      case 'erc20':
+        // Create a new ERC20 token contract instance and initialize it.
+        _contractToken = ERC20Contract(chainId, _ethClient, token.address);
+        await _contractToken?.init();
+        break;
+      case 'erc1155':
+        _contract1155Token =
+            ERC1155Contract(chainId, _ethClient, token.address);
+        await _contract1155Token?.init();
+        break;
+    }
+
+    _contractAccessControl =
+        AccessControlUpgradeableContract(chainId, _ethClient, token.address);
+    await _contractAccessControl.init();
+
+    // Create a new user profile contract instance and initialize it.
+    _contractProfile = ProfileContract(chainId, _ethClient, prfaddr);
+    await _contractProfile.init();
+  }
+
+  /// given a tx hash, waits for the tx to be mined
+  Future<bool> waitForTxSuccess(
+    String txHash, {
+    int retryCount = 0,
+    int maxRetries = 20,
+  }) async {
+    if (retryCount >= maxRetries) {
+      return false;
+    }
+
+    final receipt = await _ethClient.getTransactionReceipt(txHash);
+    if (receipt?.status != true) {
+      // there is either no receipt or the tx is still not confirmed
+
+      // increment the retry count
+      final nextRetryCount = retryCount + 1;
+
+      // wait for a bit before retrying
+      await delay(Duration(milliseconds: 250 * (nextRetryCount)));
+
+      // retry
+      return waitForTxSuccess(
+        txHash,
+        retryCount: nextRetryCount,
+        maxRetries: maxRetries,
+      );
+    }
+
+    return true;
+  }
+
+  StackupEntryPoint getEntryPointContract({bool legacy = false}) {
+    return _contractEntryPoint;
+  }
+
+  AccountFactoryService getAccounFactoryContract({bool legacy = false}) {
+    return _contractAccountFactory;
+  }
+
+  APIService getBundlerRPC({bool legacy = false}) {
+    return _bundlerRPC;
+  }
+
+  APIService getPaymasterRPC({bool legacy = false}) {
+    return _paymasterRPC;
+  }
+
+  String getPaymasterType({bool legacy = false}) {
+    return _paymasterType;
+  }
+
+  /// fetches the balance of a given address
+  // Future<String> getBalance(String addr, {BigInt? tokenId}) async {
+  //   BigInt b = BigInt.zero;
+  //   if (_tokenStandard == 'erc20') {
+  //     b = await _contractToken!.getBalance(addr);
+  //   } else if (_tokenStandard == 'erc1155') {
+  //     b = await _contract1155Token!.getBalance(addr, tokenId!);
+  //   }
+
+  //   return fromDoubleUnit(
+  //     b.toString(),
+  //     decimals: currency.decimals,
+  //   );
+  // }
+
+  String get transferEventStringSignature {
+    if (_tokenStandard == 'erc20') {
+      return _contractToken!.transferEventStringSignature;
+    } else if (_tokenStandard == 'erc1155') {
+      return _contract1155Token!.transferEventStringSignature;
+    }
+
+    return '';
+  }
+
+  String get transferEventSignature {
+    if (_tokenStandard == 'erc20') {
+      return _contractToken!.transferEventSignature;
+    } else if (_tokenStandard == 'erc1155') {
+      return _contract1155Token!.transferEventSignature;
+    }
+
+    return '';
+  }
+
+  Future<bool> isMinter(String addr) async {
+    return _contractAccessControl.isMinter(addr);
+  }
+
+  /// set profile data
+  Future<String?> setProfile(
+    ProfileRequest profile, {
+    required List<int> image,
+    required String fileType,
+  }) async {
+    try {
+      final url = '/v1/profiles/$profileAddress/${_account.hexEip55}';
+
+      final json = jsonEncode(
+        profile.toJson(),
+      );
+
+      final body = SignedRequest(convertBytesToUint8List(utf8.encode(json)));
+
+      final sig = await compute(
+          generateSignature, (jsonEncode(body.toJson()), _credentials));
+
+      final resp = await _indexerIPFS.filePut(
+        url: url,
+        file: image,
+        fileType: fileType,
+        headers: {
+          'X-Signature': sig,
+          'X-Address': _account.hexEip55,
+        },
+        body: body.toJson(),
+      );
+
+      final String profileUrl = resp['object']['ipfs_url'];
+
+      final calldata = _contractProfile.setCallData(
+          _account.hexEip55, profile.username, profileUrl);
+
+      final (_, userop) = await prepareUserop([profileAddress], [calldata]);
+
+      final txHash = await submitUserop(userop);
+      if (txHash == null) {
+        throw Exception('profile update failed');
+      }
+
+      final success = await waitForTxSuccess(txHash);
+      if (!success) {
+        throw Exception('transaction failed');
+      }
+
+      return profileUrl;
+    } catch (_) {}
+
+    return null;
+  }
+
+  /// update profile data
+  Future<String?> updateProfile(ProfileV1 profile) async {
+    try {
+      final url = '/v1/profiles/$profileAddress/${_account.hexEip55}';
+
+      final json = jsonEncode(
+        profile.toJson(),
+      );
+
+      final body = SignedRequest(convertBytesToUint8List(utf8.encode(json)));
+
+      final sig = await compute(
+          generateSignature, (jsonEncode(body.toJson()), _credentials));
+
+      final resp = await _indexerIPFS.patch(
+        url: url,
+        headers: {
+          'X-Signature': sig,
+          'X-Address': _account.hexEip55,
+        },
+        body: body.toJson(),
+      );
+
+      final String profileUrl = resp['object']['ipfs_url'];
+
+      final calldata = _contractProfile.setCallData(
+          _account.hexEip55, profile.username, profileUrl);
+
+      final (_, userop) = await prepareUserop([profileAddress], [calldata]);
+
+      final txHash = await submitUserop(userop);
+      if (txHash == null) {
+        throw Exception('profile update failed');
+      }
+
+      final success = await waitForTxSuccess(txHash);
+      if (!success) {
+        throw Exception('transaction failed');
+      }
+
+      return profileUrl;
+    } catch (_) {}
+
+    return null;
+  }
+
+  /// set profile data
+  Future<bool> unpinCurrentProfile() async {
+    try {
+      final url = '/v1/profiles/$profileAddress/${_account.hexEip55}';
+
+      final encoded = jsonEncode(
+        {
+          'account': _account.hexEip55,
+          'date': DateTime.now().toUtc().toIso8601String(),
+        },
+      );
+
+      final body = SignedRequest(convertStringToUint8List(encoded));
+
+      final sig = await compute(
+          generateSignature, (jsonEncode(body.toJson()), _credentials));
+
+      await _indexerIPFS.delete(
+        url: url,
+        headers: {
+          'X-Signature': sig,
+          'X-Address': _account.hexEip55,
+        },
+        body: body.toJson(),
+      );
+
+      return true;
+    } catch (_) {}
+
+    return false;
+  }
+
+  /// get profile data
+  Future<ProfileV1?> getProfile(String addr) async {
+    try {
+      final url = await _contractProfile.getURL(addr);
+
+      final profileData = await _ipfs.get(url: '/$url');
+
+      final profile = ProfileV1.fromJson(profileData);
+
+      profile.parseIPFSImageURLs(ipfsUrl);
+
+      return profile;
+    } catch (exception) {
+      //
+    }
+
+    return null;
+  }
+
+  /// get profile data
+  Future<ProfileV1?> getProfileFromUrl(String url) async {
+    try {
+      final profileData = await _ipfs.get(url: '/$url');
+
+      final profile = ProfileV1.fromJson(profileData);
+
+      profile.parseIPFSImageURLs(ipfsUrl);
+
+      return profile;
+    } catch (exception) {
+      //
+    }
+
+    return null;
+  }
+
+  /// get profile data by username
+  Future<ProfileV1?> getProfileByUsername(String username) async {
+    try {
+      final url = await _contractProfile.getURLFromUsername(username);
+
+      final profileData = await _ipfs.get(url: '/$url');
+
+      final profile = ProfileV1.fromJson(profileData);
+
+      profile.parseIPFSImageURLs(ipfsUrl);
+
+      return profile;
+    } catch (exception) {
+      //
+    }
+
+    return null;
+  }
+
+  /// profileExists checks whether there is a profile for this username
+  Future<bool> profileExists(String username) async {
+    try {
+      final url = await _contractProfile.getURLFromUsername(username);
+
+      return url != '';
+    } catch (exception) {
+      //
+    }
+
+    return false;
+  }
+
+  /// Accounts
+
+  /// check if an account exists
+  Future<bool> accountExists({
+    String? account,
+  }) async {
+    try {
+      final url = '/v1/accounts/${account ?? _account.hexEip55}/exists';
+
+      await _indexer.get(
+        url: url,
+      );
+
+      return true;
+    } catch (_) {}
+
+    return false;
+  }
+
+  // TODO: create an account using a user op
+
+  /// create an account
+  Future<bool> createAccount({
+    EthPrivateKey? customCredentials,
+  }) async {
+    try {
+      final exists = await accountExists();
+      if (exists) {
+        return true;
+      }
+
+      Uint8List calldata = _contractAccount.transferOwnershipCallData(
+        _credentials.address.hexEip55,
+      );
+      if (_paymasterType == 'cw-safe') {
+        calldata = _contractCommunityModule.getChainIdCallData();
+      }
+
+      final (_, userop) = await prepareUserop(
+        [_account.hexEip55],
+        [calldata],
+      );
+
+      final txHash = await submitUserop(
+        userop,
+      );
+      if (txHash == null) {
+        throw Exception('failed to submit user op');
+      }
+
+      final success = await waitForTxSuccess(txHash);
+      if (!success) {
+        throw Exception('transaction failed');
+      }
+
+      return true;
+    } catch (e, s) {
+      debugPrint('error: $e');
+      debugPrint('stack trace: $s');
+    }
+
+    return false;
+  }
+
+  /// upgrade an account
+  Future<String?> upgradeAccount() async {
+    try {
+      final accountFactory = _contractAccountFactory;
+
+      final url =
+          '/accounts/factory/${accountFactory.addr}/sca/${_account.hexEip55}';
+
+      final encoded = jsonEncode(
+        {
+          'owner': _credentials.address.hexEip55,
+          'salt': BigInt.zero.toInt(),
+        },
+      );
+
+      final body = SignedRequest(convertStringToUint8List(encoded));
+
+      final sig = await compute(
+          generateSignature, (jsonEncode(body.toJson()), _credentials));
+
+      final response = await _indexer.patch(
+        url: url,
+        headers: {
+          'X-Signature': sig,
+          'X-Address': _account.hexEip55,
+        },
+        body: body.toJson(),
+      );
+
+      final implementation = response['object']['account_implementation'];
+      if (implementation == "0x0000000000000000000000000000000000000000") {
+        throw Exception('invalid implementation');
+      }
+
+      return implementation;
+    } on ConflictException {
+      // account is already up to date
+      return null;
+    } catch (_) {}
+
+    return null;
+  }
+
+  /// Transactions
+
+  /// fetch erc20 transfer events
+  ///
+  /// [offset] number of transfers to skip
+  ///
+  /// [limit] number of transferst to fetch
+  ///
+  /// [maxDate] fetch transfers up to this date
+  Future<(List<TransferEvent>, Pagination)> fetchErc20Transfers({
+    required int offset,
+    required int limit,
+    required DateTime maxDate,
+  }) async {
+    try {
+      final List<TransferEvent> tx = [];
+
+      const path = '/v1/logs';
+
+      final eventSignature = _tokenStandard == 'erc20'
+          ? _contractToken!.transferEventSignature
+          : _contract1155Token!.transferEventSignature;
+
+      final dataQueryParams = buildQueryParams([
+        {
+          'key': 'from',
+          'value': _account.hexEip55,
+        },
+      ], or: [
+        {
+          'key': 'to',
+          'value': _account.hexEip55,
+        },
+      ]);
+
+      final addr = _tokenStandard == 'erc20'
+          ? _contractToken!.addr
+          : _contract1155Token!.addr;
+
+      final url =
+          '$path/$addr/$eventSignature?offset=$offset&limit=$limit&maxDate=${Uri.encodeComponent(maxDate.toUtc().toIso8601String())}&$dataQueryParams';
+
+      final response = await _indexer.get(url: url);
+
+      // convert response array into TransferEvent list
+      for (final item in response['array']) {
+        final log = Log.fromJson(item);
+
+        tx.add(TransferEvent.fromLog(log, standard: _tokenStandard));
+      }
+
+      return (tx, Pagination.fromJson(response['meta']));
+    } catch (_) {}
+
+    return (<TransferEvent>[], Pagination.empty());
+  }
+
+  /// fetch new erc20 transfer events
+  ///
+  /// [fromDate] fetches transfers from this date
+  Future<List<TransferEvent>?> fetchNewErc20Transfers(DateTime fromDate) async {
+    try {
+      final List<TransferEvent> tx = [];
+
+      const path = 'logs/v2/transfers';
+
+      final addr = _tokenStandard == 'erc20'
+          ? _contractToken!.addr
+          : _contract1155Token!.addr;
+
+      final url =
+          '/$path/$addr/${_account.hexEip55}/new?limit=10&fromDate=${Uri.encodeComponent(fromDate.toUtc().toIso8601String())}';
+
+      final response = await _indexer.get(url: url);
+
+      // convert response array into TransferEvent list
+      for (final item in response['array']) {
+        tx.add(TransferEvent.fromJson(item));
+      }
+
+      return tx;
+    } catch (_) {}
+
+    return null;
+  }
+
+  /// construct transfer call data
+  Uint8List tokenTransferCallData(
+    String to,
+    BigInt amount, {
+    String? from,
+    BigInt? tokenId,
+  }) {
+    if (_tokenStandard == 'erc20') {
+      return _contractToken!.transferCallData(to, amount);
+    } else if (_tokenStandard == 'erc1155') {
+      return _contract1155Token!.transferCallData(
+          from ?? _account.hexEip55, to, tokenId ?? BigInt.zero, amount);
+    }
+
+    return Uint8List.fromList([]);
+  }
+
+  /// construct erc20 transfer call data
+  Uint8List tokenMintCallData(
+    String to,
+    BigInt amount, {
+    BigInt? tokenId,
+  }) {
+    if (_tokenStandard == 'erc20') {
+      return _contractToken!.mintCallData(to, amount);
+    } else if (_tokenStandard == 'erc1155') {
+      return _contract1155Token!
+          .mintCallData(to, amount, tokenId ?? BigInt.zero);
+    }
+
+    return Uint8List.fromList([]);
+  }
+
+  /// construct simple faucet redeem call data
+  Future<Uint8List> simpleFaucetRedeemCallData(
+    String address,
+  ) async {
+    final contract = SimpleFaucetContract(chainId, _ethClient, address);
+
+    await contract.init();
+
+    return contract.redeemCallData();
+  }
+
+  /// fetch simple faucet redeem amount
+  Future<BigInt> getFaucetRedeemAmount(String address) async {
+    final contract = SimpleFaucetContract(chainId, _ethClient, address);
+
+    await contract.init();
+
+    return contract.getAmount();
+  }
+
+  /// Account Abstraction
+
+  // get account address
+  Future<EthereumAddress> getAccountAddress(
+    String addr, {
+    bool legacy = false,
+    bool cache = true,
+  }) async {
+    final prefKey = addr;
+    final cachedAccAddress = _pref.getAccountAddress(prefKey);
+
+    EthereumAddress address;
+    if (!cache || cachedAccAddress == null) {
+      final accountFactory = getAccounFactoryContract(legacy: legacy);
+
+      address = await accountFactory.getAddress(addr);
+    } else {
+      address = EthereumAddress.fromHex(cachedAccAddress);
+    }
+    await _pref.setAccountAddress(
+      prefKey,
+      address.hexEip55,
+    );
+    return address;
+  }
+
+  setAccountAddress(EthereumAddress address) async {
+    final prefKey = _credentials.address.hexEip55;
+    await _pref.setAccountAddress(
+      prefKey,
+      address.hexEip55,
+    );
+  }
+
+  /// Submits a user operation to the Ethereum network.
+  ///
+  /// This function sends a JSON-RPC request to the ERC4337 bundler. The entrypoint is specified by the
+  /// [eaddr] parameter, with the [eth_sendUserOperation] method and the given
+  /// [userop] parameter. If the request is successful, the function returns a
+  /// tuple containing the transaction hash as a string and `null`. If the request
+  /// fails, the function returns a tuple containing `null` and an exception
+  /// object representing the type of error that occurred.
+  ///
+  /// If the request fails due to a network congestion error, the function returns
+  /// a [NetworkCongestedException] object. If the request fails due to an invalid
+  /// balance error, the function returns a [NetworkInvalidBalanceException]
+  /// object. If the request fails for any other reason, the function returns a
+  /// [NetworkUnknownException] object.
+  ///
+  /// [userop] The user operation to submit to the Ethereum network.
+  /// [eaddr] The Ethereum address of the node to send the request to.
+  /// A tuple containing the transaction hash as a string and [null] if
+  ///         the request was successful, or [null] and an exception object if the
+  ///         request failed.
+  Future<(String?, Exception?)> _submitUserOp(
+    UserOp userop,
+    String eaddr, {
+    Map<String, dynamic>? data,
+    TransferData? extraData,
+  }) async {
+    final params = [userop.toJson(), eaddr];
+    if (data != null) {
+      params.add(data);
+    }
+    if (data != null && extraData != null) {
+      params.add(extraData.toJson());
+    }
+
+    final body = SUJSONRPCRequest(
+      method: 'eth_sendUserOperation',
+      params: params,
+    );
+
+    try {
+      final response = await _requestBundler(body);
+
+      return (response.result as String, null);
+    } catch (exception, s) {
+      debugPrint('error: $exception');
+      debugPrint('stack trace: $s');
+
+      final strerr = exception.toString();
+
+      if (strerr.contains(gasFeeErrorMessage)) {
+        return (null, NetworkCongestedException());
+      }
+
+      if (strerr.contains(invalidBalanceErrorMessage)) {
+        return (null, NetworkInvalidBalanceException());
+      }
+    }
+
+    return (null, NetworkUnknownException());
+  }
+
+  /// makes a jsonrpc request from this wallet
+  Future<SUJSONRPCResponse> _requestPaymaster(
+    SUJSONRPCRequest body, {
+    bool legacy = false,
+  }) async {
+    final paymasterRPC = getPaymasterRPC(legacy: legacy);
+
+    final rawResponse = await paymasterRPC.post(
+      body: body,
+      headers: erc4337Headers,
+    );
+
+    final response = SUJSONRPCResponse.fromJson(rawResponse);
+
+    if (response.error != null) {
+      throw Exception(response.error!.message);
+    }
+
+    return response;
+  }
+
+  /// makes a jsonrpc request from this wallet
+  Future<SUJSONRPCResponse> _requestBundler(SUJSONRPCRequest body) async {
+    final rawResponse = await getBundlerRPC().post(
+      body: body,
+      headers: erc4337Headers,
+    );
+
+    final response = SUJSONRPCResponse.fromJson(rawResponse);
+
+    if (response.error != null) {
+      throw Exception(response.error!.message);
+    }
+
+    return response;
+  }
+
+  /// return paymaster data for constructing a user op
+  Future<(PaymasterData?, Exception?)> _getPaymasterData(
+    UserOp userop,
+    String eaddr,
+    String ptype, {
+    bool legacy = false,
+  }) async {
+    final body = SUJSONRPCRequest(
+      method: 'pm_sponsorUserOperation',
+      params: [
+        userop.toJson(),
+        eaddr,
+        {'type': ptype},
+      ],
+    );
+
+    try {
+      final response = await _requestPaymaster(body, legacy: legacy);
+
+      return (PaymasterData.fromJson(response.result), null);
+    } catch (exception) {
+      final strerr = exception.toString();
+
+      if (strerr.contains(gasFeeErrorMessage)) {
+        return (null, NetworkCongestedException());
+      }
+
+      if (strerr.contains(invalidBalanceErrorMessage)) {
+        return (null, NetworkInvalidBalanceException());
+      }
+    }
+
+    return (null, NetworkUnknownException());
+  }
+
+  /// return paymaster data for constructing a user op
+  Future<(List<PaymasterData>, Exception?)> _getPaymasterOOData(
+    UserOp userop,
+    String eaddr,
+    String ptype, {
+    bool legacy = false,
+    int count = 1,
+  }) async {
+    final body = SUJSONRPCRequest(
+      method: 'pm_ooSponsorUserOperation',
+      params: [
+        userop.toJson(),
+        eaddr,
+        {'type': ptype},
+        count,
+      ],
+    );
+
+    try {
+      final response = await _requestPaymaster(body, legacy: legacy);
+
+      final List<dynamic> data = response.result;
+      if (data.isEmpty) {
+        throw Exception('empty paymaster data');
+      }
+
+      if (data.length != count) {
+        throw Exception('invalid paymaster data');
+      }
+
+      return (data.map((item) => PaymasterData.fromJson(item)).toList(), null);
+    } catch (exception) {
+      final strerr = exception.toString();
+
+      if (strerr.contains(gasFeeErrorMessage)) {
+        return (<PaymasterData>[], NetworkCongestedException());
+      }
+
+      if (strerr.contains(invalidBalanceErrorMessage)) {
+        return (<PaymasterData>[], NetworkInvalidBalanceException());
+      }
+    }
+
+    return (<PaymasterData>[], NetworkUnknownException());
+  }
+
+  /// prepare a userop for with calldata
+  Future<(String, UserOp)> prepareUserop(
+    List<String> dest,
+    List<Uint8List> calldata, {
+    EthPrivateKey? customCredentials,
+    BigInt? customNonce,
+    bool deploy = true,
+  }) async {
+    try {
+      final cred = customCredentials ?? _credentials;
+
+      EthereumAddress acc = _account;
+      if (customCredentials != null) {
+        acc = await getAccountAddress(
+          customCredentials.address.hexEip55,
+        );
+      }
+      final StackupEntryPoint entryPoint = getEntryPointContract();
+
+      // instantiate user op with default values
+      final userop = UserOp.defaultUserOp();
+
+      // use the account hex as the sender
+      userop.sender = acc.hexEip55;
+
+      // determine the appropriate nonce
+      BigInt nonce = customNonce ?? await entryPoint.getNonce(acc.hexEip55);
+
+      // if it's the first user op from this account, we need to deploy the account contract
+      if (nonce == BigInt.zero && deploy) {
+        bool exists = false;
+        if (getPaymasterType() == 'payg') {
+          // solves edge case with legacy account migration
+          exists = await accountExists(account: acc.hexEip55);
+        }
+
+        if (!exists) {
+          final accountFactory = getAccounFactoryContract();
+
+          // construct the init code to deploy the account
+          userop.initCode = await accountFactory.createAccountInitCode(
+            cred.address.hexEip55,
+            BigInt.zero,
+          );
+        } else {
+          // try again in case the account was created in the meantime
+          nonce = customNonce ?? await entryPoint.getNonce(acc.hexEip55);
+        }
+      }
+
+      userop.nonce = nonce;
+
+      // set the appropriate call data for the transfer
+      // we need to call account.execute which will call token.transfer
+      switch (getPaymasterType()) {
+        case 'payg':
+        case 'cw':
+          userop.callData = dest.length > 1 && calldata.length > 1
+              ? _contractAccount.executeBatchCallData(
+                  dest,
+                  calldata,
+                )
+              : _contractAccount.executeCallData(
+                  dest[0],
+                  BigInt.zero,
+                  calldata[0],
+                );
+          break;
+        case 'cw-safe':
+          userop.callData = _contractSafeAccount.executeCallData(
+            dest[0],
+            BigInt.zero,
+            calldata[0],
+          );
+          break;
+      }
+
+      // set the appropriate gas fees based on network
+      final fees = await _gasPriceEstimator.estimate;
+      if (fees == null) {
+        throw Exception('unable to estimate fees');
+      }
+
+      userop.maxPriorityFeePerGas =
+          fees.maxPriorityFeePerGas * BigInt.from(calldata.length);
+      userop.maxFeePerGas = fees.maxFeePerGas * BigInt.from(calldata.length);
+
+      // submit the user op to the paymaster in order to receive information to complete the user op
+      List<PaymasterData> paymasterOOData = [];
+      Exception? paymasterErr;
+      final useAccountNonce =
+          (nonce == BigInt.zero || getPaymasterType() == 'payg') && deploy;
+
+      if (useAccountNonce) {
+        // if it's the first user op, we should use a normal paymaster signature
+        PaymasterData? paymasterData;
+        (paymasterData, paymasterErr) = await _getPaymasterData(
+          userop,
+          entryPoint.addr,
+          getPaymasterType(),
+        );
+
+        if (paymasterData != null) {
+          paymasterOOData.add(paymasterData);
+        }
+      } else {
+        // if it's not the first user op, we should use an out of order paymaster signature
+        (paymasterOOData, paymasterErr) = await _getPaymasterOOData(
+          userop,
+          entryPoint.addr,
+          getPaymasterType(),
+        );
+      }
+
+      if (paymasterErr != null) {
+        throw paymasterErr;
+      }
+
+      if (paymasterOOData.isEmpty) {
+        throw Exception('unable to get paymaster data');
+      }
+
+      final paymasterData = paymasterOOData.first;
+      if (!useAccountNonce) {
+        // use the nonce received from the paymaster
+        userop.nonce = paymasterData.nonce;
+      }
+
+      // add the received data to the user op
+      userop.paymasterAndData = paymasterData.paymasterAndData;
+      userop.preVerificationGas = paymasterData.preVerificationGas;
+      userop.verificationGasLimit = paymasterData.verificationGasLimit;
+      userop.callGasLimit = paymasterData.callGasLimit;
+
+      // get the hash of the user op
+      final hash = await entryPoint.getUserOpHash(userop);
+
+      // now we can sign the user op
+      userop.generateSignature(cred, hash);
+
+      return (bytesToHex(hash, include0x: true), userop);
+    } catch (_) {
+      rethrow;
+    }
+  }
+
+  /// submit a user op
+  Future<String?> submitUserop(
+    UserOp userop, {
+    EthPrivateKey? customCredentials,
+    Map<String, dynamic>? data,
+    TransferData? extraData,
+  }) async {
+    try {
+      final entryPoint = getEntryPointContract();
+
+      // send the user op
+      final (txHash, useropErr) = await _submitUserOp(
+        userop,
+        entryPoint.addr,
+        data: data,
+        extraData: extraData,
+      );
+      if (useropErr != null) {
+        throw useropErr;
+      }
+
+      return txHash;
+    } catch (e, s) {
+      debugPrint('error: $e');
+      debugPrint('stack trace: $s');
+      rethrow;
+    }
+  }
+
+  /// updates the push token for the current account
+  ///
+  /// [token] the push token
+  /// [customCredentials] optional credentials to use
+  Future<bool> updatePushToken(
+    String token, {
+    EthPrivateKey? customCredentials,
+  }) async {
+    try {
+      final cred = customCredentials ?? _credentials;
+
+      EthereumAddress acc = _account;
+      if (customCredentials != null) {
+        acc = await getAccountAddress(
+          customCredentials.address.hexEip55,
+        );
+      }
+
+      final addr = _tokenStandard == 'erc20'
+          ? _contractToken!.addr
+          : _contract1155Token!.addr;
+
+      final url = '/v1/push/$addr/${acc.hexEip55}';
+
+      final encoded = jsonEncode(
+        PushUpdateRequest(token, acc.hexEip55).toJson(),
+      );
+
+      final body = SignedRequest(convertStringToUint8List(encoded));
+
+      final sig =
+          await compute(generateSignature, (jsonEncode(body.toJson()), cred));
+
+      await _indexer.put(
+        url: url,
+        headers: {
+          'X-Signature': sig,
+          'X-Address': acc.hexEip55,
+        },
+        body: body.toJson(),
+      );
+
+      return true;
+    } catch (_) {}
+
+    return false;
+  }
+
+  /// removes the push token for the current account
+  ///
+  /// [token] the push token
+  /// [customCredentials] optional credentials to use
+  Future<bool> removePushToken(
+    String token, {
+    EthPrivateKey? customCredentials,
+  }) async {
+    try {
+      final cred = customCredentials ?? _credentials;
+
+      EthereumAddress acc = _account;
+      if (customCredentials != null) {
+        acc = await getAccountAddress(
+          customCredentials.address.hexEip55,
+        );
+      }
+
+      final addr = _tokenStandard == 'erc20'
+          ? _contractToken!.addr
+          : _contract1155Token!.addr;
+
+      final url = '/v1/push/$addr/${acc.hexEip55}/$token';
+
+      final encoded = jsonEncode(
+        {
+          'account': acc.hexEip55,
+          'date': DateTime.now().toUtc().toIso8601String(),
+        },
+      );
+
+      final body = SignedRequest(convertStringToUint8List(encoded));
+
+      final sig =
+          await compute(generateSignature, (jsonEncode(body.toJson()), cred));
+
+      await _indexer.delete(
+        url: url,
+        headers: {
+          'X-Signature': sig,
+          'X-Address': acc.hexEip55,
+        },
+        body: body.toJson(),
+      );
+
+      return true;
+    } catch (_) {}
+
+    return false;
+  }
+
+  /// dispose of resources
+  void dispose() {
+    _ethClient.dispose();
+  }
+}
+
+/// given a tx hash, waits for the tx to be mined
+Future<bool> waitForTxSuccess(
+  Config config,
+  String txHash, {
+  int retryCount = 0,
+  int maxRetries = 20,
+}) async {
+  if (retryCount >= maxRetries) {
+    return false;
+  }
+
+  final ethClient = config.ethClient;
+
+  final receipt = await ethClient.getTransactionReceipt(txHash);
+  if (receipt?.status != true) {
+    // there is either no receipt or the tx is still not confirmed
+
+    // increment the retry count
+    final nextRetryCount = retryCount + 1;
+
+    // wait for a bit before retrying
+    await delay(Duration(milliseconds: 250 * (nextRetryCount)));
+
+    // retry
+    return waitForTxSuccess(
+      config,
+      txHash,
+      retryCount: nextRetryCount,
+      maxRetries: maxRetries,
+    );
+  }
+
+  return true;
+}
+
+/// construct transfer call data
+Uint8List tokenTransferCallData(
+  Config config,
+  EthereumAddress from,
+  String to,
+  BigInt amount, {
+  BigInt? tokenId,
+}) {
+  if (config.getPrimaryToken().standard == 'erc20') {
+    return config.token20Contract.transferCallData(to, amount);
+  } else if (config.getPrimaryToken().standard == 'erc1155') {
+    return config.token1155Contract
+        .transferCallData(from.hexEip55, to, tokenId ?? BigInt.zero, amount);
+  }
+
+  return Uint8List.fromList([]);
+}
+
+String transferEventStringSignature(Config config) {
+  if (config.getPrimaryToken().standard == 'erc20') {
+    return config.token20Contract.transferEventStringSignature;
+  } else if (config.getPrimaryToken().standard == 'erc1155') {
+    return config.token1155Contract.transferEventStringSignature;
+  }
+
+  return '';
+}
+
+String transferEventSignature(Config config) {
+  if (config.getPrimaryToken().standard == 'erc20') {
+    return config.token20Contract.transferEventSignature;
+  } else if (config.getPrimaryToken().standard == 'erc1155') {
+    return config.token1155Contract.transferEventSignature;
+  }
+
+  return '';
+}
+
+/// retrieves the current balance of the address
+Future<String> getBalance(
+  Config config,
+  EthereumAddress addr, {
+  BigInt? tokenId,
+}) async {
+  try {
+    final tokenStandard = config.getPrimaryToken().standard;
+
+    BigInt balance = BigInt.zero;
+    switch (tokenStandard) {
+      case 'erc20':
+        balance =
+            await config.token20Contract.getBalance(addr.hexEip55).timeout(
+                  const Duration(seconds: 4),
+                );
+
+        break;
+      case 'erc1155':
+        balance = await config.token1155Contract
+            .getBalance(addr.hexEip55, tokenId ?? BigInt.zero)
+            .timeout(
+              const Duration(seconds: 4),
+            );
+        break;
+    }
+
+    return balance.toString();
+  } catch (e, s) {
+    debugPrint('error: $e');
+    debugPrint('stack trace: $s');
+  }
+
+  return '0';
+}
+
+/// get profile data
+Future<ProfileV1?> getProfile(Config config, String addr) async {
+  try {
+    final url = await config.profileContract.getURL(addr);
+
+    final profileData = await config.ipfsService.get(url: '/$url');
+
+    final profile = ProfileV1.fromJson(profileData);
+
+    profile.parseIPFSImageURLs(config.ipfs.url);
+
+    return profile;
+  } catch (exception) {
+    //
+  }
+
+  return null;
+}
+
+/// get profile data by username
+Future<ProfileV1?> getProfileByUsername(Config config, String username) async {
+  try {
+    final url = await config.profileContract.getURLFromUsername(username);
+
+    final profileData = await config.ipfsService.get(url: '/$url');
+
+    final profile = ProfileV1.fromJson(profileData);
+
+    profile.parseIPFSImageURLs(config.ipfs.url);
+
+    return profile;
+  } catch (exception) {
+    //
+  }
+
+  return null;
+}
+
+/// profileExists checks whether there is a profile for this username
+Future<bool> profileExists(Config config, String username) async {
+  try {
+    final url = await config.profileContract.getURLFromUsername(username);
+
+    return url != '';
+  } catch (exception) {
+    //
+  }
+
+  return false;
+}
+
+/// get profile data
+Future<ProfileV1?> getProfileFromUrl(Config config, String url) async {
+  try {
+    final profileData = await config.ipfsService.get(url: '/$url');
+
+    final profile = ProfileV1.fromJson(profileData);
+
+    profile.parseIPFSImageURLs(config.ipfs.url);
+
+    return profile;
+  } catch (exception) {
+    //
+  }
+
+  return null;
+}
+
+/// set profile data
+Future<String?> setProfile(
+  Config config,
+  EthereumAddress account,
+  EthPrivateKey credentials,
+  ProfileRequest profile, {
+  required List<int> image,
+  required String fileType,
+}) async {
+  try {
+    final url =
+        '/v1/profiles/${config.profileContract.addr}/${account.hexEip55}';
+
+    final json = jsonEncode(
+      profile.toJson(),
+    );
+
+    final body = SignedRequest(convertBytesToUint8List(utf8.encode(json)));
+
+    final sig = await compute(
+        generateSignature, (jsonEncode(body.toJson()), credentials));
+
+    final resp = await config.engineIPFSService.filePut(
+      url: url,
+      file: image,
+      fileType: fileType,
+      headers: {
+        'X-Signature': sig,
+        'X-Address': account.hexEip55,
+      },
+      body: body.toJson(),
+    );
+
+    final String profileUrl = resp['object']['ipfs_url'];
+
+    final calldata = config.profileContract
+        .setCallData(account.hexEip55, profile.username, profileUrl);
+
+    final (_, userop) = await prepareUserop(
+      config,
+      account,
+      credentials,
+      [config.profileContract.addr],
+      [calldata],
+    );
+
+    final txHash = await submitUserop(config, userop);
+    if (txHash == null) {
+      throw Exception('profile update failed');
+    }
+
+    final success = await waitForTxSuccess(config, txHash);
+    if (!success) {
+      throw Exception('transaction failed');
+    }
+
+    return profileUrl;
+  } catch (e, s) {
+    debugPrint('error: $e');
+    debugPrint('stack trace: $s');
+  }
+
+  return null;
+}
+
+/// update profile data
+Future<String?> updateProfile(Config config, EthereumAddress account,
+    EthPrivateKey credentials, ProfileV1 profile) async {
+  try {
+    final url =
+        '/v1/profiles/${config.profileContract.addr}/${account.hexEip55}';
+
+    final json = jsonEncode(
+      profile.toJson(),
+    );
+
+    final body = SignedRequest(convertBytesToUint8List(utf8.encode(json)));
+
+    final sig = await compute(
+        generateSignature, (jsonEncode(body.toJson()), credentials));
+
+    final resp = await config.engineIPFSService.patch(
+      url: url,
+      headers: {
+        'X-Signature': sig,
+        'X-Address': account.hexEip55,
+      },
+      body: body.toJson(),
+    );
+
+    final String profileUrl = resp['object']['ipfs_url'];
+
+    final calldata = config.profileContract
+        .setCallData(account.hexEip55, profile.username, profileUrl);
+
+    final (_, userop) = await prepareUserop(
+      config,
+      account,
+      credentials,
+      [config.profileContract.addr],
+      [calldata],
+    );
+
+    final txHash = await submitUserop(config, userop);
+    if (txHash == null) {
+      throw Exception('profile update failed');
+    }
+
+    final success = await waitForTxSuccess(config, txHash);
+    if (!success) {
+      throw Exception('transaction failed');
+    }
+
+    return profileUrl;
+  } catch (_) {}
+
+  return null;
+}
+
+/// set profile data
+Future<bool> deleteCurrentProfile(
+  Config config,
+  EthereumAddress account,
+  EthPrivateKey credentials,
+) async {
+  try {
+    final url =
+        '/v1/profiles/${config.profileContract.addr}/${account.hexEip55}';
+
+    final encoded = jsonEncode(
+      {
+        'account': account.hexEip55,
+        'date': DateTime.now().toUtc().toIso8601String(),
+      },
+    );
+
+    final body = SignedRequest(convertStringToUint8List(encoded));
+
+    final sig = await compute(
+        generateSignature, (jsonEncode(body.toJson()), credentials));
+
+    await config.engineIPFSService.delete(
+      url: url,
+      headers: {
+        'X-Signature': sig,
+        'X-Address': account.hexEip55,
+      },
+      body: body.toJson(),
+    );
+
+    return true;
+  } catch (e, s) {
+    debugPrint('error: $e');
+    debugPrint('stack trace: $s');
+  }
+
+  return false;
+}
+
+/// check if an account exists
+Future<bool> accountExists(
+  Config config,
+  EthereumAddress account,
+) async {
+  try {
+    final url = '/v1/accounts/${account.hexEip55}/exists';
+
+    await config.engine.get(
+      url: url,
+    );
+
+    return true;
+  } catch (_) {}
+
+  return false;
+}
+
+/// create an account
+Future<bool> createAccount(
+  Config config,
+  EthereumAddress account,
+  EthPrivateKey credentials,
+) async {
+  try {
+    final exists = await accountExists(config, account);
+    if (exists) {
+      return true;
+    }
+
+    final simpleAccount = await config.getSimpleAccount(account.hexEip55);
+
+    Uint8List calldata = simpleAccount.transferOwnershipCallData(
+      credentials.address.hexEip55,
+    );
+    if (config.getPaymasterType() == 'cw-safe') {
+      calldata = config.communityModuleContract.getChainIdCallData();
+    }
+
+    final (_, userop) = await prepareUserop(
+      config,
+      account,
+      credentials,
+      [account.hexEip55],
+      [calldata],
+    );
+
+    final txHash = await submitUserop(
+      config,
+      userop,
+    );
+    if (txHash == null) {
+      throw Exception('failed to submit user op');
+    }
+
+    final success = await waitForTxSuccess(config, txHash);
+    if (!success) {
+      throw Exception('transaction failed');
+    }
+
+    return true;
+  } catch (e, s) {
+    debugPrint('error: $e');
+    debugPrint('stack trace: $s');
+  }
+
+  return false;
+}
+
+/// makes a jsonrpc request from this wallet
+Future<SUJSONRPCResponse> requestPaymaster(
+  Config config,
+  SUJSONRPCRequest body, {
+  bool legacy = false,
+}) async {
+  final rawResponse = await config.engineRPC.post(
+    body: body,
+  );
+
+  final response = SUJSONRPCResponse.fromJson(rawResponse);
+
+  if (response.error != null) {
+    throw Exception(response.error!.message);
+  }
+
+  return response;
+}
+
+/// return paymaster data for constructing a user op
+Future<(PaymasterData?, Exception?)> getPaymasterData(
+  Config config,
+  UserOp userop,
+  String eaddr,
+  String ptype, {
+  bool legacy = false,
+}) async {
+  final body = SUJSONRPCRequest(
+    method: 'pm_sponsorUserOperation',
+    params: [
+      userop.toJson(),
+      eaddr,
+      {'type': ptype},
+    ],
+  );
+
+  try {
+    final response = await requestPaymaster(config, body, legacy: legacy);
+
+    return (PaymasterData.fromJson(response.result), null);
+  } catch (exception) {
+    final strerr = exception.toString();
+
+    if (strerr.contains(gasFeeErrorMessage)) {
+      return (null, NetworkCongestedException());
+    }
+
+    if (strerr.contains(invalidBalanceErrorMessage)) {
+      return (null, NetworkInvalidBalanceException());
+    }
+  }
+
+  return (null, NetworkUnknownException());
+}
+
+/// return paymaster data for constructing a user op
+Future<(List<PaymasterData>, Exception?)> getPaymasterOOData(
+  Config config,
+  UserOp userop,
+  String eaddr,
+  String ptype, {
+  bool legacy = false,
+  int count = 1,
+}) async {
+  final body = SUJSONRPCRequest(
+    method: 'pm_ooSponsorUserOperation',
+    params: [
+      userop.toJson(),
+      eaddr,
+      {'type': ptype},
+      count,
+    ],
+  );
+
+  try {
+    final response = await requestPaymaster(config, body, legacy: legacy);
+
+    final List<dynamic> data = response.result;
+    if (data.isEmpty) {
+      throw Exception('empty paymaster data');
+    }
+
+    if (data.length != count) {
+      throw Exception('invalid paymaster data');
+    }
+
+    return (data.map((item) => PaymasterData.fromJson(item)).toList(), null);
+  } catch (exception) {
+    final strerr = exception.toString();
+
+    if (strerr.contains(gasFeeErrorMessage)) {
+      return (<PaymasterData>[], NetworkCongestedException());
+    }
+
+    if (strerr.contains(invalidBalanceErrorMessage)) {
+      return (<PaymasterData>[], NetworkInvalidBalanceException());
+    }
+  }
+
+  return (<PaymasterData>[], NetworkUnknownException());
+}
+
+/// prepare a userop for with calldata
+Future<(String, UserOp)> prepareUserop(
+  Config config,
+  EthereumAddress account,
+  EthPrivateKey credentials,
+  List<String> dest,
+  List<Uint8List> calldata, {
+  BigInt? customNonce,
+  bool deploy = true,
+}) async {
+  try {
+    // instantiate user op with default values
+    final userop = UserOp.defaultUserOp();
+
+    // use the account hex as the sender
+    userop.sender = account.hexEip55;
+
+    // determine the appropriate nonce
+    BigInt nonce = customNonce ?? await config.getNonce(account.hexEip55);
+
+    final paymasterType = config.getPaymasterType();
+
+    // if it's the first user op from this account, we need to deploy the account contract
+    if (nonce == BigInt.zero && deploy) {
+      bool exists = false;
+      if (paymasterType == 'payg') {
+        // solves edge case with legacy account migration
+        exists = await accountExists(config, account);
+      }
+
+      if (!exists) {
+        final accountFactory = config.accountFactoryContract;
+
+        // construct the init code to deploy the account
+        userop.initCode = await accountFactory.createAccountInitCode(
+          credentials.address.hexEip55,
+          BigInt.zero,
+        );
+      } else {
+        // try again in case the account was created in the meantime
+        nonce = customNonce ??
+            await config.entryPointContract.getNonce(account.hexEip55);
+      }
+    }
+
+    userop.nonce = nonce;
+
+    // set the appropriate call data for the transfer
+    // we need to call account.execute which will call token.transfer
+    switch (paymasterType) {
+      case 'payg':
+      case 'cw':
+        {
+          final simpleAccount = await config.getSimpleAccount(account.hexEip55);
+
+          userop.callData = dest.length > 1 && calldata.length > 1
+              ? simpleAccount.executeBatchCallData(
+                  dest,
+                  calldata,
+                )
+              : simpleAccount.executeCallData(
+                  dest[0],
+                  BigInt.zero,
+                  calldata[0],
+                );
+          break;
+        }
+      case 'cw-safe':
+        {
+          final safeAccount = await config.getSafeAccount(account.hexEip55);
+          userop.callData = safeAccount.executeCallData(
+            dest[0],
+            BigInt.zero,
+            calldata[0],
+          );
+          break;
+        }
+    }
+
+    // submit the user op to the paymaster in order to receive information to complete the user op
+    List<PaymasterData> paymasterOOData = [];
+    Exception? paymasterErr;
+    final useAccountNonce =
+        (nonce == BigInt.zero || paymasterType == 'payg') && deploy;
+
+    if (useAccountNonce) {
+      // if it's the first user op, we should use a normal paymaster signature
+      PaymasterData? paymasterData;
+      (paymasterData, paymasterErr) = await getPaymasterData(
+        config,
+        userop,
+        config.entryPointContract.addr,
+        paymasterType,
+      );
+
+      if (paymasterData != null) {
+        paymasterOOData.add(paymasterData);
+      }
+    } else {
+      // if it's not the first user op, we should use an out of order paymaster signature
+      (paymasterOOData, paymasterErr) = await getPaymasterOOData(
+        config,
+        userop,
+        config.entryPointContract.addr,
+        paymasterType,
+      );
+    }
+
+    if (paymasterErr != null) {
+      throw paymasterErr;
+    }
+
+    if (paymasterOOData.isEmpty) {
+      throw Exception('unable to get paymaster data');
+    }
+
+    final paymasterData = paymasterOOData.first;
+    if (!useAccountNonce) {
+      // use the nonce received from the paymaster
+      userop.nonce = paymasterData.nonce;
+    }
+
+    // add the received data to the user op
+    userop.paymasterAndData = paymasterData.paymasterAndData;
+    userop.preVerificationGas = paymasterData.preVerificationGas;
+    userop.verificationGasLimit = paymasterData.verificationGasLimit;
+    userop.callGasLimit = paymasterData.callGasLimit;
+
+    // get the hash of the user op
+    final hash = await config.entryPointContract.getUserOpHash(userop);
+
+    // now we can sign the user op
+    userop.generateSignature(credentials, hash);
+
+    return (bytesToHex(hash, include0x: true), userop);
+  } catch (_) {
+    rethrow;
+  }
+}
+
+/// submit a user op
+Future<String?> submitUserop(
+  Config config,
+  UserOp userop, {
+  Map<String, dynamic>? data,
+  TransferData? extraData,
+}) async {
+  final entryPoint = config.entryPointContract;
+
+  final params = [userop.toJson(), entryPoint.addr];
+  if (data != null) {
+    params.add(data);
+  }
+  if (data != null && extraData != null) {
+    params.add(extraData.toJson());
+  }
+
+  final body = SUJSONRPCRequest(
+    method: 'eth_sendUserOperation',
+    params: params,
+  );
+
+  try {
+    final response = await requestBundler(config, body);
+
+    return response.result as String;
+  } catch (exception, s) {
+    debugPrint('error: $exception');
+    debugPrint('stack trace: $s');
+
+    final strerr = exception.toString();
+
+    if (strerr.contains(gasFeeErrorMessage)) {
+      throw NetworkCongestedException();
+    }
+
+    if (strerr.contains(invalidBalanceErrorMessage)) {
+      throw NetworkInvalidBalanceException();
+    }
+  }
+
+  throw NetworkUnknownException();
+}
+
+/// makes a jsonrpc request from this wallet
+Future<SUJSONRPCResponse> requestBundler(
+    Config config, SUJSONRPCRequest body) async {
+  final rawResponse = await config.engineRPC.post(
+    body: body,
+  );
+
+  debugPrint('rawResponse: ${rawResponse.toString()}');
+
+  final response = SUJSONRPCResponse.fromJson(rawResponse);
+
+  if (response.error != null) {
+    debugPrint('error: ${response.error!.message}');
+    throw Exception(response.error!.message);
+  }
+
+  return response;
+}
+
+Future<EthereumAddress> getTwoFAAddress(
+  Config config,
+  String source,
+  String type,
+) async {
+  final provider = EthereumAddress.fromHex(
+      config.getPrimarySessionManager().providerAddress);
+  final salt = generateSessionSalt(source, type);
+  return await config.twoFAFactoryContract.getAddress(provider, salt);
+}

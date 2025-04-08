@@ -6,6 +6,18 @@ class AppState with ChangeNotifier {
   // private variables here
 
   // constructor here
+  bool _mounted = true;
+  void safeNotifyListeners() {
+    if (_mounted) {
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _mounted = false;
+    super.dispose();
+  }
 
   // state variables here
 

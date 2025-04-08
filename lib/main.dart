@@ -1,15 +1,48 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/routes/router.dart';
+import 'package:pay_app/services/db/app/db.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
+import 'package:pay_app/services/secure/secure.dart';
+import 'package:pay_app/services/wallet/wallet.dart';
+import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/state.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // await dotenv.load(fileName: '.env');
+  await dotenv.load(fileName: '.env');
+
+  await init();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Pass all uncaught "fatal" errors from the framework to Crashlytics
+  FlutterError.onError = (errorDetails) {
+    FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+  };
+  // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
 
   // await MainDB().init('main');
-  // await PreferencesService().init(MainDB().preference);
+  await AppDBService().openDB('main');
+  await PreferencesService().init(await SharedPreferences.getInstance());
+  await SecureService().init(await SharedPreferences.getInstance());
+
+  WalletService();
 
   runApp(provideAppState(const MyApp()));
 }
@@ -32,8 +65,8 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   static const theme = CupertinoThemeData(
-    primaryColor: CupertinoColors.systemCyan,
-    brightness: Brightness.dark,
+    primaryColor: Color(0xFF3431C4),
+    brightness: Brightness.light,
     scaffoldBackgroundColor: CupertinoColors.systemBackground,
     textTheme: CupertinoTextThemeData(
       textStyle: TextStyle(
@@ -45,15 +78,28 @@ class _MyAppState extends State<MyApp> {
   );
 
   final _rootNavigatorKey = GlobalKey<NavigatorState>();
-  final _shellNavigatorKey = GlobalKey<NavigatorState>();
+  final _appShellNavigatorKey = GlobalKey<NavigatorState>();
+  final _placeShellNavigatorKey = GlobalKey<NavigatorState>();
   final observers = <NavigatorObserver>[];
   late GoRouter router;
+
+  late OnboardingState _onboardingState;
 
   @override
   void initState() {
     super.initState();
 
-    router = createRouter(_rootNavigatorKey, _shellNavigatorKey, observers);
+    _onboardingState = context.read<OnboardingState>();
+
+    final accountAddress = _onboardingState.getAccountAddress();
+
+    router = createRouter(
+      _rootNavigatorKey,
+      _appShellNavigatorKey,
+      _placeShellNavigatorKey,
+      observers,
+      accountAddress: accountAddress?.hexEip55,
+    );
   }
 
   @override
@@ -68,14 +114,14 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       routerConfig: router,
       theme: theme,
-      title: 'Espla',
+      title: 'Brussels Pay',
       locale: const Locale('en'),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context)
             .copyWith(textScaler: const TextScaler.linear(1.0)),
         child: CupertinoPageScaffold(
           key: const Key('main'),
-          backgroundColor: CupertinoColors.systemBackground,
+          backgroundColor: theme.scaffoldBackgroundColor,
           child: Column(
             children: [
               Expanded(

@@ -1,17 +1,33 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pay_app/models/order.dart';
+import 'package:pay_app/screens/account/settings/screen.dart';
+import 'package:pay_app/screens/interactions/place/order/screen.dart';
+import 'package:pay_app/state/state.dart';
+import 'package:provider/provider.dart';
+
+// screens
 import 'package:pay_app/screens/home/screen.dart';
 import 'package:pay_app/screens/onboarding/screen.dart';
+import 'package:pay_app/screens/account/view/screen.dart';
+import 'package:pay_app/screens/account/edit/screen.dart';
+import 'package:pay_app/screens/interactions/place/screen.dart';
+import 'package:pay_app/screens/interactions/place/menu/screen.dart';
+import 'package:pay_app/screens/interactions/user/screen.dart';
+
+// state
+import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 
 GoRouter createRouter(
   GlobalKey<NavigatorState> rootNavigatorKey,
-  GlobalKey<NavigatorState> shellNavigatorKey,
+  GlobalKey<NavigatorState> appShellNavigatorKey,
+  GlobalKey<NavigatorState> placeShellNavigatorKey,
   List<NavigatorObserver> observers, {
-  String? userId,
+  String? accountAddress,
 }) =>
     GoRouter(
-      initialLocation: userId != null ? '/$userId' : '/',
+      initialLocation: accountAddress != null ? '/$accountAddress' : '/',
       debugLogDiagnostics: kDebugMode,
       navigatorKey: rootNavigatorKey,
       observers: observers,
@@ -24,14 +40,115 @@ GoRouter createRouter(
             return const OnboardingScreen();
           },
         ),
-        GoRoute(
-          name: 'Home',
-          path: '/:id',
-          parentNavigatorKey: rootNavigatorKey,
-          builder: (context, state) {
-            // state.pathParameters['id']!
-            return const HomeScreen();
-          },
+        ShellRoute(
+          navigatorKey: appShellNavigatorKey,
+          builder: (context, state, child) =>
+              provideAccountState(context, state, child),
+          routes: [
+            GoRoute(
+              name: 'Home',
+              path: '/:account',
+              builder: (context, state) {
+                return const HomeScreen();
+              },
+            ),
+            GoRoute(
+              name: 'MyAccount',
+              path: '/:account/my-account',
+              builder: (context, state) {
+                final accountAddress = state.pathParameters['account']!;
+
+                return MyAccount(accountAddress: accountAddress);
+              },
+            ),
+            GoRoute(
+              name: 'MyAccountSettings',
+              path: '/:account/my-account/settings',
+              builder: (context, state) {
+                final accountAddress = state.pathParameters['account']!;
+
+                return MyAccountSettings(accountAddress: accountAddress);
+              },
+            ),
+            GoRoute(
+              name: 'EditMyAccount',
+              path: '/:account/my-account/edit',
+              builder: (context, state) {
+                final accountAddress = state.pathParameters['account']!;
+
+                return const EditAccountScreen();
+              },
+            ),
+            ShellRoute(
+              navigatorKey: placeShellNavigatorKey,
+              builder: (context, state, child) =>
+                  providePlaceState(context, state, child),
+              routes: [
+                GoRoute(
+                  name: 'InteractionWithPlace',
+                  path: '/:account/place/:slug',
+                  builder: (context, state) {
+                    final myAddress = state.pathParameters['account']!;
+                    final slug = state.pathParameters['slug']!;
+                    final extra = state.extra as Map<String, dynamic>;
+                    final openMenu = extra['openMenu'] as bool? ?? false;
+
+                    return InteractionWithPlaceScreen(
+                      slug: slug,
+                      myAddress: myAddress,
+                      openMenu: openMenu,
+                    );
+                  },
+                  routes: [
+                    GoRoute(
+                      name: 'PlaceMenu',
+                      path: '/menu',
+                      builder: (context, state) {
+                        return const PlaceMenuScreen();
+                      },
+                    ),
+                    GoRoute(
+                      name: 'PlaceOrder',
+                      path: '/order/:orderId',
+                      builder: (context, state) {
+                        final order = state.extra! as Order;
+
+                        return OrderScreen(order: order);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            GoRoute(
+              name: 'InteractionWithUser',
+              path: '/:account/user/:withUser',
+              builder: (context, state) {
+                final myAddress = state.pathParameters['account']!;
+                final userAddress = state.pathParameters['withUser']!;
+
+                final extra = state.extra as Map<String, dynamic>;
+
+                final customName = extra['name'] ?? '';
+                final customPhone = extra['phone'] ?? '';
+                final customPhoto = extra['photo'] as Uint8List?;
+                final customImageUrl = extra['imageUrl'] as String?;
+
+                return ChangeNotifierProvider(
+                  create: (_) => TransactionsWithUserState(
+                    withUserAddress: userAddress,
+                    myAddress: myAddress,
+                  ),
+                  child: InteractionWithUserScreen(
+                    customName: customName,
+                    customPhone: customPhone,
+                    customPhoto: customPhoto,
+                    customImageUrl: customImageUrl,
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ],
     );

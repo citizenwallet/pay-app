@@ -1,13 +1,13 @@
-import 'package:pay_app/services/db/preference.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PreferencesService {
   static final PreferencesService _instance = PreferencesService._internal();
   factory PreferencesService() => _instance;
   PreferencesService._internal();
 
-  late PreferenceTable _preferences;
+  late SharedPreferences _preferences;
 
-  Future init(PreferenceTable pref) async {
+  Future init(SharedPreferences pref) async {
     _preferences = pref;
   }
 
@@ -15,17 +15,49 @@ class PreferencesService {
     await _preferences.clear();
   }
 
-  // Future<String?> get lastActiveOrgId => _preferences.get('lastActiveOrgId');
+  // save the chain id
+  Future setChainId(int chainId) async {
+    await _preferences.setInt('chainId', chainId);
+  }
 
-  // Future setLastActiveOrgId(String id) async {
-  //   await _preferences.set('lastActiveOrgId', id);
-  // }
+  int get chainId => _preferences.getInt('chainId') ?? 1;
 
-  // Future<String?> getOrgThreshold(String id) async {
-  //   return _preferences.get('orgThreshold-$id');
-  // }
+  // save chain id for a given alias
+  Future setChainIdForAlias(String alias, String chainId) async {
+    await _preferences.setString('chainId_$alias', chainId);
+  }
 
-  // Future setOrgThreshold(String id, String threshold) async {
-  //   await _preferences.set('orgThreshold-$id', threshold);
-  // }
+  String? getChainIdForAlias(String alias) {
+    return _preferences.getString('chainId_$alias');
+  }
+
+  // saved balance
+  Future setBalance(String key, String value) async {
+    await _preferences.setString('balance_$key', value);
+  }
+
+  String? getBalance(String key) {
+    return _preferences.getString('balance_$key');
+  }
+
+  // save account address for given key
+  Future setAccountAddress(String key, String accaddress) async {
+    await _preferences.setString('accountAddress_$key', accaddress);
+  }
+
+  String? getAccountAddress(String key) {
+    return _preferences.getString('accountAddress_$key');
+  }
+
+  Future setLastAlias(String alias) async {
+    await _preferences.setString('lastAlias', alias);
+  }
+
+  String? get lastAlias => _preferences.getString('lastAlias');
+
+  Future setLastWallet(String address) async {
+    await _preferences.setString('lastWallet', address);
+  }
+
+  String? get lastWallet => _preferences.getString('lastWallet');
 }
