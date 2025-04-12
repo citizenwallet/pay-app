@@ -4,5 +4,11 @@
 <dict>
 	<key>aps-environment</key>
 	<string>development</string>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:checkout.pay.brussels</string>
+		<string>applinks:wallet.pay.brussels</string>
+		<string>applinks:tap.pay.brussels</string>
+	</array>
 </dict>
 </plist>
