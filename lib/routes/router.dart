@@ -135,11 +135,13 @@ GoRouter createRouter(
                     final slug = state.pathParameters['slug']!;
                     final extra = state.extra as Map<String, dynamic>;
                     final openMenu = extra['openMenu'] as bool? ?? false;
+                    final orderId = extra['orderId'] as String?;
 
                     return InteractionWithPlaceScreen(
                       slug: slug,
                       myAddress: myAddress,
                       openMenu: openMenu,
+                      orderId: orderId,
                     );
                   },
                   routes: [

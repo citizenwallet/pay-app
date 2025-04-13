@@ -6,6 +6,7 @@ import 'package:pay_app/models/checkout.dart';
 
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/place.dart';
+import 'package:pay_app/screens/interactions/place/external_order_modal.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
@@ -18,12 +19,14 @@ class InteractionWithPlaceScreen extends StatefulWidget {
   final String slug;
   final String myAddress;
   final bool openMenu;
+  final String? orderId;
 
   const InteractionWithPlaceScreen({
     super.key,
     required this.slug,
     required this.myAddress,
     this.openMenu = false,
+    this.orderId,
   });
 
   @override
@@ -58,6 +61,24 @@ class _InteractionWithPlaceScreenState
 
   void onLoad() async {
     final placeWithMenu = await _ordersWithPlaceState.fetchPlaceAndMenu();
+
+    if (widget.orderId != null) {
+      _ordersWithPlaceState.loadExternalOrder(widget.slug, widget.orderId!);
+
+      if (!mounted) {
+        return;
+      }
+
+      // open modal
+      showCupertinoModalPopup<String?>(
+        useRootNavigator: false,
+        barrierDismissible: false,
+        context: context,
+        builder: (modalContext) => ExternalOrderModal(onPay: onPay),
+      );
+
+      return;
+    }
 
     if (widget.openMenu &&
         placeWithMenu != null &&
@@ -110,6 +131,25 @@ class _InteractionWithPlaceScreenState
 
   void goBack() {
     Navigator.pop(context);
+  }
+
+  Future<void> onPay(Order order) async {
+    HapticFeedback.heavyImpact();
+
+    final newOrder = await _ordersWithPlaceState.confirmOrder(order);
+
+    HapticFeedback.lightImpact();
+
+    Future.delayed(
+      const Duration(milliseconds: 100),
+      () {
+        scrollToTop();
+      },
+    );
+
+    if (newOrder != null) {
+      handleOrderPressed(newOrder);
+    }
   }
 
   Future<Order?> sendMessage(double amount, String? message) async {
@@ -260,6 +300,7 @@ class _InteractionWithPlaceScreenState
                 messageFocusNode: messageFocusNode,
                 display: place?.place.display,
                 place: place?.place,
+                autoFocusAmount: widget.orderId == null && !widget.openMenu,
               ),
             ],
           ),

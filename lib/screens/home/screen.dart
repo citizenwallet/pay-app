@@ -229,6 +229,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     String? myAddress,
     String slug, {
     bool openMenu = false,
+    String? orderId,
   }) async {
     if (myAddress == null) {
       return;
@@ -240,6 +241,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     await navigator.push('/$myAddress/place/$slug', extra: {
       'openMenu': openMenu,
+      'orderId': orderId,
     });
 
     clearSearch();
@@ -377,7 +379,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     switch (format) {
       case QRFormat.checkoutUrl:
-        handleInteractionWithPlace(myAddress, address, openMenu: true);
+        final checkoutUrl = Uri.parse(result);
+        final orderId = checkoutUrl.queryParameters['orderId'];
+        handleInteractionWithPlace(myAddress, address,
+            openMenu: true, orderId: orderId);
         break;
       case QRFormat.sendtoUrl:
       case QRFormat.sendtoUrlWithEIP681:
