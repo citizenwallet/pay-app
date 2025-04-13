@@ -20,6 +20,15 @@ import 'package:pay_app/screens/interactions/user/screen.dart';
 // state
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 
+String addTimestampToUrl(String url) {
+  final timestamp = DateTime.now().millisecondsSinceEpoch;
+  if (url.contains('?')) {
+    return '$url&timestamp=$timestamp';
+  }
+
+  return '$url?timestamp=$timestamp';
+}
+
 Future<String?> Function(BuildContext context, GoRouterState state)
     createRedirectHandler(String? accountAddress) {
   return (BuildContext context, GoRouterState state) async {
@@ -32,7 +41,9 @@ Future<String?> Function(BuildContext context, GoRouterState state)
 
     for (final deeplinkUrl in deeplinkUrls) {
       if (url.startsWith(deeplinkUrl)) {
-        return '/$accountAddress?deepLink=${Uri.encodeComponent(url)}';
+        // add timestamp to url to make it unique
+        final uniqueUrl = addTimestampToUrl(url);
+        return '/$accountAddress?deepLink=${Uri.encodeComponent(uniqueUrl)}';
       }
     }
 
