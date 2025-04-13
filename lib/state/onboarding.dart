@@ -56,6 +56,8 @@ class OnboardingState with ChangeNotifier {
     _config = config;
 
     _sessionService = SessionService(_config);
+
+    connectedAccountAddress = getAccountAddress();
   }
 
   bool _mounted = true;
@@ -72,6 +74,8 @@ class OnboardingState with ChangeNotifier {
   }
 
   // state variables here
+  EthereumAddress? connectedAccountAddress;
+
   bool touched = false;
   String? regionCode;
   bool challengeTouched = false;
@@ -91,6 +95,11 @@ class OnboardingState with ChangeNotifier {
 
     phoneNumberController.clear();
     challengeController.clear();
+  }
+
+  void clearConnectedAccountAddress() {
+    connectedAccountAddress = null;
+    safeNotifyListeners();
   }
 
   void retry() {
@@ -241,6 +250,8 @@ class OnboardingState with ChangeNotifier {
       }
 
       final (account, _) = credentials;
+
+      connectedAccountAddress = account;
 
       return account;
     } catch (e, s) {

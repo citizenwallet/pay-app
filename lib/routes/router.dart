@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/screens/account/settings/screen.dart';
 import 'package:pay_app/screens/interactions/place/order/screen.dart';
+import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/state.dart';
 import 'package:provider/provider.dart';
 
@@ -19,6 +20,7 @@ import 'package:pay_app/screens/interactions/user/screen.dart';
 
 // state
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
+import 'package:web3dart/web3dart.dart';
 
 String addTimestampToUrl(String url) {
   final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -29,26 +31,27 @@ String addTimestampToUrl(String url) {
   return '$url?timestamp=$timestamp';
 }
 
-Future<String?> Function(BuildContext context, GoRouterState state)
-    createRedirectHandler(String? accountAddress) {
-  return (BuildContext context, GoRouterState state) async {
-    final url = state.uri.toString();
-    final deeplinkUrls = dotenv.get('DEEPLINK_URLS').split(',');
+Future<String?> redirectHandler(
+    BuildContext context, GoRouterState state) async {
+  final url = state.uri.toString();
+  final deeplinkUrls = dotenv.get('DEEPLINK_URLS').split(',');
 
-    if (accountAddress == null) {
-      return '/';
-    }
+  final connectedAccountAddress =
+      context.read<OnboardingState>().connectedAccountAddress;
 
-    for (final deeplinkUrl in deeplinkUrls) {
-      if (url.startsWith(deeplinkUrl)) {
-        // add timestamp to url to make it unique
-        final uniqueUrl = addTimestampToUrl(url);
-        return '/$accountAddress?deepLink=${Uri.encodeComponent(uniqueUrl)}';
+  for (final deeplinkUrl in deeplinkUrls) {
+    if (url.startsWith(deeplinkUrl)) {
+      if (connectedAccountAddress == null) {
+        return '/';
       }
-    }
 
-    return url;
-  };
+      // add timestamp to url to make it unique
+      final uniqueUrl = addTimestampToUrl(url);
+      return '/${connectedAccountAddress.hexEip55}?deepLink=${Uri.encodeComponent(uniqueUrl)}';
+    }
+  }
+
+  return url;
 }
 
 GoRouter createRouter(
@@ -56,14 +59,15 @@ GoRouter createRouter(
   GlobalKey<NavigatorState> appShellNavigatorKey,
   GlobalKey<NavigatorState> placeShellNavigatorKey,
   List<NavigatorObserver> observers, {
-  String? accountAddress,
+  EthereumAddress? accountAddress,
 }) =>
     GoRouter(
-      initialLocation: accountAddress != null ? '/$accountAddress' : '/',
+      initialLocation:
+          accountAddress != null ? '/${accountAddress.hexEip55}' : '/',
       debugLogDiagnostics: kDebugMode,
       navigatorKey: rootNavigatorKey,
       observers: observers,
-      redirect: createRedirectHandler(accountAddress),
+      redirect: redirectHandler,
       routes: [
         GoRoute(
           name: 'Onboarding',

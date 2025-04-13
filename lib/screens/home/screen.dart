@@ -14,6 +14,7 @@ import 'package:pay_app/state/contacts/contacts.dart';
 import 'package:pay_app/state/contacts/selectors.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
 import 'package:pay_app/state/interactions/selectors.dart';
+import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/places/places.dart';
 import 'package:pay_app/state/places/selectors.dart';
 import 'package:pay_app/state/profile.dart';
@@ -60,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final Debouncer _debouncer =
       Debouncer(timerDuration: const Duration(milliseconds: 300));
 
+  late OnboardingState _onboardingState;
   late InteractionState _interactionState;
   late PlacesState _placesState;
   late WalletState _walletState;
@@ -75,6 +77,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _scrollController.addListener(_scrollListener);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _onboardingState = context.read<OnboardingState>();
       _interactionState = context.read<InteractionState>();
       _placesState = context.read<PlacesState>();
       _walletState = context.read<WalletState>();
@@ -94,6 +97,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     final success = await _walletState.init();
     if (!success) {
+      _onboardingState.clearConnectedAccountAddress();
       navigator.go('/');
       return;
     }

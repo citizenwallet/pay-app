@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/state/account.dart';
+import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/button.dart';
@@ -23,6 +24,7 @@ class MyAccountSettings extends StatefulWidget {
 
 class _MyAccountSettingsState extends State<MyAccountSettings> {
   late AccountState _accountState;
+  late OnboardingState _onboardingState;
 
   @override
   void initState() {
@@ -31,6 +33,7 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // make initial requests here
       _accountState = context.read<AccountState>();
+      _onboardingState = context.read<OnboardingState>();
     });
   }
 
@@ -78,6 +81,7 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
 
     final success = await _accountState.logout();
     if (success) {
+      _onboardingState.clearConnectedAccountAddress();
       navigator.go('/');
     }
   }
@@ -113,6 +117,7 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
 
     final success = await _accountState.deleteData();
     if (success) {
+      _onboardingState.clearConnectedAccountAddress();
       navigator.go('/');
     }
   }
