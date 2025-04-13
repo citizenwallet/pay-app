@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/screens/account/settings/screen.dart';
@@ -19,6 +20,26 @@ import 'package:pay_app/screens/interactions/user/screen.dart';
 // state
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 
+Future<String?> Function(BuildContext context, GoRouterState state)
+    createRedirectHandler(String? accountAddress) {
+  return (BuildContext context, GoRouterState state) async {
+    final url = state.uri.toString();
+    final deeplinkUrls = dotenv.get('DEEPLINK_URLS').split(',');
+
+    if (accountAddress == null) {
+      return '/';
+    }
+
+    for (final deeplinkUrl in deeplinkUrls) {
+      if (url.startsWith(deeplinkUrl)) {
+        return '/$accountAddress?deepLink=${Uri.encodeComponent(url)}';
+      }
+    }
+
+    return url;
+  };
+}
+
 GoRouter createRouter(
   GlobalKey<NavigatorState> rootNavigatorKey,
   GlobalKey<NavigatorState> appShellNavigatorKey,
@@ -31,6 +52,7 @@ GoRouter createRouter(
       debugLogDiagnostics: kDebugMode,
       navigatorKey: rootNavigatorKey,
       observers: observers,
+      redirect: createRedirectHandler(accountAddress),
       routes: [
         GoRoute(
           name: 'Onboarding',
@@ -49,7 +71,13 @@ GoRouter createRouter(
               name: 'Home',
               path: '/:account',
               builder: (context, state) {
-                return const HomeScreen();
+                final accountAddress = state.pathParameters['account']!;
+                final deepLink = state.uri.queryParameters['deepLink'];
+
+                return HomeScreen(
+                  accountAddress: accountAddress,
+                  deepLink: deepLink,
+                );
               },
             ),
             GoRoute(
