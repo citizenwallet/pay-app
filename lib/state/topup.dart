@@ -44,10 +44,12 @@ class TopupState extends ChangeNotifier {
 
       final (account, key) = credentials;
 
+      final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
+
       final sigAuthService = SigAuthService(
         credentials: key,
         address: account,
-        redirect: dotenv.env['APP_REDIRECT_URL'] ?? '',
+        redirect: redirectDomain != null ? 'https://$redirectDomain' : '',
       );
 
       final sigAuthConnection = sigAuthService.connect();

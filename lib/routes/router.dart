@@ -34,13 +34,13 @@ String addTimestampToUrl(String url) {
 Future<String?> redirectHandler(
     BuildContext context, GoRouterState state) async {
   final url = state.uri.toString();
-  final deeplinkUrls = dotenv.get('DEEPLINK_URLS').split(',');
+  final deeplinkDomains = dotenv.get('DEEPLINK_DOMAINS').split(',');
 
   final connectedAccountAddress =
       context.read<OnboardingState>().connectedAccountAddress;
 
-  for (final deeplinkUrl in deeplinkUrls) {
-    if (url.startsWith(deeplinkUrl)) {
+  for (final deeplinkDomain in deeplinkDomains) {
+    if (url.contains(deeplinkDomain) && !url.contains('?deepLink=')) {
       if (connectedAccountAddress == null) {
         return '/';
       }

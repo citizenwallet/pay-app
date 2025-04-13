@@ -326,10 +326,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           return const SizedBox.shrink();
         }
 
+        final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
+
         return ConnectedWebViewModal(
           modalKey: 'connected-webview',
           url: topupUrl,
-          redirectUrl: dotenv.env['APP_REDIRECT_URL'] ?? '',
+          redirectUrl: redirectDomain != null ? 'https://$redirectDomain' : '',
         );
       },
     );
@@ -347,7 +349,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void handleQRScan(String myAddress, {String? manualResult}) async {
-    print('manualResult: $manualResult');
     final result = manualResult ??
         await showCupertinoModalPopup<String?>(
           context: context,
@@ -356,8 +357,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             modalKey: 'home-qr-scanner',
           ),
         );
-
-    print('result: $result');
 
     if (result == null) {
       return;
