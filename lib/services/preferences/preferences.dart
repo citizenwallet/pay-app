@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PreferencesService {
@@ -15,49 +18,25 @@ class PreferencesService {
     await _preferences.clear();
   }
 
-  // save the chain id
-  Future setChainId(int chainId) async {
-    await _preferences.setInt('chainId', chainId);
+  // save profile
+  Future setProfile(ProfileV1 profile) async {
+    await _preferences.setString('profile', jsonEncode(profile.toJson()));
   }
 
-  int get chainId => _preferences.getInt('chainId') ?? 1;
-
-  // save chain id for a given alias
-  Future setChainIdForAlias(String alias, String chainId) async {
-    await _preferences.setString('chainId_$alias', chainId);
+  ProfileV1? get profile {
+    final json = _preferences.getString('profile');
+    if (json == null) {
+      return null;
+    }
+    return ProfileV1.fromJson(jsonDecode(json));
   }
 
-  String? getChainIdForAlias(String alias) {
-    return _preferences.getString('chainId_$alias');
+  // save balance
+  Future setBalance(String balance) async {
+    await _preferences.setString('balance', balance);
   }
 
-  // saved balance
-  Future setBalance(String key, String value) async {
-    await _preferences.setString('balance_$key', value);
+  String? get balance {
+    return _preferences.getString('balance');
   }
-
-  String? getBalance(String key) {
-    return _preferences.getString('balance_$key');
-  }
-
-  // save account address for given key
-  Future setAccountAddress(String key, String accaddress) async {
-    await _preferences.setString('accountAddress_$key', accaddress);
-  }
-
-  String? getAccountAddress(String key) {
-    return _preferences.getString('accountAddress_$key');
-  }
-
-  Future setLastAlias(String alias) async {
-    await _preferences.setString('lastAlias', alias);
-  }
-
-  String? get lastAlias => _preferences.getString('lastAlias');
-
-  Future setLastWallet(String address) async {
-    await _preferences.setString('lastWallet', address);
-  }
-
-  String? get lastWallet => _preferences.getString('lastWallet');
 }

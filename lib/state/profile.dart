@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/photos/photos.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
@@ -34,6 +35,7 @@ enum ProfileUpdateState {
 class ProfileState with ChangeNotifier {
   // instantiate services here
   final ConfigService _configService = ConfigService();
+  final PreferencesService _preferencesService = PreferencesService();
   final SecureService _secureService = SecureService();
   final PhotosService _photosService = PhotosService();
 
@@ -75,7 +77,9 @@ class ProfileState with ChangeNotifier {
   // state variables here
   bool loading = false;
   bool error = false;
-  ProfileV1 profile = ProfileV1();
+  ProfileV1? _profile;
+  ProfileV1 get profile =>
+      _profile ?? _preferencesService.profile ?? ProfileV1();
   String get alias => _config.community.alias;
 
   bool hasChanges = false;
@@ -115,15 +119,30 @@ class ProfileState with ChangeNotifier {
     debugPrint('handleNewProfile');
 
     try {
+      final cachedProfile = _preferencesService.profile;
+      if (cachedProfile != null) {
+        _profile = cachedProfile;
+        safeNotifyListeners();
+      }
+
       loading = true;
       error = false;
       safeNotifyListeners();
 
       final existingProfile = await getProfile(_config, _account);
 
+      if (existingProfile != null && cachedProfile == null) {
+        await _preferencesService.setProfile(existingProfile);
+      }
+
       if (existingProfile != null) {
-        profile = existingProfile;
+        _profile = existingProfile;
         safeNotifyListeners();
+        return;
+      }
+
+      // don't go further if profile has been automatically setup
+      if (cachedProfile != null) {
         return;
       }
 
@@ -180,6 +199,11 @@ class ProfileState with ChangeNotifier {
       if (newProfile == null) {
         throw Exception('Failed to get profile from url $url');
       }
+
+      _profile = newProfile;
+      safeNotifyListeners();
+
+      await _preferencesService.setProfile(newProfile);
 
       if (_pauseProfileCreation) {
         return;
@@ -372,7 +396,8 @@ class ProfileState with ChangeNotifier {
         throw Exception('Failed to get profile from url $url');
       }
 
-      profile = newProfile;
+      _profile = newProfile;
+      await _preferencesService.setProfile(newProfile);
 
       checkForChanges();
       safeNotifyListeners();

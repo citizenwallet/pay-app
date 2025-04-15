@@ -4,12 +4,14 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:web3dart/web3dart.dart';
 
 class WalletState with ChangeNotifier {
   final ConfigService _configService = ConfigService();
+  final PreferencesService _preferencesService = PreferencesService();
   final SecureService _secureService = SecureService();
 
   late Config _config;
@@ -19,7 +21,8 @@ class WalletState with ChangeNotifier {
 
   String _balance = '0';
   int _decimals = 6;
-  double get doubleBalance => double.tryParse(_balance) ?? 0.0;
+  double get doubleBalance =>
+      double.tryParse(_preferencesService.balance ?? _balance) ?? 0.0;
   double get balance => doubleBalance / pow(10, _decimals);
 
   bool loading = false;
@@ -102,6 +105,7 @@ class WalletState with ChangeNotifier {
 
   Future<void> updateBalance() async {
     _balance = await getBalance(_config, _address!);
+    await _preferencesService.setBalance(_balance);
     safeNotifyListeners();
   }
 }

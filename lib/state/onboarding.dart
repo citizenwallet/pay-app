@@ -6,6 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/session/session.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
@@ -24,6 +25,7 @@ enum SessionRequestStatus {
 class OnboardingState with ChangeNotifier {
   // instantiate services here
   final ConfigService _configService = ConfigService();
+  final PreferencesService _preferencesService = PreferencesService();
   final SecureService _secureService = SecureService();
   late SessionService _sessionService;
   late Config _config;
@@ -99,6 +101,7 @@ class OnboardingState with ChangeNotifier {
 
   void clearConnectedAccountAddress() {
     connectedAccountAddress = null;
+    _preferencesService.clear();
     safeNotifyListeners();
   }
 

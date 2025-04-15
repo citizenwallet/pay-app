@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/utils/uint8.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
@@ -57,17 +56,6 @@ class SigAuthService {
   })  : _credentials = credentials,
         _address = address,
         _redirect = redirect;
-
-  factory SigAuthService.fromWalletService(
-    WalletService walletService,
-    String redirect,
-  ) {
-    return SigAuthService(
-      credentials: walletService.credentials,
-      address: walletService.account,
-      redirect: redirect,
-    );
-  }
 
   SigAuthConnection connect({DateTime? expiry}) {
     final expiryDate = expiry ?? DateTime.now().add(const Duration(days: 7));
