@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
@@ -40,8 +41,13 @@ class CommunityState with ChangeNotifier {
       // Update state with local data
       community = config;
       safeNotifyListeners();
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('Error in fetchCommunity: $e');
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        stack,
+        reason: 'Error loading local community file',
+      );
     } finally {
       loading = false;
       safeNotifyListeners();

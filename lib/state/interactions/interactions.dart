@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/services/pay/interactions.dart';
@@ -66,6 +67,11 @@ class InteractionState with ChangeNotifier {
     } catch (e, s) {
       debugPrint('Error fetching interactions: $e');
       debugPrint('Stack trace: $s');
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'Error fetching interactions',
+      );
       error = true;
     } finally {
       loading = false;

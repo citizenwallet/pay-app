@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
@@ -207,6 +208,11 @@ class OnboardingState with ChangeNotifier {
     } catch (e, s) {
       debugPrint('error: $e');
       debugPrint('stack trace: $s');
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'Error requesting session',
+      );
       sessionRequestStatus = SessionRequestStatus.failed;
       safeNotifyListeners();
     }
@@ -260,6 +266,11 @@ class OnboardingState with ChangeNotifier {
     } catch (e, s) {
       debugPrint('error: $e');
       debugPrint('stack trace: $s');
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'Error confirming session',
+      );
       sessionRequestStatus = SessionRequestStatus.confirmFailed;
       safeNotifyListeners();
 
