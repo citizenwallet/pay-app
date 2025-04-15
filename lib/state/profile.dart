@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
@@ -211,6 +212,11 @@ class ProfileState with ChangeNotifier {
     } catch (e, s) {
       debugPrint('giveProfileUsername error: $e, $s');
       error = true;
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'Error giving profile username',
+      );
     } finally {
       loading = false;
       safeNotifyListeners();
