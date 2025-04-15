@@ -195,10 +195,12 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
           return const SizedBox.shrink();
         }
 
+        final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
+
         return ConnectedWebViewModal(
           modalKey: 'connected-webview',
           url: topupUrl,
-          redirectUrl: dotenv.env['APP_REDIRECT_URL'] ?? '',
+          redirectUrl: redirectDomain != null ? 'https://$redirectDomain' : '',
         );
       },
     );

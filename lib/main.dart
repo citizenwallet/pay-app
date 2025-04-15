@@ -98,7 +98,7 @@ class _MyAppState extends State<MyApp> {
       _appShellNavigatorKey,
       _placeShellNavigatorKey,
       observers,
-      accountAddress: accountAddress?.hexEip55,
+      accountAddress: accountAddress,
     );
   }
 

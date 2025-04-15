@@ -20,6 +20,7 @@ class Footer extends StatefulWidget {
   final FocusNode messageFocusNode;
   final Place? place;
   final Display? display;
+  final bool autoFocusAmount;
 
   const Footer({
     super.key,
@@ -32,6 +33,7 @@ class Footer extends StatefulWidget {
     required this.messageFocusNode,
     this.place,
     this.display,
+    this.autoFocusAmount = true,
   });
 
   @override
@@ -50,7 +52,9 @@ class _FooterState extends State<Footer> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.amountFocusNode.requestFocus();
+      if (widget.autoFocusAmount) {
+        widget.amountFocusNode.requestFocus();
+      }
       _ordersWithPlaceState = context.read<OrdersWithPlaceState>();
     });
   }

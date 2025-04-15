@@ -8,13 +8,13 @@ import 'package:pay_app/widgets/qr/qr.dart';
 class AccountCard extends StatelessWidget {
   final ProfileV1 profile;
   final String alias;
-  final String appRedirectUrl;
+  final String appRedirectDomain;
 
   AccountCard({
     super.key,
     required this.profile,
     required this.alias,
-  }) : appRedirectUrl = dotenv.get('APP_REDIRECT_URL');
+  }) : appRedirectDomain = dotenv.get('APP_REDIRECT_DOMAIN');
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +36,8 @@ class AccountCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               QR(
-                data: '$appRedirectUrl/?sendto=${profile.username}@$alias',
+                data:
+                    'https://$appRedirectDomain/?sendto=${profile.username}@$alias',
                 size: size - 20,
                 padding: EdgeInsets.all(20),
                 logo: 'assets/logo.png',

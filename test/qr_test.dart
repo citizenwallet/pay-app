@@ -29,6 +29,7 @@ const List<String> cases = [
   'https://app.citizenwallet.xyz/#/?sendto=0x6C8bdE31530Ca3382150Fb18e17D8f920CcF86BE@wallet.pay.brussels%26amount%3D10.50%26description%3Dtest',
   'https://checkout.pay.brussels/demo-pizza',
   'https://wallet.pay.brussels/0xDA9e31F176F5B499b3B208a20Fe169b3aA01BA26',
+  'brusselspay://checkout.pay.brussels/demo-pizza',
 ];
 
 const List<QRFormat> expected = [
@@ -56,6 +57,7 @@ const List<QRFormat> expected = [
   QRFormat.sendtoUrl,
   QRFormat.checkoutUrl,
   QRFormat.accountUrl,
+  QRFormat.checkoutUrl,
 ];
 
 const List<(String, String?, String?, String?)> expectedParse = [
@@ -113,6 +115,7 @@ const List<(String, String?, String?, String?)> expectedParse = [
   ),
   ('demo-pizza', null, null, null),
   ('0xDA9e31F176F5B499b3B208a20Fe169b3aA01BA26', null, null, null),
+  ('demo-pizza', null, null, null),
 ];
 
 void main() {

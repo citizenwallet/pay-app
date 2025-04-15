@@ -48,10 +48,10 @@ class OrdersService {
     }
   }
 
-  Future<Order> getOrder(int orderId) async {
+  Future<Order> getOrder(String slug, int orderId) async {
     try {
       final response = await apiService.get(
-        url: '/accounts/$account/orders/$orderId',
+        url: '/app/places/$slug/orders/$orderId',
       );
 
       return Order.fromJson(response);
@@ -79,6 +79,34 @@ class OrdersService {
 
       final response = await apiService.post(
         url: '/app/places/$placeId/orders',
+        body: body,
+        headers: connection.toMap(),
+      );
+
+      final order = Order.fromJson(response);
+
+      return order;
+    } catch (e, s) {
+      debugPrint('Failed to create order: $e');
+      debugPrint('Stack trace: $s');
+      throw Exception('Failed to create order');
+    }
+  }
+
+  Future<Order?> confirmOrder(
+    SigAuthConnection connection,
+    int placeId,
+    int orderId,
+    String txHash,
+  ) async {
+    try {
+      final body = {
+        'account': account,
+        'txHash': txHash,
+      };
+
+      final response = await apiService.patch(
+        url: '/app/places/$placeId/orders/$orderId',
         body: body,
         headers: connection.toMap(),
       );

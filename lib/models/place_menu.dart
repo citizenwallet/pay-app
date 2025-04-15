@@ -20,6 +20,13 @@ class PlaceMenu {
     };
   }
 
+  Map<int, MenuItem> get menuItemsById => menuItems.fold<Map<int, MenuItem>>(
+      {},
+      (map, item) => {
+            ...map,
+            item.id: item,
+          });
+
   List<String> get categories =>
       menuItems.map((i) => i.category).toSet().toList();
 
