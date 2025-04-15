@@ -80,6 +80,9 @@ class OrdersWithPlaceState with ChangeNotifier {
 
   Order? payingOrder;
 
+  bool loadingExternalOrder = false;
+  Order? payingExternalOrder;
+
   // state methods here
   void startPolling({Future<void> Function()? updateBalance}) {
     // Cancel any existing timer first
@@ -291,8 +294,151 @@ class OrdersWithPlaceState with ChangeNotifier {
     }
   }
 
+  Future<Order?> confirmOrder(Order order) async {
+    try {
+      if (place == null || place?.place == null) {
+        return null;
+      }
+
+      paying = true;
+      payError = false;
+      safeNotifyListeners();
+
+      final token = _config.getPrimaryToken();
+
+      final menuItemsById = placeMenu?.menuItemsById ?? {};
+
+      final message = order.description ??
+          order.items.fold<String>('', (acc, item) {
+            final menuItem = menuItemsById[item.id];
+            final line = '${menuItem?.name ?? item.id} x ${item.quantity}';
+            if (acc.isEmpty) {
+              return line;
+            }
+
+            return '$acc\n$line';
+          });
+
+      final doubleAmount = order.total.toString().replaceAll(',', '.');
+      final parsedAmount = toUnit(
+        doubleAmount,
+        decimals: token.decimals,
+      );
+
+      if (parsedAmount == BigInt.zero) {
+        return null;
+      }
+
+      final toAddress = place!.place.account;
+      final fromAddress = myAddress;
+
+      payingOrder = order;
+      safeNotifyListeners();
+
+      final credentials = _secureService.getCredentials();
+      if (credentials == null) {
+        throw Exception('Credentials not found');
+      }
+
+      final (account, key) = credentials;
+
+      final calldata = tokenTransferCallData(
+        _config,
+        account,
+        toAddress,
+        parsedAmount,
+      );
+
+      final (_, userOp) = await prepareUserop(
+        _config,
+        account,
+        key,
+        [_config.getPrimaryToken().address],
+        [calldata],
+      );
+
+      final args = {
+        'from': fromAddress,
+        'to': toAddress,
+      };
+
+      if (_config.getPrimaryToken().standard == 'erc1155') {
+        args['operator'] = account.hexEip55;
+        args['id'] = '0';
+        args['amount'] = parsedAmount.toString();
+      } else {
+        args['value'] = parsedAmount.toString();
+      }
+
+      final eventData = createEventData(
+        stringSignature: transferEventStringSignature(_config),
+        topic: transferEventSignature(_config),
+        args: args,
+      );
+
+      final txHash = await submitUserop(
+        _config,
+        userOp,
+        data: eventData,
+        extraData:
+            message.trim().isNotEmpty ? TransferData(message.trim()) : null,
+      );
+
+      if (txHash == null) {
+        throw Exception('Failed to pay order');
+      }
+
+      final sigAuthService = SigAuthService(credentials: key, address: account);
+
+      final sigAuthConnection = sigAuthService.connect();
+
+      final newOrder = await _ordersService.confirmOrder(
+        sigAuthConnection,
+        place!.place.id,
+        order.id,
+        txHash,
+      );
+
+      if (newOrder == null) {
+        throw Exception('Failed to create order');
+      }
+
+      paying = false;
+      payError = false;
+      safeNotifyListeners();
+
+      return newOrder;
+    } catch (e, s) {
+      print('payOrder error: $e');
+      print('payOrder stack trace: $s');
+      payingOrder = null;
+      paying = false;
+      payError = true;
+      safeNotifyListeners();
+      return null;
+    }
+  }
+
   void updateAmount(double amount) {
     toSendAmount = amount;
     safeNotifyListeners();
+  }
+
+  Future<void> loadExternalOrder(String slug, String orderId) async {
+    try {
+      loadingExternalOrder = true;
+      safeNotifyListeners();
+
+      final order = await _ordersService.getOrder(slug, int.parse(orderId));
+
+      payingExternalOrder = order;
+      safeNotifyListeners();
+    } catch (e, s) {
+      print('loadExternalOrder error: $e');
+      print('loadExternalOrder stack trace: $s');
+    } finally {
+      loadingExternalOrder = false;
+      safeNotifyListeners();
+    }
   }
 }

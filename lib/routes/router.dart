@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/screens/account/settings/screen.dart';
 import 'package:pay_app/screens/interactions/place/order/screen.dart';
+import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/state.dart';
 import 'package:provider/provider.dart';
 
@@ -18,19 +20,54 @@ import 'package:pay_app/screens/interactions/user/screen.dart';
 
 // state
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
+import 'package:web3dart/web3dart.dart';
+
+String addTimestampToUrl(String url) {
+  final timestamp = DateTime.now().millisecondsSinceEpoch;
+  if (url.contains('?')) {
+    return '$url&timestamp=$timestamp';
+  }
+
+  return '$url?timestamp=$timestamp';
+}
+
+Future<String?> redirectHandler(
+    BuildContext context, GoRouterState state) async {
+  final url = state.uri.toString();
+  final deeplinkDomains = dotenv.get('DEEPLINK_DOMAINS').split(',');
+
+  final connectedAccountAddress =
+      context.read<OnboardingState>().connectedAccountAddress;
+
+  for (final deeplinkDomain in deeplinkDomains) {
+    if (url.contains(deeplinkDomain) && !url.contains('?deepLink=')) {
+      if (connectedAccountAddress == null) {
+        return '/';
+      }
+
+      // add timestamp to url to make it unique
+      final uniqueUrl = addTimestampToUrl(url);
+      return '/${connectedAccountAddress.hexEip55}?deepLink=${Uri.encodeComponent(uniqueUrl)}';
+    }
+  }
+
+  return url;
+}
 
 GoRouter createRouter(
   GlobalKey<NavigatorState> rootNavigatorKey,
   GlobalKey<NavigatorState> appShellNavigatorKey,
   GlobalKey<NavigatorState> placeShellNavigatorKey,
   List<NavigatorObserver> observers, {
-  String? accountAddress,
+  EthereumAddress? accountAddress,
 }) =>
     GoRouter(
-      initialLocation: accountAddress != null ? '/$accountAddress' : '/',
+      initialLocation:
+          accountAddress != null ? '/${accountAddress.hexEip55}' : '/',
       debugLogDiagnostics: kDebugMode,
       navigatorKey: rootNavigatorKey,
       observers: observers,
+      redirect: redirectHandler,
       routes: [
         GoRoute(
           name: 'Onboarding',
@@ -49,7 +86,13 @@ GoRouter createRouter(
               name: 'Home',
               path: '/:account',
               builder: (context, state) {
-                return const HomeScreen();
+                final accountAddress = state.pathParameters['account']!;
+                final deepLink = state.uri.queryParameters['deepLink'];
+
+                return HomeScreen(
+                  accountAddress: accountAddress,
+                  deepLink: deepLink,
+                );
               },
             ),
             GoRoute(
@@ -92,11 +135,13 @@ GoRouter createRouter(
                     final slug = state.pathParameters['slug']!;
                     final extra = state.extra as Map<String, dynamic>;
                     final openMenu = extra['openMenu'] as bool? ?? false;
+                    final orderId = extra['orderId'] as String?;
 
                     return InteractionWithPlaceScreen(
                       slug: slug,
                       myAddress: myAddress,
                       openMenu: openMenu,
+                      orderId: orderId,
                     );
                   },
                   routes: [

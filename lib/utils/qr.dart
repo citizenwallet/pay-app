@@ -33,9 +33,9 @@ QRFormat parseQRFormat(String raw) {
     return QRFormat.receiveUrl;
   } else if (raw.contains('voucher=')) {
     return QRFormat.voucher;
-  } else if (raw.startsWith(dotenv.env['CHECKOUT_URL'] ?? '')) {
+  } else if (raw.contains(dotenv.env['CHECKOUT_DOMAIN'] ?? '')) {
     return QRFormat.checkoutUrl;
-  } else if (raw.startsWith(dotenv.env['APP_REDIRECT_URL'] ?? '')) {
+  } else if (raw.contains(dotenv.env['APP_REDIRECT_DOMAIN'] ?? '')) {
     return QRFormat.accountUrl;
   } else if (raw.startsWith('https://') || raw.startsWith('http://')) {
     return QRFormat.url;

@@ -14,6 +14,7 @@ import 'package:pay_app/state/contacts/contacts.dart';
 import 'package:pay_app/state/contacts/selectors.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
 import 'package:pay_app/state/interactions/selectors.dart';
+import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/places/places.dart';
 import 'package:pay_app/state/places/selectors.dart';
 import 'package:pay_app/state/profile.dart';
@@ -33,7 +34,14 @@ import 'interaction_list_item.dart';
 import 'place_list_item.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final String accountAddress;
+  final String? deepLink;
+
+  const HomeScreen({
+    super.key,
+    required this.accountAddress,
+    this.deepLink,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -53,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final Debouncer _debouncer =
       Debouncer(timerDuration: const Duration(milliseconds: 300));
 
+  late OnboardingState _onboardingState;
   late InteractionState _interactionState;
   late PlacesState _placesState;
   late WalletState _walletState;
@@ -68,6 +77,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _scrollController.addListener(_scrollListener);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _onboardingState = context.read<OnboardingState>();
       _interactionState = context.read<InteractionState>();
       _placesState = context.read<PlacesState>();
       _walletState = context.read<WalletState>();
@@ -78,6 +88,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       // Start listening to lifecycle changes.
       WidgetsBinding.instance.addObserver(this);
       onLoad();
+      handleDeepLink(widget.accountAddress, widget.deepLink);
     });
   }
 
@@ -86,6 +97,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     final success = await _walletState.init();
     if (!success) {
+      _onboardingState.clearConnectedAccountAddress();
       navigator.go('/');
       return;
     }
@@ -95,6 +107,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _interactionState.startPolling(updateBalance: _walletState.updateBalance);
     await _placesState.getAllPlaces();
     await _profileState.giveProfileUsername();
+  }
+
+  Future<void> handleDeepLink(String accountAddress, String? deepLink) async {
+    if (deepLink != null) {
+      await delay(const Duration(milliseconds: 100));
+
+      handleQRScan(accountAddress, manualResult: deepLink);
+    }
+  }
+
+  @override
+  void didUpdateWidget(HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.deepLink != widget.deepLink && widget.deepLink != null) {
+      handleDeepLink(
+        widget.accountAddress,
+        widget.deepLink,
+      );
+    }
   }
 
   @override
@@ -197,6 +229,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     String? myAddress,
     String slug, {
     bool openMenu = false,
+    String? orderId,
   }) async {
     if (myAddress == null) {
       return;
@@ -208,6 +241,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     await navigator.push('/$myAddress/place/$slug', extra: {
       'openMenu': openMenu,
+      'orderId': orderId,
     });
 
     clearSearch();
@@ -294,10 +328,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           return const SizedBox.shrink();
         }
 
+        final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
+
         return ConnectedWebViewModal(
           modalKey: 'connected-webview',
           url: topupUrl,
-          redirectUrl: dotenv.env['APP_REDIRECT_URL'] ?? '',
+          redirectUrl: redirectDomain != null ? 'https://$redirectDomain' : '',
         );
       },
     );
@@ -314,14 +350,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     onLoad();
   }
 
-  void handleQRScan(String myAddress) async {
-    final result = await showCupertinoModalPopup<String?>(
-      context: context,
-      barrierDismissible: true,
-      builder: (_) => const ScannerModal(
-        modalKey: 'home-qr-scanner',
-      ),
-    );
+  void handleQRScan(String myAddress, {String? manualResult}) async {
+    final result = manualResult ??
+        await showCupertinoModalPopup<String?>(
+          context: context,
+          barrierDismissible: true,
+          builder: (_) => const ScannerModal(
+            modalKey: 'home-qr-scanner',
+          ),
+        );
 
     if (result == null) {
       return;
@@ -342,7 +379,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     switch (format) {
       case QRFormat.checkoutUrl:
-        handleInteractionWithPlace(myAddress, address, openMenu: true);
+        final checkoutUrl = Uri.parse(result);
+        final orderId = checkoutUrl.queryParameters['orderId'];
+        handleInteractionWithPlace(myAddress, address,
+            openMenu: true, orderId: orderId);
         break;
       case QRFormat.sendtoUrl:
       case QRFormat.sendtoUrlWithEIP681:
