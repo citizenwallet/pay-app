@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:dart_debouncer/dart_debouncer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 
@@ -25,8 +26,10 @@ import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/utils/qr.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:pay_app/widgets/scanner/scanner_modal.dart';
+import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
+import 'package:toastification/toastification.dart';
 
 import 'profile_bar.dart';
 import 'search_bar.dart';
@@ -316,7 +319,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return;
     }
 
-    await showCupertinoModalPopup<String?>(
+    final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
+
+    final redirectUrl = redirectDomain != null ? 'https://$redirectDomain' : '';
+
+    final result = await showCupertinoModalPopup<String?>(
       context: context,
       barrierDismissible: true,
       useRootNavigator: false,
@@ -328,15 +335,39 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           return const SizedBox.shrink();
         }
 
-        final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
-
         return ConnectedWebViewModal(
           modalKey: 'connected-webview',
           url: topupUrl,
-          redirectUrl: redirectDomain != null ? 'https://$redirectDomain' : '',
+          redirectUrl: redirectUrl,
         );
       },
     );
+
+    if (result == null) {
+      return;
+    }
+
+    if (!result.startsWith(redirectUrl)) {
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    HapticFeedback.heavyImpact();
+
+    toastification.showCustom(
+      context: context,
+      autoCloseDuration: const Duration(seconds: 5),
+      alignment: Alignment.bottomCenter,
+      builder: (context, toast) => Toast(
+        icon: const Text('🚀'),
+        title: const Text('Your topup is on the way'),
+      ),
+    );
+
+    await _walletState.updateBalance();
   }
 
   void handleSettingsTap(String myAddress) async {
