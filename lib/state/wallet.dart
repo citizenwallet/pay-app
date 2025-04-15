@@ -10,7 +10,6 @@ import 'package:web3dart/web3dart.dart';
 
 class WalletState with ChangeNotifier {
   final ConfigService _configService = ConfigService();
-  final WalletService _walletService = WalletService();
   final SecureService _secureService = SecureService();
 
   late Config _config;
@@ -82,60 +81,6 @@ class WalletState with ChangeNotifier {
       safeNotifyListeners();
     }
 
-    return false;
-  }
-
-  Future<bool> accountExists() async {
-    try {
-      if (address == null) {
-        throw Exception('Wallet not created');
-      }
-
-      loading = true;
-      error = false;
-      safeNotifyListeners();
-
-      final exists =
-          await _walletService.accountExists(account: address!.hexEip55);
-      return exists;
-    } catch (e, s) {
-      debugPrint('error: $e');
-      debugPrint('stack trace: $s');
-      error = true;
-      safeNotifyListeners();
-    } finally {
-      loading = false;
-      safeNotifyListeners();
-    }
-    return false;
-  }
-
-  Future<bool> createAccount() async {
-    try {
-      if (address == null) {
-        throw Exception('Wallet not created');
-      }
-
-      loading = true;
-      error = false;
-      safeNotifyListeners();
-
-      final exists = await _walletService.createAccount();
-
-      if (!exists) {
-        throw Exception('Account not created');
-      }
-
-      return true;
-    } catch (e, s) {
-      debugPrint('error: $e');
-      debugPrint('stack trace: $s');
-      error = true;
-      safeNotifyListeners();
-    } finally {
-      loading = false;
-      safeNotifyListeners();
-    }
     return false;
   }
 
