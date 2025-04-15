@@ -42,8 +42,11 @@ class WalletState with ChangeNotifier {
     super.dispose();
   }
 
-  Future<bool> init() async {
+  Future<bool?> init() async {
     try {
+      loading = true;
+      safeNotifyListeners();
+
       final config = await _configService.getLocalConfig();
       if (config == null) {
         throw Exception('Community not found in local asset');
@@ -71,10 +74,15 @@ class WalletState with ChangeNotifier {
 
       if (expired) {
         await _secureService.clearCredentials();
+        loading = false;
+        safeNotifyListeners();
         return false;
       }
 
       await updateBalance();
+
+      loading = false;
+      safeNotifyListeners();
 
       return true;
     } catch (e, s) {
@@ -84,7 +92,7 @@ class WalletState with ChangeNotifier {
       safeNotifyListeners();
     }
 
-    return false;
+    return null;
   }
 
   Future<void> startBalancePolling() async {

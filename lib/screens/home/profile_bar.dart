@@ -7,6 +7,7 @@ import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:provider/provider.dart';
 
 class ProfileBar extends StatefulWidget {
+  final bool loading;
   final String accountAddress;
   final Function() onProfileTap;
   final Function() onTopUpTap;
@@ -14,6 +15,7 @@ class ProfileBar extends StatefulWidget {
 
   const ProfileBar({
     super.key,
+    required this.loading,
     required this.accountAddress,
     required this.onProfileTap,
     required this.onTopUpTap,
@@ -38,7 +40,7 @@ class _ProfileBarState extends State<ProfileBar> {
     final profile = context.watch<ProfileState>().profile;
 
     return GestureDetector(
-      onTap: widget.onProfileTap,
+      onTap: widget.loading ? null : widget.onProfileTap,
       child: Container(
         height: 95,
         padding: const EdgeInsets.symmetric(
@@ -77,7 +79,8 @@ class _ProfileBarState extends State<ProfileBar> {
                       children: [
                         Balance(balance: balance),
                         const SizedBox(width: 16),
-                        TopUpButton(onTopUpTap: widget.onTopUpTap),
+                        if (!widget.loading)
+                          TopUpButton(onTopUpTap: widget.onTopUpTap),
                       ],
                     )
                   ],
@@ -88,7 +91,7 @@ class _ProfileBarState extends State<ProfileBar> {
               padding: EdgeInsets.only(right: 16),
               child: CupertinoButton(
                 padding: EdgeInsets.zero,
-                onPressed: widget.onSettingsTap,
+                onPressed: widget.loading ? null : widget.onSettingsTap,
                 child: Icon(
                   CupertinoIcons.settings,
                   color: primaryColor,

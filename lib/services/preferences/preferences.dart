@@ -15,7 +15,8 @@ class PreferencesService {
   }
 
   Future clear() async {
-    await _preferences.clear();
+    await _preferences.remove('balance');
+    await _preferences.remove('profile');
   }
 
   // save profile
