@@ -82,7 +82,7 @@ class _WebViewModalState extends State<ConnectedWebViewModal> {
     }
 
     if (uri.toString().startsWith(widget.closeUrl)) {
-      handleClose();
+      handleClose(uri.toString());
 
       return NavigationActionPolicy.CANCEL;
     }
@@ -105,8 +105,8 @@ class _WebViewModalState extends State<ConnectedWebViewModal> {
     webViewController = null;
   }
 
-  void handleClose() async {
-    handleDismiss(context);
+  void handleClose(String path) async {
+    handleDismiss(context, path: path);
   }
 
   void handleDismiss(BuildContext context, {String? path}) async {

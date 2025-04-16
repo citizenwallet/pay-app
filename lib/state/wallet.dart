@@ -4,13 +4,14 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:web3dart/web3dart.dart';
 
 class WalletState with ChangeNotifier {
   final ConfigService _configService = ConfigService();
-  final WalletService _walletService = WalletService();
+  final PreferencesService _preferencesService = PreferencesService();
   final SecureService _secureService = SecureService();
 
   late Config _config;
@@ -20,7 +21,8 @@ class WalletState with ChangeNotifier {
 
   String _balance = '0';
   int _decimals = 6;
-  double get doubleBalance => double.tryParse(_balance) ?? 0.0;
+  double get doubleBalance =>
+      double.tryParse(_preferencesService.balance ?? _balance) ?? 0.0;
   double get balance => doubleBalance / pow(10, _decimals);
 
   bool loading = false;
@@ -40,8 +42,11 @@ class WalletState with ChangeNotifier {
     super.dispose();
   }
 
-  Future<bool> init() async {
+  Future<bool?> init() async {
     try {
+      loading = true;
+      safeNotifyListeners();
+
       final config = await _configService.getLocalConfig();
       if (config == null) {
         throw Exception('Community not found in local asset');
@@ -69,11 +74,16 @@ class WalletState with ChangeNotifier {
 
       if (expired) {
         await _secureService.clearCredentials();
+        loading = false;
+        safeNotifyListeners();
         return false;
       }
 
       await updateBalance();
 
+      loading = false;
+      safeNotifyListeners();
+
       return true;
     } catch (e, s) {
       debugPrint('error: $e');
@@ -82,61 +92,7 @@ class WalletState with ChangeNotifier {
       safeNotifyListeners();
     }
 
-    return false;
-  }
-
-  Future<bool> accountExists() async {
-    try {
-      if (address == null) {
-        throw Exception('Wallet not created');
-      }
-
-      loading = true;
-      error = false;
-      safeNotifyListeners();
-
-      final exists =
-          await _walletService.accountExists(account: address!.hexEip55);
-      return exists;
-    } catch (e, s) {
-      debugPrint('error: $e');
-      debugPrint('stack trace: $s');
-      error = true;
-      safeNotifyListeners();
-    } finally {
-      loading = false;
-      safeNotifyListeners();
-    }
-    return false;
-  }
-
-  Future<bool> createAccount() async {
-    try {
-      if (address == null) {
-        throw Exception('Wallet not created');
-      }
-
-      loading = true;
-      error = false;
-      safeNotifyListeners();
-
-      final exists = await _walletService.createAccount();
-
-      if (!exists) {
-        throw Exception('Account not created');
-      }
-
-      return true;
-    } catch (e, s) {
-      debugPrint('error: $e');
-      debugPrint('stack trace: $s');
-      error = true;
-      safeNotifyListeners();
-    } finally {
-      loading = false;
-      safeNotifyListeners();
-    }
-    return false;
+    return null;
   }
 
   Future<void> startBalancePolling() async {
@@ -157,6 +113,7 @@ class WalletState with ChangeNotifier {
 
   Future<void> updateBalance() async {
     _balance = await getBalance(_config, _address!);
+    await _preferencesService.setBalance(_balance);
     safeNotifyListeners();
   }
 }

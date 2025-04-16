@@ -8,7 +8,6 @@ import 'package:pay_app/routes/router.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
-import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/state.dart';
 import 'package:provider/provider.dart';
@@ -41,8 +40,6 @@ void main() async {
   await AppDBService().openDB('main');
   await PreferencesService().init(await SharedPreferences.getInstance());
   await SecureService().init(await SharedPreferences.getInstance());
-
-  WalletService();
 
   runApp(provideAppState(const MyApp()));
 }

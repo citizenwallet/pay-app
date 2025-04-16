@@ -242,7 +242,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
                     onChange(0);
                     return;
                   }
-                  onChange(double.tryParse(value) ?? 0);
+                  onChange(double.tryParse(value.replaceAll(',', '.')) ?? 0);
                 },
               ),
               if (error)

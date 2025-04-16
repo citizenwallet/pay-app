@@ -1,3 +1,4 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/place.dart';
 import 'package:pay_app/services/pay/places.dart';
@@ -44,6 +45,11 @@ class PlacesState with ChangeNotifier {
     } catch (e, s) {
       debugPrint('Error fetching places: $e');
       debugPrint('Stack trace: $s');
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'Error fetching places',
+      );
       error = true;
     } finally {
       loading = false;

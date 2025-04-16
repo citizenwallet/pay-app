@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:dart_debouncer/dart_debouncer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 
@@ -25,8 +26,10 @@ import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/utils/qr.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:pay_app/widgets/scanner/scanner_modal.dart';
+import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
+import 'package:toastification/toastification.dart';
 
 import 'profile_bar.dart';
 import 'search_bar.dart';
@@ -69,6 +72,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   late ContactsState _contactsState;
   late TopupState _topupState;
 
+  bool _stopInitRetries = false;
+
   @override
   void initState() {
     super.initState();
@@ -93,10 +98,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> onLoad() async {
+    if (_stopInitRetries) {
+      return;
+    }
+
     final navigator = GoRouter.of(context);
 
     final success = await _walletState.init();
-    if (!success) {
+    if (success == null) {
+      await delay(const Duration(milliseconds: 2000));
+      return onLoad();
+    }
+
+    if (success == false) {
       _onboardingState.clearConnectedAccountAddress();
       navigator.go('/');
       return;
@@ -141,10 +155,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       case AppLifecycleState.resumed:
         // Restart the scanner when the app is resumed.
         // Don't forget to resume listening to the barcode events.
+        _stopInitRetries = false;
         onLoad();
       case AppLifecycleState.inactive:
         // Stop the scanner when the app is paused.
         // Also stop the barcode events subscription.
+        _stopInitRetries = true;
         _interactionState.stopPolling();
     }
   }
@@ -153,6 +169,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void dispose() {
     // Stop listening to lifecycle changes.
     WidgetsBinding.instance.removeObserver(this);
+
+    _stopInitRetries = true;
 
     _debouncer.dispose();
 
@@ -239,10 +257,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     final navigator = GoRouter.of(context);
 
+    _stopInitRetries = true;
+
     await navigator.push('/$myAddress/place/$slug', extra: {
       'openMenu': openMenu,
       'orderId': orderId,
     });
+
+    _stopInitRetries = false;
 
     clearSearch();
   }
@@ -255,10 +277,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     _contactsState.clearContacts();
 
+    _stopInitRetries = true;
+
     final account = await _contactsState.getContactAddress(
       contact.phone,
       'sms',
     );
+
+    _stopInitRetries = false;
 
     if (account == null) {
       return;
@@ -287,6 +313,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     _contactsState.clearContacts();
 
+    _stopInitRetries = true;
+
     final navigator = GoRouter.of(context);
 
     await navigator.push('/$myAddress/user/$account', extra: {
@@ -296,6 +324,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       'imageUrl': imageUrl,
     });
 
+    _stopInitRetries = false;
+
     clearSearch();
   }
 
@@ -304,19 +334,30 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     final navigator = GoRouter.of(context);
 
+    _stopInitRetries = true;
+
     await navigator.push('/$myAddress/my-account');
+
+    _stopInitRetries = false;
 
     clearSearch();
   }
 
   void handleTopUp() async {
+    _stopInitRetries = true;
+
     await _topupState.generateTopupUrl();
 
     if (!mounted) {
+      _stopInitRetries = false;
       return;
     }
 
-    await showCupertinoModalPopup<String?>(
+    final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
+
+    final redirectUrl = redirectDomain != null ? 'https://$redirectDomain' : '';
+
+    final result = await showCupertinoModalPopup<String?>(
       context: context,
       barrierDismissible: true,
       useRootNavigator: false,
@@ -328,15 +369,41 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           return const SizedBox.shrink();
         }
 
-        final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
-
         return ConnectedWebViewModal(
           modalKey: 'connected-webview',
           url: topupUrl,
-          redirectUrl: redirectDomain != null ? 'https://$redirectDomain' : '',
+          redirectUrl: redirectUrl,
         );
       },
     );
+
+    _stopInitRetries = false;
+
+    if (result == null) {
+      return;
+    }
+
+    if (!result.startsWith(redirectUrl)) {
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    HapticFeedback.heavyImpact();
+
+    toastification.showCustom(
+      context: context,
+      autoCloseDuration: const Duration(seconds: 5),
+      alignment: Alignment.bottomCenter,
+      builder: (context, toast) => Toast(
+        icon: const Text('🚀'),
+        title: const Text('Your topup is on the way'),
+      ),
+    );
+
+    await _walletState.updateBalance();
   }
 
   void handleSettingsTap(String myAddress) async {
@@ -344,13 +411,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     final navigator = GoRouter.of(context);
 
+    _stopInitRetries = true;
+
     await navigator.push('/$myAddress/my-account/settings');
+
+    _stopInitRetries = false;
 
     clearSearch();
     onLoad();
   }
 
   void handleQRScan(String myAddress, {String? manualResult}) async {
+    _stopInitRetries = true;
+
     final result = manualResult ??
         await showCupertinoModalPopup<String?>(
           context: context,
@@ -359,6 +432,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             modalKey: 'home-qr-scanner',
           ),
         );
+
+    _stopInitRetries = false;
 
     if (result == null) {
       return;
@@ -463,6 +538,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final double heightFactor = 1 - (_scrollOffset / _maxScrollOffset);
 
+    final loading = context.select((WalletState state) => state.loading);
+
     final interactions = context.select(sortByUnreadAndDate);
     final places = context.select(selectFilteredPlaces);
     final contacts = context.select(selectFilteredContacts);
@@ -504,6 +581,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       floating: true,
                       pinned: true,
                       delegate: ProfileBarDelegate(
+                        loading: loading,
                         accountAddress: myAddress ?? '',
                         onProfileTap: () => handleProfileTap(myAddress ?? ''),
                         onTopUpTap: handleTopUp,
@@ -585,6 +663,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           ),
                         ),
                       ),
+                    if (loading &&
+                        places.isEmpty &&
+                        interactions.isEmpty &&
+                        contacts.isEmpty)
+                      SliverFillRemaining(
+                        child: Center(child: CupertinoActivityIndicator()),
+                      ),
                     if (nothingFound)
                       SliverToBoxAdapter(
                         child: Center(
@@ -617,19 +702,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                 ),
               ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 10 + safeBottomPadding,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 100),
-                  height: isKeyboardVisible ? 0 : (100 * heightFactor),
-                  child: ScanQrCircle(
-                    handleQRScan: () => handleQRScan(myAddress ?? ''),
-                    heightFactor: heightFactor,
+              if (!loading)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 10 + safeBottomPadding,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 100),
+                    height: isKeyboardVisible ? 0 : (100 * heightFactor),
+                    child: ScanQrCircle(
+                      handleQRScan: () => handleQRScan(myAddress ?? ''),
+                      heightFactor: heightFactor,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),
@@ -639,12 +725,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 }
 
 class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
+  final bool loading;
   final String accountAddress;
   final Function() onProfileTap;
   final Function() onTopUpTap;
   final Function() onSettingsTap;
 
   ProfileBarDelegate({
+    required this.loading,
     required this.accountAddress,
     required this.onProfileTap,
     required this.onTopUpTap,
@@ -655,6 +743,7 @@ class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
     return ProfileBar(
+      loading: loading,
       accountAddress: accountAddress,
       onProfileTap: onProfileTap,
       onTopUpTap: onTopUpTap,

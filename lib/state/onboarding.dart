@@ -1,11 +1,13 @@
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/session/session.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
@@ -24,6 +26,7 @@ enum SessionRequestStatus {
 class OnboardingState with ChangeNotifier {
   // instantiate services here
   final ConfigService _configService = ConfigService();
+  final PreferencesService _preferencesService = PreferencesService();
   final SecureService _secureService = SecureService();
   late SessionService _sessionService;
   late Config _config;
@@ -99,6 +102,7 @@ class OnboardingState with ChangeNotifier {
 
   void clearConnectedAccountAddress() {
     connectedAccountAddress = null;
+    _preferencesService.clear();
     safeNotifyListeners();
   }
 
@@ -204,6 +208,11 @@ class OnboardingState with ChangeNotifier {
     } catch (e, s) {
       debugPrint('error: $e');
       debugPrint('stack trace: $s');
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'Error requesting session',
+      );
       sessionRequestStatus = SessionRequestStatus.failed;
       safeNotifyListeners();
     }
@@ -257,6 +266,11 @@ class OnboardingState with ChangeNotifier {
     } catch (e, s) {
       debugPrint('error: $e');
       debugPrint('stack trace: $s');
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'Error confirming session',
+      );
       sessionRequestStatus = SessionRequestStatus.confirmFailed;
       safeNotifyListeners();
 
