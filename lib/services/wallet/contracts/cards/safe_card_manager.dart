@@ -1,8 +1,8 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:pay_app/services/wallet/contracts/cards/interface.dart';
-import 'package:pay_app/utils/uint8.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -32,7 +32,7 @@ class SafeCardManagerContract implements AbstractCardManagerContract {
 
   @override
   Future<Uint8List> getCardHash(String serial, {bool local = true}) async {
-    Uint8List serialHash = keccak256(convertStringToUint8List(serial));
+    Uint8List serialHash = keccak256(utf8.encode(serial));
 
     if (local) {
       return keccak256EncodePacked(
@@ -53,11 +53,8 @@ class SafeCardManagerContract implements AbstractCardManagerContract {
   }
 
   @override
-  Future<EthereumAddress> getCardAddress(Uint8List hash) async {
-    final hexHash = bytesToHex(hash);
-    if (addressCache.containsKey(hexHash)) {
-      return addressCache[hexHash]!;
-    }
+  Future<EthereumAddress> getCardAddress(String serial) async {
+    Uint8List hash = keccak256(utf8.encode(serial));
 
     final function = rcontract.function('getCardAddress');
 
@@ -68,8 +65,6 @@ class SafeCardManagerContract implements AbstractCardManagerContract {
     );
 
     final address = result[0] as EthereumAddress;
-
-    addressCache[hexHash] = address;
 
     return address;
   }

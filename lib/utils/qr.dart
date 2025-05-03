@@ -11,6 +11,7 @@ enum QRFormat {
   sendtoUrl,
   sendtoUrlWithEIP681,
   checkoutUrl,
+  cardUrl,
   accountUrl,
   url,
   unsupported,
@@ -35,6 +36,8 @@ QRFormat parseQRFormat(String raw) {
     return QRFormat.voucher;
   } else if (raw.contains(dotenv.env['CHECKOUT_DOMAIN'] ?? '')) {
     return QRFormat.checkoutUrl;
+  } else if (raw.contains(dotenv.env['CARD_DOMAIN'] ?? '')) {
+    return QRFormat.cardUrl;
   } else if (raw.contains(dotenv.env['APP_REDIRECT_DOMAIN'] ?? '')) {
     return QRFormat.accountUrl;
   } else if (raw.startsWith('https://') || raw.startsWith('http://')) {
@@ -123,6 +126,38 @@ QRFormat parseQRFormat(String raw) {
   return (placeSlug, null, null, null);
 }
 
+(String, String?, String?, String?) parseCardUrl(String raw) {
+  final cleanRaw = raw.replaceFirst('/#/', '/');
+  final decodedRaw = Uri.decodeComponent(cleanRaw);
+
+  final receiveUrl = Uri.parse(decodedRaw);
+
+  final cardId = receiveUrl.pathSegments.last;
+
+  if (cardId == '') {
+    return ('', null, null, null);
+  }
+
+  return (cardId, null, null, null);
+}
+
+String? parseCardProject(String raw) {
+  final cleanRaw = raw.replaceFirst('/#/', '/');
+  final decodedRaw = Uri.decodeComponent(cleanRaw);
+
+  final receiveUrl = Uri.parse(decodedRaw);
+
+  final cardId = receiveUrl.pathSegments.last;
+
+  if (cardId == '') {
+    return null;
+  }
+
+  final project = receiveUrl.queryParameters['project'];
+
+  return project;
+}
+
 (String, String?, String?, String?) parseAccountUrl(String raw) {
   final cleanRaw = raw.replaceFirst('/#/', '/');
   final decodedRaw = Uri.decodeComponent(cleanRaw);
@@ -178,6 +213,8 @@ QRFormat parseQRFormat(String raw) {
       return parseSendtoUrlWithEIP681(raw);
     case QRFormat.checkoutUrl:
       return parseCheckoutUrl(raw);
+    case QRFormat.cardUrl:
+      return parseCardUrl(raw);
     case QRFormat.accountUrl:
       return parseAccountUrl(raw);
     case QRFormat.url:

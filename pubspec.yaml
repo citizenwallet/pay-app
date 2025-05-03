@@ -120,6 +120,7 @@ flutter:
     - assets/icons/qr-code.png
     - assets/icons/app.png
     - assets/icons/card.png
+    - assets/icons/nfc.png
     - assets/icons/docs.svg
     - assets/config/v4/communities.json
     - assets/config/v4/communities.test.json

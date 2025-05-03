@@ -8,6 +8,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:pay_app/models/interaction.dart';
+import 'package:pay_app/screens/home/card_modal.dart';
 import 'package:pay_app/screens/home/contact_list_item.dart';
 import 'package:pay_app/screens/home/profile_list_item.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
@@ -19,6 +20,7 @@ import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/places/places.dart';
 import 'package:pay_app/state/places/selectors.dart';
 import 'package:pay_app/state/profile.dart';
+import 'package:pay_app/state/state.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
@@ -269,6 +271,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     clearSearch();
   }
 
+  void handleInteractionWithCard(
+      String? myAddress, String cardId, String? project) async {
+    if (myAddress == null) {
+      return;
+    }
+
+    print('cardId: $cardId');
+
+    await showCupertinoModalPopup(
+      useRootNavigator: false,
+      context: context,
+      builder: (modalContext) => provideCardState(
+        context,
+        cardId,
+        CardModal(project: project),
+      ),
+    );
+
+    // await navigator.push('/$myAddress/card/$cardId');
+  }
+
   Future<void> handleInteractionWithContact(
       String? myAddress, SimpleContact contact) async {
     if (myAddress == null) {
@@ -458,6 +481,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         final orderId = checkoutUrl.queryParameters['orderId'];
         handleInteractionWithPlace(myAddress, address,
             openMenu: true, orderId: orderId);
+        break;
+      case QRFormat.cardUrl:
+        final project = parseCardProject(result);
+
+        handleInteractionWithCard(myAddress, address, project);
         break;
       case QRFormat.sendtoUrl:
       case QRFormat.sendtoUrlWithEIP681:

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/state/account.dart';
 import 'package:pay_app/state/app.dart';
+import 'package:pay_app/state/card.dart';
 import 'package:pay_app/state/checkout.dart';
 import 'package:pay_app/state/community.dart';
 import 'package:pay_app/state/contacts/contacts.dart';
@@ -102,6 +103,23 @@ Widget providePlaceState(
           account: account,
           slug: slug,
         ),
+      ),
+    ],
+    child: child,
+  );
+}
+
+Widget provideCardState(
+  BuildContext context,
+  String cardId,
+  Widget child,
+) {
+  return MultiProvider(
+    key: Key('card-$cardId'),
+    providers: [
+      ChangeNotifierProvider(
+        key: Key('card-$cardId'),
+        create: (_) => CardState(cardId: cardId),
       ),
     ],
     child: child,
