@@ -69,7 +69,7 @@ class SigAuthService {
 
     final signature = bytesToHex(
       _credentials.signPersonalMessageToUint8List(
-        convertBytesToUint8List(utf8.encode(message)),
+        keccak256(utf8.encode(message)),
       ),
       include0x: true,
     );
