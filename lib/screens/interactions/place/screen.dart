@@ -83,7 +83,8 @@ class _InteractionWithPlaceScreenState
     if (widget.openMenu &&
         placeWithMenu != null &&
         (placeWithMenu.place.display == Display.menu ||
-            placeWithMenu.place.display == Display.amountAndMenu)) {
+            placeWithMenu.place.display == Display.amountAndMenu) &&
+        placeWithMenu.items.isNotEmpty) {
       handleMenuPressed();
     }
   }
