@@ -80,23 +80,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
 
+    _initState();
+
     _searchFocusNode.addListener(_searchListener);
     _scrollController.addListener(_scrollListener);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _onboardingState = context.read<OnboardingState>();
-      _interactionState = context.read<InteractionState>();
-      _placesState = context.read<PlacesState>();
-      _walletState = context.read<WalletState>();
-      _profileState = context.read<ProfileState>();
-      _contactsState = context.read<ContactsState>();
-      _topupState = context.read<TopupState>();
-
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Start listening to lifecycle changes.
       WidgetsBinding.instance.addObserver(this);
-      onLoad();
+      await onLoad();
       handleDeepLink(widget.accountAddress, widget.deepLink);
     });
+  }
+
+  void _initState() {
+    _onboardingState = context.read<OnboardingState>();
+    _interactionState = context.read<InteractionState>();
+    _placesState = context.read<PlacesState>();
+    _walletState = context.read<WalletState>();
+    _profileState = context.read<ProfileState>();
+    _contactsState = context.read<ContactsState>();
+    _topupState = context.read<TopupState>();
   }
 
   Future<void> onLoad() async {
@@ -116,6 +120,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _onboardingState.clearConnectedAccountAddress();
       navigator.go('/');
       return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    final connectedAccountAddress =
+        context.read<OnboardingState>().connectedAccountAddress;
+    if (connectedAccountAddress == null) {
+      await delay(const Duration(milliseconds: 2000));
+      return onLoad();
     }
 
     await _walletState.updateBalance();
@@ -277,8 +292,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return;
     }
 
-    print('cardId: $cardId');
-
     await showCupertinoModalPopup(
       useRootNavigator: false,
       context: context,
@@ -288,8 +301,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         CardModal(project: project),
       ),
     );
-
-    // await navigator.push('/$myAddress/card/$cardId');
   }
 
   Future<void> handleInteractionWithContact(
