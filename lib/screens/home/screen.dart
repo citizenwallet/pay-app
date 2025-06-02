@@ -75,6 +75,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   late TopupState _topupState;
 
   bool _stopInitRetries = false;
+  bool _pauseDeepLinkHandling = false;
 
   @override
   void initState() {
@@ -141,10 +142,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> handleDeepLink(String accountAddress, String? deepLink) async {
-    if (deepLink != null) {
+    if (deepLink != null && !_pauseDeepLinkHandling) {
+      _pauseDeepLinkHandling = true;
+
       await delay(const Duration(milliseconds: 100));
 
-      handleQRScan(accountAddress, manualResult: deepLink);
+      await handleQRScan(accountAddress, manualResult: deepLink);
+
+      _pauseDeepLinkHandling = false;
     }
   }
 
@@ -455,7 +460,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     onLoad();
   }
 
-  void handleQRScan(String myAddress, {String? manualResult}) async {
+  Future<void> handleQRScan(String myAddress, {String? manualResult}) async {
     _stopInitRetries = true;
 
     final result = manualResult ??
