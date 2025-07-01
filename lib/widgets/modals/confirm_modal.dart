@@ -10,13 +10,19 @@ const List<String> emptyDetails = [];
 class ConfirmModal extends StatelessWidget {
   final String? title;
   final List<String> details;
+  final String? cancelText;
   final String? confirmText;
+  final Color? confirmColor;
+  final Color? labelColor;
 
   const ConfirmModal({
     super.key,
     this.title,
     this.details = emptyDetails,
+    this.cancelText,
     this.confirmText,
+    this.confirmColor,
+    this.labelColor,
   });
 
   void handleDismiss(BuildContext context) {
@@ -43,7 +49,6 @@ class ConfirmModal extends StatelessWidget {
       child: GestureDetector(
         onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
         child: CupertinoPageScaffold(
-          backgroundColor: backgroundColor,
           child: SafeArea(
             top: false,
             child: Flex(
@@ -51,28 +56,26 @@ class ConfirmModal extends StatelessWidget {
               children: [
                 Header(
                   title: title,
-                  color: backgroundColor,
+                  color: whiteColor,
                 ),
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      ...details
-                          .map(
-                            (d) => Padding(
-                              padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                              child: Text(
-                                d,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.normal,
-                                ),
-                              ),
+                      ...details.map(
+                        (d) => Padding(
+                          padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                          child: Text(
+                            d,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.normal,
                             ),
-                          )
-                          .toList(),
+                          ),
+                        ),
+                      ),
                       const SizedBox(
                         height: 40,
                       ),
@@ -81,7 +84,7 @@ class ConfirmModal extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Button(
-                            text: 'Cancel',
+                            text: cancelText ?? 'Cancel',
                             minWidth: 140,
                             maxWidth: 140,
                             color: neutralColor,
@@ -91,10 +94,11 @@ class ConfirmModal extends StatelessWidget {
                             width: 10,
                           ),
                           Button(
-                            text: confirmText ?? 'Delete account',
+                            text: confirmText ?? 'Confirm',
                             minWidth: 140,
                             maxWidth: 140,
-                            color: dangerColor,
+                            color: confirmColor ?? primaryColor,
+                            labelColor: labelColor ?? whiteColor,
                             onPressed: () => handleConfirm(context),
                           ),
                         ],
