@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
@@ -51,11 +52,8 @@ class CardManagerContract implements AbstractCardManagerContract {
   }
 
   @override
-  Future<EthereumAddress> getCardAddress(Uint8List hash) async {
-    final hexHash = bytesToHex(hash);
-    if (addressCache.containsKey(hexHash)) {
-      return addressCache[hexHash]!;
-    }
+  Future<EthereumAddress> getCardAddress(String serial) async {
+    Uint8List hash = keccak256(utf8.encode(serial));
 
     final function = rcontract.function('getCardAddress');
 
@@ -66,8 +64,6 @@ class CardManagerContract implements AbstractCardManagerContract {
     );
 
     final address = result[0] as EthereumAddress;
-
-    addressCache[hexHash] = address;
 
     return address;
   }

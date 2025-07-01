@@ -45,6 +45,7 @@ class OnboardingState with ChangeNotifier {
 
   // constructor here
   OnboardingState() {
+    connectedAccountAddress = getAccountAddress();
     init();
   }
 
@@ -59,8 +60,6 @@ class OnboardingState with ChangeNotifier {
     _config = config;
 
     _sessionService = SessionService(_config);
-
-    connectedAccountAddress = getAccountAddress();
   }
 
   bool _mounted = true;

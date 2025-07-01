@@ -59,10 +59,7 @@ dependencies:
     git:
       url: https://github.com/citizenwallet/contractforge.git
       ref: v0.0.19
-  mobile_scanner:
-    git:
-      url: https://github.com/juliansteenbakker/mobile_scanner.git
-      ref: 72f168c
+  mobile_scanner: ^7.0.0
   flutter_libphonenumber: ^2.5.1
   country_flags: ^3.2.0
   file_picker: ^10.0.0
@@ -120,6 +117,7 @@ flutter:
     - assets/icons/qr-code.png
     - assets/icons/app.png
     - assets/icons/card.png
+    - assets/icons/nfc.png
     - assets/icons/docs.svg
     - assets/config/v4/communities.json
     - assets/config/v4/communities.test.json

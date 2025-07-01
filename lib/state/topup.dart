@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/secure/secure.dart';
-import 'package:pay_app/services/session/session.dart';
 import 'package:pay_app/services/sigauth/sigauth.dart';
 
 class TopupState extends ChangeNotifier {
@@ -30,10 +29,17 @@ class TopupState extends ChangeNotifier {
   String topupUrl = '';
 
   // state methods here
-  Future<void> generateTopupUrl() async {
+  Future<void> generateTopupUrl({String? customAccount}) async {
     try {
       final config = await _configService.getLocalConfig();
       if (config == null) {
+        return;
+      }
+
+      if (customAccount != null) {
+        this.topupUrl = '${dotenv.env['TOPUP_URL']}?account=$customAccount';
+
+        safeNotifyListeners();
         return;
       }
 

@@ -159,9 +159,10 @@ class ProfileState with ChangeNotifier {
 
       final (address, privateKey) = credentials;
 
-      profile.username = username;
-      profile.account = address.hexEip55;
-      profile.name = username.isNotEmpty
+      _profile ??= ProfileV1();
+      _profile!.username = username;
+      _profile!.account = address.hexEip55;
+      _profile!.name = username.isNotEmpty
           ? username[0].toUpperCase() + username.substring(1)
           : 'Anonymous';
 

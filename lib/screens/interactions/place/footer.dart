@@ -102,12 +102,23 @@ class _FooterState extends State<Footer> {
     final balance = context.watch<WalletState>().balance;
 
     final toSendAmount = context.watch<OrdersWithPlaceState>().toSendAmount;
+    final placeMenu = context.watch<OrdersWithPlaceState>().placeMenu;
 
     final error = toSendAmount > balance;
     final disabled = toSendAmount == 0.0 || error;
 
     final paying = context.watch<OrdersWithPlaceState>().paying;
     final payError = context.watch<OrdersWithPlaceState>().payError;
+
+    final hasMenu = (widget.display == Display.menu ||
+            widget.display == Display.amountAndMenu) &&
+        placeMenu != null &&
+        placeMenu.menuItems.isNotEmpty;
+
+    final displayAmount = widget.display == Display.amount ||
+        widget.display == Display.amountAndMenu ||
+        (widget.display == Display.menu &&
+            (placeMenu == null || placeMenu.menuItems.isEmpty));
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -131,8 +142,7 @@ class _FooterState extends State<Footer> {
                 child: CupertinoActivityIndicator(),
               ),
             ),
-          if (widget.display == Display.menu ||
-              widget.display == Display.amountAndMenu)
+          if (hasMenu)
             WideButton(
               onPressed: widget.onMenuPressed,
               disabled: paying,
@@ -146,8 +156,7 @@ class _FooterState extends State<Footer> {
               ),
             ),
           if (widget.display == Display.amountAndMenu) SizedBox(height: 10),
-          if (widget.display == Display.amount ||
-              widget.display == Display.amountAndMenu)
+          if (displayAmount)
             TransactionInputRow(
               showAmountField: _showAmountField,
               amountController: _amountController,

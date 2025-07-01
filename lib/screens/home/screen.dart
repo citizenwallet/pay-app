@@ -8,6 +8,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:pay_app/models/interaction.dart';
+import 'package:pay_app/screens/home/card_modal.dart';
 import 'package:pay_app/screens/home/contact_list_item.dart';
 import 'package:pay_app/screens/home/profile_list_item.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
@@ -19,6 +20,7 @@ import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/places/places.dart';
 import 'package:pay_app/state/places/selectors.dart';
 import 'package:pay_app/state/profile.dart';
+import 'package:pay_app/state/state.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
@@ -73,28 +75,33 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   late TopupState _topupState;
 
   bool _stopInitRetries = false;
+  bool _pauseDeepLinkHandling = false;
 
   @override
   void initState() {
     super.initState();
 
+    _initState();
+
     _searchFocusNode.addListener(_searchListener);
     _scrollController.addListener(_scrollListener);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _onboardingState = context.read<OnboardingState>();
-      _interactionState = context.read<InteractionState>();
-      _placesState = context.read<PlacesState>();
-      _walletState = context.read<WalletState>();
-      _profileState = context.read<ProfileState>();
-      _contactsState = context.read<ContactsState>();
-      _topupState = context.read<TopupState>();
-
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Start listening to lifecycle changes.
       WidgetsBinding.instance.addObserver(this);
-      onLoad();
+      await onLoad();
       handleDeepLink(widget.accountAddress, widget.deepLink);
     });
+  }
+
+  void _initState() {
+    _onboardingState = context.read<OnboardingState>();
+    _interactionState = context.read<InteractionState>();
+    _placesState = context.read<PlacesState>();
+    _walletState = context.read<WalletState>();
+    _profileState = context.read<ProfileState>();
+    _contactsState = context.read<ContactsState>();
+    _topupState = context.read<TopupState>();
   }
 
   Future<void> onLoad() async {
@@ -116,6 +123,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return;
     }
 
+    if (!mounted) {
+      return;
+    }
+
+    final connectedAccountAddress =
+        context.read<OnboardingState>().connectedAccountAddress;
+    if (connectedAccountAddress == null) {
+      await delay(const Duration(milliseconds: 2000));
+      return onLoad();
+    }
+
     await _walletState.updateBalance();
     await _interactionState.getInteractions();
     _interactionState.startPolling(updateBalance: _walletState.updateBalance);
@@ -124,10 +142,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> handleDeepLink(String accountAddress, String? deepLink) async {
-    if (deepLink != null) {
+    if (deepLink != null && !_pauseDeepLinkHandling) {
+      _pauseDeepLinkHandling = true;
+
       await delay(const Duration(milliseconds: 100));
 
-      handleQRScan(accountAddress, manualResult: deepLink);
+      await handleQRScan(accountAddress, manualResult: deepLink);
+
+      _pauseDeepLinkHandling = false;
     }
   }
 
@@ -267,6 +289,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _stopInitRetries = false;
 
     clearSearch();
+  }
+
+  void handleInteractionWithCard(
+      String? myAddress, String cardId, String? project) async {
+    if (myAddress == null) {
+      return;
+    }
+
+    await showCupertinoModalPopup(
+      useRootNavigator: false,
+      context: context,
+      builder: (modalContext) => provideCardState(
+        context,
+        cardId,
+        CardModal(project: project),
+      ),
+    );
   }
 
   Future<void> handleInteractionWithContact(
@@ -421,7 +460,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     onLoad();
   }
 
-  void handleQRScan(String myAddress, {String? manualResult}) async {
+  Future<void> handleQRScan(String myAddress, {String? manualResult}) async {
     _stopInitRetries = true;
 
     final result = manualResult ??
@@ -458,6 +497,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         final orderId = checkoutUrl.queryParameters['orderId'];
         handleInteractionWithPlace(myAddress, address,
             openMenu: true, orderId: orderId);
+        break;
+      case QRFormat.cardUrl:
+        final project = parseCardProject(result);
+
+        handleInteractionWithCard(myAddress, address, project);
         break;
       case QRFormat.sendtoUrl:
       case QRFormat.sendtoUrlWithEIP681:

@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:http/http.dart';
 import 'package:pay_app/services/api/api.dart';
 import 'package:pay_app/services/config/legacy.dart';
 import 'package:collection/collection.dart';
 import 'package:pay_app/services/wallet/contracts/account_factory.dart';
+import 'package:pay_app/services/wallet/contracts/cards/interface.dart';
+import 'package:pay_app/services/wallet/contracts/cards/safe_card_manager.dart';
 import 'package:pay_app/services/wallet/contracts/communityModule.dart';
 import 'package:pay_app/services/wallet/contracts/entrypoint.dart';
 import 'package:pay_app/services/wallet/contracts/erc1155.dart';
@@ -12,6 +16,8 @@ import 'package:pay_app/services/wallet/contracts/safe_account.dart';
 import 'package:pay_app/services/wallet/contracts/session_manager_module.dart';
 import 'package:pay_app/services/wallet/contracts/simple_account.dart';
 import 'package:pay_app/services/wallet/contracts/two_fa_factory.dart';
+import 'package:pay_app/utils/uint8.dart';
+import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
 const String defaultPrimary = '#A256FF';
@@ -491,6 +497,7 @@ class CardsConfig extends ContractLocation {
     return CardsConfig(
         chainId: json['chain_id'],
         address: json['address'],
+        instanceId: json['instance_id'],
         type: CardManagerType.values.firstWhere((t) => t.name == json['type']));
   }
 
@@ -500,6 +507,7 @@ class CardsConfig extends ContractLocation {
     return {
       'chain_id': chainId,
       'address': address,
+      'instance_id': instanceId,
       'type': type.name,
     };
   }
@@ -507,7 +515,7 @@ class CardsConfig extends ContractLocation {
   // to string
   @override
   String toString() {
-    return 'CardsConfig{chainId: $chainId, address: $address, type: $type}';
+    return 'CardsConfig{chainId: $chainId, address: $address, instanceId: $instanceId, type: $type}';
   }
 }
 
@@ -598,6 +606,7 @@ class Config {
   late CommunityModule communityModuleContract;
   late AccountFactoryService accountFactoryContract;
   late ProfileContract profileContract;
+  AbstractCardManagerContract? cardManagerContract;
   late SessionManagerModuleService sessionManagerModuleContract;
   late TwoFAFactoryService twoFAFactoryContract;
 
@@ -675,6 +684,19 @@ class Config {
       community.profile.address,
     );
     await profileContract.init();
+
+    final primaryCardManager = getPrimaryCardManager();
+
+    if (primaryCardManager != null &&
+        primaryCardManager.type == CardManagerType.safe) {
+      cardManagerContract = SafeCardManagerContract(
+        keccak256(utf8.encode(primaryCardManager.instanceId!)),
+        chain.id,
+        ethClient,
+        primaryCardManager.address,
+      );
+      await cardManagerContract!.init();
+    }
 
     sessionManagerModuleContract = SessionManagerModuleService(
       chain.id,
