@@ -327,6 +327,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return;
     }
 
+    HapticFeedback.heavyImpact();
+
     await showCupertinoModalPopup(
       useRootNavigator: false,
       context: context,
@@ -405,6 +407,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     _stopInitRetries = true;
 
+    HapticFeedback.heavyImpact();
+
     await navigator.push('/$myAddress/my-account');
 
     _stopInitRetries = false;
@@ -421,6 +425,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _stopInitRetries = false;
       return;
     }
+
+    HapticFeedback.heavyImpact();
 
     final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
 
@@ -481,6 +487,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final navigator = GoRouter.of(context);
 
     _stopInitRetries = true;
+
+    HapticFeedback.heavyImpact();
 
     await navigator.push('/$myAddress/my-account/settings');
 
