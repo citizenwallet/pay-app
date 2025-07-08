@@ -12,6 +12,7 @@ import 'package:pay_app/screens/home/card_modal.dart';
 import 'package:pay_app/screens/home/contact_list_item.dart';
 import 'package:pay_app/screens/home/profile_list_item.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/state/contacts/contacts.dart';
 import 'package:pay_app/state/contacts/selectors.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
@@ -26,12 +27,14 @@ import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/utils/qr.dart';
+import 'package:pay_app/widgets/modals/confirm_modal.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:pay_app/widgets/scanner/scanner_modal.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
+import 'package:universal_io/io.dart';
 
 import 'profile_bar.dart';
 import 'search_bar.dart';
@@ -209,9 +212,36 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  void _searchListener() {
+  void _searchListener() async {
     if (_searchFocusNode.hasFocus) {
-      _contactsState.fetchContacts();
+      if (Platform.isAndroid) {
+        if (PreferencesService().contactPermission == null) {
+          final confirmed = await showCupertinoModalPopup<bool>(
+            context: context,
+            barrierDismissible: true,
+            builder: (modalContext) => ConfirmModal(
+              title: 'Display contacts',
+              details: [
+                'This app uses your contact list to help you search for the right person.',
+                'No contact data is sent to our servers.',
+                'We generate the account number on device.',
+              ],
+              cancelText: 'Skip',
+              confirmText: 'Allow',
+            ),
+          );
+
+          PreferencesService().setContactPermission(confirmed ?? false);
+        }
+
+        final hasPermission = PreferencesService().contactPermission;
+
+        if (hasPermission == true) {
+          _contactsState.fetchContacts();
+        }
+      } else {
+        _contactsState.fetchContacts();
+      }
       setState(() {
         isKeyboardVisible = true;
         isSearching = true;

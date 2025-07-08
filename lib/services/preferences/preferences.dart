@@ -40,4 +40,13 @@ class PreferencesService {
   String? get balance {
     return _preferences.getString('balance');
   }
+
+  // save contact permission
+  Future setContactPermission(bool permission) async {
+    await _preferences.setBool('contact_permission', permission);
+  }
+
+  bool? get contactPermission {
+    return _preferences.getBool('contact_permission');
+  }
 }
