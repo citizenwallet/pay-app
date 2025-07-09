@@ -369,12 +369,8 @@ class _ProfileModalState extends State<ProfileModal> {
       (state) => state.currentToken,
     );
 
-    final tokenLoadingStates = context.select<WalletState, Map<String, bool>>(
-      (state) => state.tokenLoadingStates,
-    );
-    final tokenBalances = context.select<WalletState, Map<String, String>>(
-      (state) => state.tokenBalances,
-    );
+    final tokenLoadingStates = context.watch<WalletState>().tokenLoadingStates;
+    final tokenBalances = context.watch<WalletState>().tokenBalances;
 
     final theme = CupertinoTheme.of(context);
     final primaryColor = theme.primaryColor;
