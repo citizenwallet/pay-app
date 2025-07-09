@@ -12,7 +12,7 @@ import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
 import 'header.dart';
-import 'order_list_item.dart';
+import '../../../widgets/orders/order_list_item.dart';
 import 'footer.dart';
 
 class InteractionWithPlaceScreen extends StatefulWidget {

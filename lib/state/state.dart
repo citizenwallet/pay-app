@@ -13,6 +13,7 @@ import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/state/places/places.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/topup.dart';
+import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:provider/provider.dart';
 
@@ -116,7 +117,10 @@ Widget providePlaceState(
 
 Widget provideCardState(
   BuildContext context,
+  Config config,
   String cardId,
+  String cardAddress,
+  String myAddress,
   Widget child,
 ) {
   return MultiProvider(
@@ -124,7 +128,14 @@ Widget provideCardState(
     providers: [
       ChangeNotifierProvider(
         key: Key('card-$cardId'),
-        create: (_) => CardState(cardId: cardId),
+        create: (_) => CardState(config, cardId: cardId),
+      ),
+      ChangeNotifierProvider(
+        key: Key('transactions-with-user-$cardId'),
+        create: (_) => TransactionsWithUserState(
+          withUserAddress: cardAddress,
+          myAddress: myAddress,
+        ),
       ),
     ],
     child: child,

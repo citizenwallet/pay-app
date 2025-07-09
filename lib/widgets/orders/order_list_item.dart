@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/menu_item.dart';
 
 import 'package:pay_app/models/order.dart';
+import 'package:pay_app/models/place.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/date.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
@@ -73,7 +74,10 @@ class OrderListItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Amount(amount: order.total),
+        Amount(
+          amount: order.total,
+          isPositive: order.place.display == Display.topup,
+        ),
         SizedBox(height: 4),
         TimeAgo(createdAt: order.createdAt),
       ],
@@ -262,6 +266,7 @@ class PaymentMethodBadge extends StatelessWidget {
 
     switch (orderType) {
       case OrderType.terminal:
+      case OrderType.pos:
         return _terminalPaymentBadge();
       case OrderType.web:
         return _qrPaymentBadge();
@@ -273,10 +278,12 @@ class PaymentMethodBadge extends StatelessWidget {
 
 class Amount extends StatelessWidget {
   final double amount;
+  final bool isPositive;
 
   const Amount({
     super.key,
     required this.amount,
+    this.isPositive = true,
   });
 
   @override
@@ -289,7 +296,7 @@ class Amount extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         Text(
-          '${amount >= 0 ? '+' : '-'}${amount.toStringAsFixed(2)}',
+          '${isPositive ? '+' : '-'}${amount.toStringAsFixed(2)}',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,

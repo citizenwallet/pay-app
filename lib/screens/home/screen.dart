@@ -8,12 +8,14 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:pay_app/models/interaction.dart';
-import 'package:pay_app/screens/home/card_modal.dart';
+import 'package:pay_app/screens/home/card_modal/card_modal.dart';
 import 'package:pay_app/screens/home/contact_list_item.dart';
 import 'package:pay_app/screens/home/profile_list_item.dart';
 import 'package:pay_app/screens/home/profile_modal.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
+import 'package:pay_app/state/card.dart';
 import 'package:pay_app/state/contacts/contacts.dart';
 import 'package:pay_app/state/contacts/selectors.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
@@ -324,24 +326,39 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void handleInteractionWithCard(
-      String? myAddress, String cardId, String? project) async {
+    String? myAddress,
+    String cardId,
+    String? project,
+  ) async {
     if (myAddress == null) {
       return;
     }
 
     final config = context.read<WalletState>().config;
 
+    final cardAddress = await config.cardManagerContract!.getCardAddress(
+      cardId,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
     HapticFeedback.heavyImpact();
 
     await showCupertinoModalPopup(
       useRootNavigator: false,
       context: context,
-      builder: (modalContext) => provideCardState(
-        context,
-        config,
-        cardId,
-        CardModal(project: project),
-      ),
+      builder: (modalContext) {
+        return provideCardState(
+          context,
+          config,
+          cardId,
+          cardAddress.hexEip55,
+          myAddress,
+          CardModal(project: project),
+        );
+      },
     );
   }
 

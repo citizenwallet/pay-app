@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:pay_app/models/place.dart';
 import 'package:web3dart/web3dart.dart' show EthereumAddress;
 
 enum PaymentMode {
@@ -17,6 +18,40 @@ enum OrderType {
   web,
   app,
   terminal,
+  pos,
+}
+
+class OrderPlace {
+  final String slug;
+  final Display display;
+  final String account;
+
+  OrderPlace({
+    required this.slug,
+    required this.display,
+    required this.account,
+  });
+
+  factory OrderPlace.fromJson(Map<String, dynamic> json) {
+    final accounts = json['accounts'] as List<dynamic>;
+    final account = accounts.first;
+
+    return OrderPlace(
+      slug: json['slug'],
+      display:
+          Display.values.firstWhereOrNull((e) => e.name == json['display']) ??
+              Display.amount,
+      account: account,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'slug': slug,
+      'display': display.name,
+      'accounts': [account],
+    };
+  }
 }
 
 class Order {
@@ -33,6 +68,7 @@ class Order {
   final OrderType? type;
   final EthereumAddress? account;
   final double fees;
+  final OrderPlace place;
 
   Order({
     required this.id,
@@ -48,9 +84,11 @@ class Order {
     this.type,
     this.account,
     this.fees = 0,
+    required this.place,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
+    print(json);
     return Order(
       id: json['id'],
       createdAt: DateTime.parse(json['created_at']),
@@ -71,6 +109,7 @@ class Order {
           ? EthereumAddress.fromHex(json['account'])
           : null,
       fees: (json['fees'] ?? 0).toDouble() / 100,
+      place: OrderPlace.fromJson(json['place']),
     );
   }
 

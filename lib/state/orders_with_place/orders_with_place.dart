@@ -192,6 +192,11 @@ class OrdersWithPlaceState with ChangeNotifier {
         items: [],
         status: OrderStatus.pending,
         description: message,
+        place: OrderPlace(
+          slug: slug,
+          display: place!.place.display,
+          account: place!.place.account,
+        ),
       );
 
       payingOrder = order;
