@@ -11,6 +11,12 @@ import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:provider/provider.dart';
 
+enum TapDepth {
+  none,
+  tapped,
+  active,
+}
+
 class ProfileBar extends StatefulWidget {
   final bool loading;
   final String accountAddress;
@@ -32,7 +38,7 @@ class ProfileBar extends StatefulWidget {
 }
 
 class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
-  bool _isTapped = false;
+  TapDepth _tapDepth = TapDepth.none;
   late AnimationController _rotationController;
   late Animation<double> _rotationAnimation;
 
@@ -62,7 +68,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
     await widget.onProfileTap();
 
     setState(() {
-      _isTapped = false;
+      _tapDepth = TapDepth.none;
     });
     _rotationController.reverse();
   }
@@ -70,13 +76,16 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
   void handleTapIn() {
     HapticFeedback.lightImpact();
     setState(() {
-      _isTapped = true;
+      _tapDepth = TapDepth.tapped;
     });
-    _rotationController.forward();
   }
 
   void handleTapOut() {
     HapticFeedback.heavyImpact();
+    setState(() {
+      _tapDepth = TapDepth.active;
+    });
+    _rotationController.forward();
   }
 
   @override
@@ -123,16 +132,23 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 100),
           decoration: BoxDecoration(
-            color: !_isTapped
-                ? primaryColor.withAlpha(20)
-                : primaryColor.withAlpha(40),
-            // borderRadius: BorderRadius.circular(16),
+            color: switch (_tapDepth) {
+              TapDepth.tapped => primaryColor.withAlpha(60),
+              TapDepth.active => primaryColor.withAlpha(40),
+              _ => primaryColor.withAlpha(20),
+            },
             borderRadius: BorderRadius.circular(60),
             border: Border.all(
-              color: !_isTapped
-                  ? primaryColor.withAlpha(40)
-                  : primaryColor.withAlpha(60),
-              width: _isTapped ? 3 : 1,
+              color: switch (_tapDepth) {
+                TapDepth.tapped => primaryColor.withAlpha(80),
+                TapDepth.active => primaryColor.withAlpha(60),
+                _ => primaryColor.withAlpha(40),
+              },
+              width: switch (_tapDepth) {
+                TapDepth.tapped => 3,
+                TapDepth.active => 2,
+                _ => 1,
+              },
             ),
           ),
           padding: const EdgeInsets.symmetric(
