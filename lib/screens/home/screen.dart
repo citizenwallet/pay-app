@@ -28,6 +28,7 @@ import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/utils/qr.dart';
+import 'package:pay_app/utils/ratio.dart';
 import 'package:pay_app/widgets/modals/confirm_modal.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:pay_app/widgets/scanner/scanner_modal.dart';
@@ -151,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
       await delay(const Duration(milliseconds: 100));
 
-      await handleQRScan(accountAddress, manualResult: deepLink);
+      await handleQRScan(accountAddress, () {}, manualResult: deepLink);
 
       _pauseDeepLinkHandling = false;
     }
@@ -328,6 +329,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return;
     }
 
+    final config = context.read<WalletState>().config;
+
     HapticFeedback.heavyImpact();
 
     await showCupertinoModalPopup(
@@ -335,6 +338,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       context: context,
       builder: (modalContext) => provideCardState(
         context,
+        config,
         cardId,
         CardModal(project: project),
       ),
@@ -508,7 +512,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     onLoad();
   }
 
-  Future<void> handleQRScan(String myAddress, {String? manualResult}) async {
+  Future<void> handleQRScan(String myAddress, Function() callback,
+      {String? manualResult}) async {
     _stopInitRetries = true;
 
     final result = manualResult ??
@@ -519,6 +524,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             modalKey: 'home-qr-scanner',
           ),
         );
+
+    callback();
 
     _stopInitRetries = false;
 
@@ -795,16 +802,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
               ),
               if (!loading)
-                Positioned(
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 100),
                   left: 0,
                   right: 0,
-                  bottom: 10 + safeBottomPadding,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 100),
-                    height: isKeyboardVisible ? 0 : (100 * heightFactor),
-                    child: ScanQrCircle(
-                      handleQRScan: () => handleQRScan(myAddress ?? ''),
-                      heightFactor: heightFactor,
+                  bottom: -1 *
+                      progressiveClamp(
+                        -10 - safeBottomPadding,
+                        120,
+                        heightFactor,
+                      ),
+                  child: SizedBox(
+                    height: 120,
+                    width: 120,
+                    child: Center(
+                      child: ScanQrCircle(
+                        handleQRScan: (callback) => handleQRScan(
+                          myAddress ?? '',
+                          callback,
+                        ),
+                      ),
                     ),
                   ),
                 ),

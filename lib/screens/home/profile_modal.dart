@@ -88,8 +88,6 @@ class _ProfileModalState extends State<ProfileModal> {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // _buildProfileHeader(context),
-          // const SizedBox(height: 24),
           _buildTokensList(context),
           const SizedBox(height: 12),
           Container(
@@ -101,8 +99,6 @@ class _ProfileModalState extends State<ProfileModal> {
           ),
           const SizedBox(height: 12),
           _buildActionButtons(),
-          // const SizedBox(height: 24),
-          // _buildCloseButton(context),
         ],
       ),
     );
