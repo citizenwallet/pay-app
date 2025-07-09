@@ -88,7 +88,6 @@ class Order {
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
-    print(json);
     return Order(
       id: json['id'],
       createdAt: DateTime.parse(json['created_at']),

@@ -4,8 +4,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/screens/home/card_modal/footer.dart';
+import 'package:pay_app/state/cards.dart';
 import 'package:pay_app/state/topup.dart';
-import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/widgets/orders/order_list_item.dart';
 import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
@@ -13,15 +13,16 @@ import 'package:pay_app/state/card.dart';
 import 'package:pay_app/theme/card_colors.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/button.dart';
-import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
+import 'package:pay_app/widgets/card.dart' show Card;
 import 'package:provider/provider.dart';
 
 class CardModal extends StatefulWidget {
+  final String uid;
   final String? project;
 
-  const CardModal({super.key, this.project});
+  const CardModal({super.key, required this.uid, this.project});
 
   @override
   State<CardModal> createState() => _CardModalState();
@@ -32,6 +33,7 @@ class _CardModalState extends State<CardModal> {
   FocusNode messageFocusNode = FocusNode();
 
   late CardState _cardState;
+  late CardsState _cardsState;
   late TopupState _topupState;
 
   ScrollController scrollController = ScrollController();
@@ -44,6 +46,7 @@ class _CardModalState extends State<CardModal> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _cardState = context.read<CardState>();
+      _cardsState = context.read<CardsState>();
       _topupState = context.read<TopupState>();
 
       amountFocusNode.addListener(onFocus);
@@ -166,6 +169,42 @@ class _CardModalState extends State<CardModal> {
     );
   }
 
+  void handleRemoveCard() async {
+    final navigator = GoRouter.of(context);
+
+    // confirm modal
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text('Remove Card'),
+        content: Text('Are you sure you want to remove this card?'),
+        actions: [
+          CupertinoDialogAction(
+            child: Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == null || !confirmed) {
+      return;
+    }
+
+    await _cardsState.removeCard(widget.uid);
+
+    if (!mounted) {
+      return;
+    }
+
+    navigator.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
@@ -230,7 +269,7 @@ class _CardModalState extends State<CardModal> {
               ),
             ],
           ),
-          _buildCard(context, card),
+          _buildCard(context),
           if (card == null) const SizedBox(height: 24),
           if (card == null)
             Button(
@@ -239,6 +278,7 @@ class _CardModalState extends State<CardModal> {
               labelColor: whiteColor,
               color: cardColor,
             ),
+          if (card == null) const SizedBox(height: 24),
           if (card != null)
             _buildOrders(
               context,
@@ -257,115 +297,22 @@ class _CardModalState extends State<CardModal> {
     );
   }
 
-  Widget _buildCard(BuildContext context, DBCard? card) {
+  Widget _buildCard(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
     final balance = context.select<CardState, double>((state) => state.balance);
     final profile =
         context.select<CardState, ProfileV1?>((state) => state.profile);
 
     final cardColor = projectCardColor(widget.project);
 
-    return Container(
-      height: 200,
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: CupertinoColors.white),
-        boxShadow: [
-          BoxShadow(
-            color: blackColor.withAlpha(10),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  profile?.username != null
-                      ? '@${profile?.username}'
-                      : 'anonymous',
-                  style: const TextStyle(
-                    color: CupertinoColors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Image.asset(
-                  'assets/icons/nfc.png',
-                  color: CupertinoColors.white,
-                  width: 24,
-                  height: 24,
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  color: whiteColor,
-                  borderRadius: BorderRadius.circular(8),
-                  minSize: 0,
-                  onPressed: handleTopUpCard,
-                  child: SizedBox(
-                    width: 100,
-                    height: 28,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Icon(
-                          CupertinoIcons.plus,
-                          color: cardColor,
-                          size: 14,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'add funds',
-                          style: TextStyle(
-                            color: cardColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        CoinLogo(size: 20),
-                        const SizedBox(width: 4),
-                        Text(
-                          balance.toStringAsFixed(2),
-                          style: TextStyle(
-                            color: CupertinoColors.white,
-                            fontSize: 20,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ],
-                    )
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+    return Card(
+      width: width * 0.8,
+      uid: widget.uid,
+      color: cardColor,
+      profile: profile,
+      balance: balance,
+      onTopUpPressed: handleTopUpCard,
     );
   }
 
@@ -399,6 +346,12 @@ class _CardModalState extends State<CardModal> {
               ),
             ),
           ),
+          SliverToBoxAdapter(
+            child: const SizedBox(height: 24),
+          ),
+          SliverToBoxAdapter(
+            child: _buildCardActions(context),
+          ),
           SliverList(
             delegate: SliverChildBuilderDelegate(
               childCount: orders.length,
@@ -429,6 +382,20 @@ class _CardModalState extends State<CardModal> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCardActions(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Button(
+          onPressed: handleRemoveCard,
+          text: 'Remove Card',
+          labelColor: whiteColor,
+          color: dangerColor,
+        ),
+      ],
     );
   }
 }

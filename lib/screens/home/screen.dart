@@ -356,7 +356,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           cardId,
           cardAddress.hexEip55,
           myAddress,
-          CardModal(project: project),
+          CardModal(uid: cardId, project: project),
         );
       },
     );

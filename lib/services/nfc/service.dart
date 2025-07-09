@@ -8,7 +8,13 @@ abstract class NFCService {
   Future<void> printReceipt(
       {String? amount, String? symbol, String? description, String? link});
 
-  Future<String> readSerialNumber({String? message, String? successMessage});
+  Future<(String, String?)> readTag({String? message, String? successMessage});
+
+  Future<(String, String?)> configureTag(
+    String baseUri, {
+    String? message,
+    String? successMessage,
+  });
 
   Future<void> stop();
 

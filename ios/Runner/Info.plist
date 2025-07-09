@@ -65,6 +65,8 @@
 		<string>In Brussels Pay, phone numbers are user accounts. Use your contacts to search for people to send payments to. This information is never shared with anyone.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Brussels Pay needs photo library access in order to pick a profile photo.</string>
+		<key>NFCReaderUsageDescription</key>
+		<string>Brussels Pay needs NFC scanner access in order to scan NFC tags. Scanning is done on device.</string>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UIBackgroundModes</key>

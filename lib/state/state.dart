@@ -4,6 +4,7 @@ import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/state/account.dart';
 import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/card.dart';
+import 'package:pay_app/state/cards.dart';
 import 'package:pay_app/state/checkout.dart';
 import 'package:pay_app/state/community.dart';
 import 'package:pay_app/state/contacts/contacts.dart';
@@ -77,6 +78,10 @@ Widget provideAccountState(
       ChangeNotifierProvider(
         key: Key('account-$account'),
         create: (_) => AccountState(config),
+      ),
+      ChangeNotifierProvider(
+        key: Key('cards-$account'),
+        create: (_) => CardsState(config),
       ),
     ],
     child: child,

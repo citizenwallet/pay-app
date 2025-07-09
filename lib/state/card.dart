@@ -169,6 +169,8 @@ class CardState with ChangeNotifier {
 
       card = await _cards.getByUid(cardId);
       safeNotifyListeners();
+
+      fetchOrders(refresh: true);
     } catch (e) {
       //
       debugPrint(e.toString());

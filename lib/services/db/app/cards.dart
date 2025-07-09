@@ -125,4 +125,12 @@ class CardsTable extends DBTable {
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
+
+  Future<void> delete(String uid) async {
+    await db.delete(
+      name,
+      where: 'uid = ?',
+      whereArgs: [uid],
+    );
+  }
 }

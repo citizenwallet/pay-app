@@ -131,6 +131,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
         ),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 100),
+          curve: Curves.easeInOut,
           decoration: BoxDecoration(
             color: switch (_tapDepth) {
               TapDepth.tapped => primaryColor.withAlpha(60),

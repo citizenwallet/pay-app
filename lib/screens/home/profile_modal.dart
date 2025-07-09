@@ -1,15 +1,23 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pay_app/screens/home/card_modal/card_modal.dart';
 import 'package:pay_app/services/config/config.dart';
+import 'package:pay_app/services/db/app/cards.dart';
+import 'package:pay_app/state/cards.dart';
+import 'package:pay_app/state/state.dart';
 import 'package:pay_app/state/wallet.dart';
+import 'package:pay_app/theme/card_colors.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/currency.dart';
 import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/widgets/button.dart';
+import 'package:pay_app/widgets/card.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
+import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:provider/provider.dart';
+import 'package:toastification/toastification.dart';
 
 class ProfileModal extends StatefulWidget {
   final String accountAddress;
@@ -22,12 +30,14 @@ class ProfileModal extends StatefulWidget {
 
 class _ProfileModalState extends State<ProfileModal> {
   late WalletState _walletState;
+  late CardsState _cardsState;
 
   @override
   void initState() {
     super.initState();
 
     _walletState = context.read<WalletState>();
+    _cardsState = context.read<CardsState>();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       onLoad();
@@ -37,7 +47,8 @@ class _ProfileModalState extends State<ProfileModal> {
   void onLoad() async {
     await delay(const Duration(milliseconds: 100));
 
-    await _walletState.loadTokenBalances();
+    _walletState.loadTokenBalances();
+    _cardsState.fetchCards();
   }
 
   void handleEditProfile() {
@@ -66,13 +77,170 @@ class _ProfileModalState extends State<ProfileModal> {
     navigator.pop(tokenKey);
   }
 
+  Future<void> handleCardSelect(
+    String? myAddress,
+    String cardId,
+    String? project,
+  ) async {
+    if (myAddress == null) {
+      return;
+    }
+
+    final config = context.read<WalletState>().config;
+
+    final cardAddress = await config.cardManagerContract!.getCardAddress(
+      cardId,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    HapticFeedback.heavyImpact();
+
+    await showCupertinoModalPopup(
+      useRootNavigator: false,
+      context: context,
+      builder: (modalContext) {
+        return provideCardState(
+          context,
+          config,
+          cardId,
+          cardAddress.hexEip55,
+          myAddress,
+          CardModal(uid: cardId, project: project),
+        );
+      },
+    );
+  }
+
+  Future<void> handleAddCard() async {
+    HapticFeedback.heavyImpact();
+
+    final error = await _cardsState.addCard();
+
+    if (error == null) {
+      if (!mounted) {
+        return;
+      }
+
+      toastification.showCustom(
+        context: context,
+        autoCloseDuration: const Duration(seconds: 5),
+        alignment: Alignment.bottomCenter,
+        builder: (context, toast) => Toast(
+          icon: const Text('✅'),
+          title: const Text('Card added'),
+        ),
+      );
+
+      return;
+    }
+
+    await handleAddCardError(error);
+    return;
+  }
+
+  Future<void> handleAddCardError(AddCardError error) async {
+    if (error == AddCardError.cardAlreadyExists) {
+      // show error
+      if (!mounted) {
+        return;
+      }
+
+      toastification.showCustom(
+        context: context,
+        autoCloseDuration: const Duration(seconds: 5),
+        alignment: Alignment.bottomCenter,
+        builder: (context, toast) => Toast(
+          icon: const Text('✅'),
+          title: const Text('Card already exists'),
+        ),
+      );
+    }
+
+    if (error == AddCardError.cardNotConfigured) {
+      // show error
+      if (!mounted) {
+        return;
+      }
+
+      // show a confirmation modal
+      final confirmed = await showCupertinoDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => CupertinoAlertDialog(
+          title: Text('Card not configured'),
+          content: Text(
+              'This card is not configured. Would you like to configure it?'),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Configure'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == null || !confirmed) {
+        return;
+      }
+
+      final error = await _cardsState.configureCard();
+
+      if (error == null) {
+        if (!mounted) {
+          return;
+        }
+
+        toastification.showCustom(
+          context: context,
+          autoCloseDuration: const Duration(seconds: 5),
+          alignment: Alignment.bottomCenter,
+          builder: (context, toast) => Toast(
+            icon: const Text('✅'),
+            title: const Text('Card configured'),
+          ),
+        );
+        return;
+      }
+
+      await handleAddCardError(error);
+      return;
+    }
+
+    if (error == AddCardError.nfcNotAvailable) {
+      // show error
+      if (!mounted) {
+        return;
+      }
+
+      toastification.showCustom(
+        context: context,
+        autoCloseDuration: const Duration(seconds: 5),
+        alignment: Alignment.bottomCenter,
+        builder: (context, toast) => Toast(
+          icon: const Text('❌'),
+          title: const Text('NFC is not available on this device'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
+
     return DismissibleModalPopup(
       modalKey: 'profile_modal',
-      maxHeight: 600,
+      maxHeight: height * 0.8,
       paddingSides: 16,
-      paddingTopBottom: 16,
+      paddingTopBottom: 0,
       topRadius: 12,
       onDismissed: (dir) {
         handleClose(context);
@@ -82,23 +250,62 @@ class _ProfileModalState extends State<ProfileModal> {
   }
 
   Widget _buildContent(BuildContext context) {
+    final cards = context.watch<CardsState>().cards;
+
     return SafeArea(
       top: false,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
+      bottom: false,
+      child: Stack(
+        alignment: Alignment.topCenter,
         children: [
-          _buildTokensList(context),
-          const SizedBox(height: 12),
-          Container(
-            height: 1,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Color(0xFFD9D9D9),
+          Column(
+            children: [
+              const SizedBox(height: 12),
+              _buildActionButtons(),
+              const SizedBox(height: 12),
+              Container(
+                height: 1,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Color(0xFFD9D9D9),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 0),
+                  scrollDirection: Axis.vertical,
+                  children: [
+                    const SizedBox(height: 12),
+                    _buildTokensList(context),
+                    const SizedBox(height: 12),
+                    Container(
+                      height: 1,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFD9D9D9),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildCardsList(context, cards),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: CupertinoButton(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              color: whiteColor,
+              borderRadius: BorderRadius.circular(8),
+              onPressed: () => handleClose(context),
+              child: Icon(
+                CupertinoIcons.xmark,
+                color: textColor,
+              ),
             ),
           ),
-          const SizedBox(height: 12),
-          _buildActionButtons(),
         ],
       ),
     );
@@ -107,6 +314,20 @@ class _ProfileModalState extends State<ProfileModal> {
   Widget _buildActionButtons() {
     return Column(
       children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Text(
+              'Account',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         Button(
           onPressed: handleEditProfile,
           text: 'Edit Profile',
@@ -143,6 +364,11 @@ class _ProfileModalState extends State<ProfileModal> {
     final config = context.select<WalletState, Config>(
       (state) => state.config,
     );
+
+    final currentToken = context.select<WalletState, String?>(
+      (state) => state.currentToken,
+    );
+
     final tokenLoadingStates = context.select<WalletState, Map<String, bool>>(
       (state) => state.tokenLoadingStates,
     );
@@ -176,23 +402,13 @@ class _ProfileModalState extends State<ProfileModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Text(
               'Tokens',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: textColor,
-              ),
-            ),
-            CupertinoButton(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              color: whiteColor,
-              borderRadius: BorderRadius.circular(8),
-              onPressed: () => handleClose(context),
-              child: Icon(
-                CupertinoIcons.xmark,
                 color: textColor,
               ),
             ),
@@ -208,13 +424,19 @@ class _ProfileModalState extends State<ProfileModal> {
             tokenConfig.decimals,
           );
 
+          final isSelected = currentToken == tokenKey;
+
           return GestureDetector(
             onTap: () => handleTokenSelect(tokenKey),
             child: Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: CupertinoColors.systemGrey6,
+                color: backgroundColor,
+                border: Border.all(
+                  color: isSelected ? primaryColor : backgroundColor,
+                  width: 2,
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -294,6 +516,61 @@ class _ProfileModalState extends State<ProfileModal> {
             ),
           );
         }).toList()),
+      ],
+    );
+  }
+
+  Widget _buildCardsList(BuildContext context, List<DBCard> cards) {
+    final width = MediaQuery.of(context).size.width;
+
+    final primaryColor = CupertinoTheme.of(context).primaryColor;
+
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Text(
+              'Cards',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...(cards.map((card) {
+          final cardColor = projectCardColor(card.project);
+
+          return Card(
+            width: width * 0.8,
+            uid: card.uid,
+            color: cardColor,
+            profile: null,
+            onCardPressed: (uid) => handleCardSelect(
+              widget.accountAddress,
+              uid,
+              card.project,
+            ),
+          );
+        }).toList()),
+        const SizedBox(height: 12),
+        Button(
+          onPressed: () => handleAddCard(),
+          text: 'Add Card',
+          labelColor: whiteColor,
+          color: primaryColor,
+          suffix: Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Image.asset(
+              'assets/icons/nfc.png',
+              width: 20,
+              height: 20,
+            ),
+          ),
+        ),
       ],
     );
   }

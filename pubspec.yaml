@@ -76,6 +76,7 @@ dependencies:
   firebase_crashlytics: ^4.3.5
   toastification: ^3.0.2
   nfc_manager: ^4.0.2
+  nfc_manager_ndef: ^1.0.1
 
 dev_dependencies:
   flutter_test:

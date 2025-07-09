@@ -5,13 +5,13 @@ import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
+import 'package:pay_app/widgets/account_card.dart';
 import 'package:pay_app/widgets/button.dart';
 
 import 'package:pay_app/widgets/wide_button.dart';
 import 'package:provider/provider.dart';
 
 import 'about.dart';
-import '../../../widgets/account_card.dart';
 
 class MyAccountSettings extends StatefulWidget {
   final String accountAddress;
