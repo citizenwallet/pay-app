@@ -13,6 +13,7 @@ import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/state/places/places.dart';
 import 'package:pay_app/state/profile.dart';
+import 'package:pay_app/state/scanner.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
@@ -36,6 +37,9 @@ Widget provideAppState(
         ),
         ChangeNotifierProvider(
           create: (_) => OnboardingState(config),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ScanState(),
         ),
       ],
       builder: builder,

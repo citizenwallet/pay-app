@@ -1,10 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/db/app/db.dart';
-import 'package:pay_app/services/nfc/default.dart';
-import 'package:pay_app/services/nfc/service.dart';
 
 enum AddCardError {
   cardAlreadyExists,
@@ -17,7 +14,6 @@ enum AddCardError {
 class CardsState with ChangeNotifier {
   // instantiate services here
   final CardsTable _cards = AppDBService().cards;
-  final NFCService _nfc = DefaultNFCService();
 
   // private variables here
   final Config _config;
@@ -28,7 +24,6 @@ class CardsState with ChangeNotifier {
   }
 
   void init() async {
-    nfcAvailable = await _nfc.isAvailable();
     safeNotifyListeners();
   }
 
@@ -46,8 +41,6 @@ class CardsState with ChangeNotifier {
   }
 
   // state variables here
-  bool nfcAvailable = false;
-
   List<DBCard> cards = [];
 
   // state methods here
@@ -67,18 +60,8 @@ class CardsState with ChangeNotifier {
     }
   }
 
-  Future<AddCardError?> addCard() async {
+  Future<AddCardError?> addCard(String uid, String? uri) async {
     try {
-      final available = await _nfc.isAvailable();
-      if (!available) {
-        return AddCardError.nfcNotAvailable;
-      }
-
-      final (uid, uri) = await _nfc.readTag(
-        message: 'Bring the card close to the phone',
-        successMessage: 'Card identified',
-      );
-
       final cardAddress = await _config.cardManagerContract!.getCardAddress(
         uid,
       );
@@ -116,42 +99,6 @@ class CardsState with ChangeNotifier {
       }
     } catch (e) {
       debugPrint(e.toString());
-
-      _nfc.stop();
-
-      return AddCardError.unknownError;
-    }
-
-    return null;
-  }
-
-  Future<AddCardError?> configureCard() async {
-    try {
-      final available = await _nfc.isAvailable();
-      if (!available) {
-        return AddCardError.nfcNotAvailable;
-      }
-
-      final cardDomain = dotenv.env['CARD_DOMAIN'];
-
-      if (cardDomain == null) {
-        return AddCardError.missingCardDomain;
-      }
-
-      final (uid, uri) = await _nfc.configureTag(
-        'https://$cardDomain/card',
-        message: 'Bring the card close to the phone',
-        successMessage: 'Card configured',
-      );
-
-      if (uri == null) {
-        // this is not an error, it just means the card is not configured
-        return AddCardError.cardNotConfigured;
-      }
-    } catch (e) {
-      debugPrint(e.toString());
-
-      _nfc.stop();
 
       return AddCardError.unknownError;
     }

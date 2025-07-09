@@ -15,6 +15,7 @@ import 'package:pay_app/widgets/button.dart';
 import 'package:pay_app/widgets/card.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
+import 'package:pay_app/widgets/modals/nfc_modal.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
@@ -117,7 +118,21 @@ class _ProfileModalState extends State<ProfileModal> {
   Future<void> handleAddCard() async {
     HapticFeedback.heavyImpact();
 
-    final error = await _cardsState.addCard();
+    final result = await showCupertinoModalPopup<(String, String?)?>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => const NFCModal(
+        modalKey: 'modal-nfc-scanner',
+      ),
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    final (uid, uri) = result;
+
+    final error = await _cardsState.addCard(uid, uri);
 
     if (error == null) {
       if (!mounted) {
@@ -191,26 +206,47 @@ class _ProfileModalState extends State<ProfileModal> {
         return;
       }
 
-      final error = await _cardsState.configureCard();
+      await delay(const Duration(milliseconds: 500));
 
-      if (error == null) {
-        if (!mounted) {
-          return;
-        }
-
-        toastification.showCustom(
-          context: context,
-          autoCloseDuration: const Duration(seconds: 5),
-          alignment: Alignment.bottomCenter,
-          builder: (context, toast) => Toast(
-            icon: const Text('✅'),
-            title: const Text('Card configured'),
-          ),
-        );
+      if (!mounted) {
         return;
       }
 
-      await handleAddCardError(error);
+      final writeResult = await showCupertinoModalPopup<(String, String?)?>(
+        context: context,
+        barrierDismissible: true,
+        builder: (_) => const NFCModal(
+          modalKey: 'modal-nfc-scanner',
+          write: true,
+        ),
+      );
+
+      if (writeResult == null) {
+        await handleAddCardError(AddCardError.unknownError);
+        return;
+      }
+
+      final (uid, uri) = writeResult;
+
+      if (uri == null) {
+        await handleAddCardError(AddCardError.unknownError);
+        return;
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      toastification.showCustom(
+        context: context,
+        autoCloseDuration: const Duration(seconds: 5),
+        alignment: Alignment.bottomCenter,
+        builder: (context, toast) => Toast(
+          icon: const Text('✅'),
+          title: const Text('Card configured'),
+        ),
+      );
+
       return;
     }
 
