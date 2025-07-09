@@ -49,4 +49,16 @@ class PreferencesService {
   bool? get contactPermission {
     return _preferences.getBool('contact_permission');
   }
+
+  String? get tokenKey {
+    return _preferences.getString('token_key');
+  }
+
+  Future setToken(String? tokenKey) async {
+    if (tokenKey == null) {
+      await _preferences.remove('token_key');
+    } else {
+      await _preferences.setString('token_key', tokenKey);
+    }
+  }
 }

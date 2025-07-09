@@ -176,8 +176,8 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
     navigator.pop(checkout);
   }
 
-  void handleTopUp() async {
-    await _topupState.generateTopupUrl();
+  void handleTopUp(String baseUrl) async {
+    await _topupState.generateTopupUrl(baseUrl);
 
     if (!mounted) {
       return;

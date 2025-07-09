@@ -1,5 +1,7 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/checkout.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
@@ -9,7 +11,7 @@ import 'package:provider/provider.dart';
 class Footer extends StatelessWidget {
   final Checkout checkout;
   final Function(Checkout) onPay;
-  final Function() onTopUp;
+  final Function(String) onTopUp;
 
   const Footer({
     required this.checkout,
@@ -24,6 +26,17 @@ class Footer extends StatelessWidget {
     final insufficientBalance = balance < checkout.total;
 
     final disabled = checkout.total == 0 || balance < checkout.total;
+
+    final config = context.select<WalletState, Config?>(
+      (state) => state.config,
+    );
+    final tokenConfig = context.select<WalletState, TokenConfig?>(
+      (state) => state.currentTokenConfig,
+    );
+
+    final topUpPlugin = config?.plugins?.firstWhereOrNull(
+      (plugin) => plugin.action == 'topup' && plugin.token == tokenConfig?.key,
+    );
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -77,9 +90,9 @@ class Footer extends StatelessWidget {
             ),
           ),
           if (insufficientBalance) const SizedBox(height: 10),
-          if (insufficientBalance)
+          if (insufficientBalance && topUpPlugin != null)
             WideButton(
-              onPressed: onTopUp,
+              onPressed: () => onTopUp(topUpPlugin.url),
               child: Text(
                 'Top up',
                 style: TextStyle(

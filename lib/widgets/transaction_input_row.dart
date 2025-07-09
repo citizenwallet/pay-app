@@ -17,7 +17,7 @@ class TransactionInputRow extends StatelessWidget {
   final bool loading;
   final bool disabled;
   final bool error;
-  final Function() onTopUpPressed;
+  final Function()? onTopUpPressed;
 
   const TransactionInputRow({
     super.key,
@@ -33,11 +33,14 @@ class TransactionInputRow extends StatelessWidget {
     this.loading = false,
     this.disabled = false,
     this.error = false,
-    required this.onTopUpPressed,
+    this.onTopUpPressed,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+    final primaryColor = theme.primaryColor;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -120,6 +123,9 @@ class SendButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+    final primaryColor = theme.primaryColor;
+
     if (disabled) {
       return SizedBox.shrink();
     }
@@ -188,7 +194,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
   final FocusNode focusNode;
   final AmountFormatter amountFormatter = AmountFormatter();
   final Function(double) onChange;
-  final Function() onTopUpPressed;
+  final Function()? onTopUpPressed;
   final bool isSending;
   final bool disabled;
   final bool error;
@@ -201,11 +207,14 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
     this.isSending = false,
     this.disabled = false,
     this.error = false,
-    required this.onTopUpPressed,
+    this.onTopUpPressed,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+    final primaryColor = theme.primaryColor;
+
     return Row(
       children: [
         Expanded(
@@ -245,7 +254,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
                   onChange(double.tryParse(value.replaceAll(',', '.')) ?? 0);
                 },
               ),
-              if (error)
+              if (error && onTopUpPressed != null)
                 Positioned(
                   top: 4,
                   right: 4,

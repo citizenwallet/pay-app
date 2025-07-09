@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:pay_app/services/config/config.dart';
-import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
@@ -9,28 +8,14 @@ import 'package:web3dart/web3dart.dart';
 
 class ContactsState extends ChangeNotifier {
   // instantiate services here
-  final ConfigService _configService = ConfigService();
   final ContactsService _contactsService = ContactsService();
 
-  late Config _config;
+  final Config _config;
 
   // private variables here
 
   // constructor here
-  ContactsState() {
-    init();
-  }
-
-  init() async {
-    final config = await _configService.getLocalConfig();
-    if (config == null) {
-      throw Exception('Community not found in local asset');
-    }
-
-    _config = config;
-
-    await _config.initContracts();
-  }
+  ContactsState(this._config);
 
   bool _mounted = true;
   void safeNotifyListeners() {

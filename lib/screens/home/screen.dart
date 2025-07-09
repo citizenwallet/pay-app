@@ -11,6 +11,7 @@ import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/screens/home/card_modal.dart';
 import 'package:pay_app/screens/home/contact_list_item.dart';
 import 'package:pay_app/screens/home/profile_list_item.dart';
+import 'package:pay_app/screens/home/profile_modal.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/state/contacts/contacts.dart';
@@ -400,26 +401,35 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     clearSearch();
   }
 
-  void handleProfileTap(String myAddress) async {
+  Future<void> handleProfileTap(String myAddress) async {
     _searchFocusNode.unfocus();
-
-    final navigator = GoRouter.of(context);
 
     _stopInitRetries = true;
 
     HapticFeedback.heavyImpact();
 
-    await navigator.push('/$myAddress/my-account');
+    final selectedToken = await showCupertinoModalPopup<String?>(
+      context: context,
+      barrierDismissible: true,
+      useRootNavigator: false,
+      builder: (modalContext) => ProfileModal(
+        accountAddress: myAddress,
+      ),
+    );
+
+    if (selectedToken != null) {
+      _walletState.setCurrentToken(selectedToken);
+    }
 
     _stopInitRetries = false;
 
     clearSearch();
   }
 
-  void handleTopUp() async {
+  void handleTopUp(String baseUrl) async {
     _stopInitRetries = true;
 
-    await _topupState.generateTopupUrl();
+    await _topupState.generateTopupUrl(baseUrl);
 
     if (!mounted) {
       _stopInitRetries = false;
@@ -809,8 +819,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
   final bool loading;
   final String accountAddress;
-  final Function() onProfileTap;
-  final Function() onTopUpTap;
+  final Future<void> Function() onProfileTap;
+  final Function(String) onTopUpTap;
   final Function() onSettingsTap;
 
   ProfileBarDelegate({
@@ -834,10 +844,10 @@ class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  double get maxExtent => 95.0; // Maximum height of header
+  double get maxExtent => 120.0; // Maximum height of header
 
   @override
-  double get minExtent => 95.0; // Minimum height of header
+  double get minExtent => 120.0; // Minimum height of header
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>

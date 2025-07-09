@@ -92,22 +92,32 @@ String transferEventSignature(Config config) {
 Future<String> getBalance(
   Config config,
   EthereumAddress addr, {
+  String? tokenAddress,
   BigInt? tokenId,
 }) async {
   try {
-    final tokenStandard = config.getPrimaryToken().standard;
+    final tokenStandard = tokenAddress != null
+        ? config.getToken(tokenAddress).standard
+        : config.getPrimaryToken().standard;
 
     BigInt balance = BigInt.zero;
     switch (tokenStandard) {
       case 'erc20':
-        balance =
-            await config.token20Contract.getBalance(addr.hexEip55).timeout(
-                  const Duration(seconds: 4),
-                );
+        final tokenContract = tokenAddress != null
+            ? await config.getTokenContract(tokenAddress)
+            : config.token20Contract;
+
+        balance = await tokenContract.getBalance(addr.hexEip55).timeout(
+              const Duration(seconds: 4),
+            );
 
         break;
       case 'erc1155':
-        balance = await config.token1155Contract
+        final tokenContract = tokenAddress != null
+            ? await config.getToken1155Contract(tokenAddress)
+            : config.token1155Contract;
+
+        balance = await tokenContract
             .getBalance(addr.hexEip55, tokenId ?? BigInt.zero)
             .timeout(
               const Duration(seconds: 4),

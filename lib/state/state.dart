@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/state/account.dart';
 import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/card.dart';
@@ -16,6 +17,7 @@ import 'package:pay_app/state/wallet.dart';
 import 'package:provider/provider.dart';
 
 Widget provideAppState(
+  Config config,
   Widget? child, {
   Widget Function(BuildContext, Widget?)? builder,
 }) =>
@@ -28,10 +30,10 @@ Widget provideAppState(
           create: (_) => CommunityState(),
         ),
         ChangeNotifierProvider(
-          create: (_) => WalletState(),
+          create: (_) => WalletState(config),
         ),
         ChangeNotifierProvider(
-          create: (_) => OnboardingState(),
+          create: (_) => OnboardingState(config),
         ),
       ],
       builder: builder,
@@ -41,6 +43,7 @@ Widget provideAppState(
 Widget provideAccountState(
   BuildContext context,
   GoRouterState state,
+  Config config,
   Widget child,
 ) {
   final account = state.pathParameters['account']!;
@@ -60,11 +63,11 @@ Widget provideAccountState(
       ),
       ChangeNotifierProvider(
         key: Key('profile-$account'),
-        create: (_) => ProfileState(account),
+        create: (_) => ProfileState(account, config),
       ),
       ChangeNotifierProvider(
         key: Key('contacts'),
-        create: (_) => ContactsState(),
+        create: (_) => ContactsState(config),
       ),
       ChangeNotifierProvider(
         key: Key('topup'),
@@ -72,7 +75,7 @@ Widget provideAccountState(
       ),
       ChangeNotifierProvider(
         key: Key('account-$account'),
-        create: (_) => AccountState(),
+        create: (_) => AccountState(config),
       ),
     ],
     child: child,
@@ -82,6 +85,7 @@ Widget provideAccountState(
 Widget providePlaceState(
   BuildContext context,
   GoRouterState state,
+  Config config,
   Widget child,
 ) {
   final slug = state.pathParameters['slug']!;
@@ -93,6 +97,7 @@ Widget providePlaceState(
       ChangeNotifierProvider(
         key: Key('orders-with-place-$account-$slug'),
         create: (_) => OrdersWithPlaceState(
+          config,
           slug: slug,
           myAddress: account,
         ),

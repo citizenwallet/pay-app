@@ -180,6 +180,9 @@ class ScannerModalState extends State<ScannerModal>
 
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
+    final theme = CupertinoTheme.of(context);
+    final primaryColor = theme.primaryColor;
+
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: CupertinoPageScaffold(

@@ -1,5 +1,7 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/widgets/transaction_input_row.dart';
@@ -8,7 +10,7 @@ import 'package:provider/provider.dart';
 
 class Footer extends StatefulWidget {
   final Function(double, String?) onSend;
-  final Function() onTopUpPressed;
+  final Function(String) onTopUpPressed;
   final FocusNode amountFocusNode;
   final FocusNode messageFocusNode;
   final String? phoneNumber;
@@ -93,6 +95,17 @@ class _FooterState extends State<Footer> {
     final width = MediaQuery.of(context).size.width;
     final balance = context.watch<WalletState>().balance;
 
+    final config = context.select<WalletState, Config?>(
+      (state) => state.config,
+    );
+    final tokenConfig = context.select<WalletState, TokenConfig?>(
+      (state) => state.currentTokenConfig,
+    );
+
+    final topUpPlugin = config?.plugins?.firstWhereOrNull(
+      (plugin) => plugin.action == 'topup' && plugin.token == tokenConfig?.key,
+    );
+
     final toSendAmount =
         context.watch<TransactionsWithUserState>().toSendAmount;
 
@@ -128,7 +141,9 @@ class _FooterState extends State<Footer> {
               onSend: sendTransaction,
               disabled: disabled,
               error: error,
-              onTopUpPressed: widget.onTopUpPressed,
+              onTopUpPressed: topUpPlugin != null
+                  ? () => widget.onTopUpPressed(topUpPlugin.url)
+                  : null,
             ),
           if (widget.phoneNumber != null)
             WideButton(

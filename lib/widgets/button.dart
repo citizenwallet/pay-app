@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:pay_app/theme/colors.dart';
 
 class Button extends StatelessWidget {
   final String text;
@@ -25,6 +24,9 @@ class Button extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+    final primaryColor = theme.primaryColor;
+
     return CupertinoButton(
       color: color ?? primaryColor,
       borderRadius: BorderRadius.circular(minWidth / 2),
@@ -39,7 +41,7 @@ class Button extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (prefix != null) prefix!,
-            Expanded(
+            Flexible(
               child: Text(
                 text,
                 textAlign: TextAlign.center,

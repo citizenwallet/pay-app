@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/services/config/config.dart';
-import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/photos/photos.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
@@ -35,7 +34,6 @@ enum ProfileUpdateState {
 
 class ProfileState with ChangeNotifier {
   // instantiate services here
-  final ConfigService _configService = ConfigService();
   final PreferencesService _preferencesService = PreferencesService();
   final SecureService _secureService = SecureService();
   final PhotosService _photosService = PhotosService();
@@ -44,23 +42,10 @@ class ProfileState with ChangeNotifier {
   bool _pauseProfileCreation = false;
   final String _account;
 
-  late Config _config;
+  final Config _config;
 
   // constructor here
-  ProfileState(this._account) {
-    init();
-  }
-
-  Future<void> init() async {
-    final config = await _configService.getLocalConfig();
-    if (config == null) {
-      throw Exception('Community not found in local asset');
-    }
-
-    await config.initContracts();
-
-    _config = config;
-  }
+  ProfileState(this._account, this._config);
 
   bool _mounted = true;
   void safeNotifyListeners() {

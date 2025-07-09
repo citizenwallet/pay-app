@@ -1,4 +1,3 @@
-// import 'package:pay_app/theme/provider.dart';  // TODO: set up theme provider
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -16,7 +15,7 @@ class CoinLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = CupertinoTheme.of(context);
-    
+
     Widget? logoWidget;
 
     if (logo == null) {

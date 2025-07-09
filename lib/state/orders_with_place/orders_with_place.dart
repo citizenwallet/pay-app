@@ -18,9 +18,8 @@ import 'package:pay_app/services/wallet/wallet.dart';
 
 class OrdersWithPlaceState with ChangeNotifier {
   // instantiate services here
-  late Config _config;
+  final Config _config;
 
-  final ConfigService _configService = ConfigService();
   final SecureService _secureService = SecureService();
   final PlacesService _placesService = PlacesService();
   late OrdersService _ordersService;
@@ -30,24 +29,12 @@ class OrdersWithPlaceState with ChangeNotifier {
   Timer? _pollingTimer;
 
   // constructor here
-  OrdersWithPlaceState({
+  OrdersWithPlaceState(
+    this._config, {
     required this.slug,
     required this.myAddress,
   }) {
     _ordersService = OrdersService(account: myAddress);
-
-    init();
-  }
-
-  void init() async {
-    final config = await _configService.getLocalConfig();
-    if (config == null) {
-      throw Exception('Community not found in local asset');
-    }
-
-    await config.initContracts();
-
-    _config = config;
   }
 
   void safeNotifyListeners() {

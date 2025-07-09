@@ -3,13 +3,13 @@ import 'package:go_router/go_router.dart';
 import 'package:pay_app/state/account.dart';
 import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/profile.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/button.dart';
 
 import 'package:pay_app/widgets/wide_button.dart';
 import 'package:provider/provider.dart';
 
-import 'notifications.dart';
 import 'about.dart';
 import '../../../widgets/account_card.dart';
 
@@ -23,6 +23,7 @@ class MyAccountSettings extends StatefulWidget {
 }
 
 class _MyAccountSettingsState extends State<MyAccountSettings> {
+  late WalletState _walletState;
   late AccountState _accountState;
   late OnboardingState _onboardingState;
 
@@ -32,6 +33,7 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // make initial requests here
+      _walletState = context.read<WalletState>();
       _accountState = context.read<AccountState>();
       _onboardingState = context.read<OnboardingState>();
     });
@@ -79,6 +81,8 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
       return;
     }
 
+    _walletState.clear();
+
     final success = await _accountState.logout();
     if (success) {
       _onboardingState.clearConnectedAccountAddress();
@@ -115,6 +119,8 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
       return;
     }
 
+    _walletState.clear();
+
     final success = await _accountState.deleteData();
     if (success) {
       _onboardingState.clearConnectedAccountAddress();
@@ -131,6 +137,9 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
 
     final isLoggingOut = context.select((AccountState a) => a.loggingOut);
     final isDeletingData = context.select((AccountState a) => a.deletingData);
+
+    final theme = CupertinoTheme.of(context);
+    final primaryColor = theme.primaryColor;
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(

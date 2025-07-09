@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/state/account.dart';
 import 'package:pay_app/state/profile.dart';
-import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/button.dart';
 
 import 'package:provider/provider.dart';
@@ -51,6 +50,9 @@ class _MyAccountState extends State<MyAccount> {
     final alias = context.select((ProfileState p) => p.alias);
 
     final isLoggingOut = context.select((AccountState a) => a.loggingOut);
+
+    final theme = CupertinoTheme.of(context);
+    final primaryColor = theme.primaryColor;
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(

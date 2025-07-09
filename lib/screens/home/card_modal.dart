@@ -91,10 +91,12 @@ class _CardModalState extends State<CardModal> {
     final profile =
         context.select<CardState, ProfileV1?>((state) => state.profile);
 
+    final cardColor = projectCardColor(widget.project);
+
     return Container(
       height: 200,
       decoration: BoxDecoration(
-        color: projectCardColor(widget.project),
+        color: cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: CupertinoColors.white),
         boxShadow: [
@@ -151,14 +153,14 @@ class _CardModalState extends State<CardModal> {
                       children: [
                         Icon(
                           CupertinoIcons.search,
-                          color: primaryColor,
+                          color: cardColor,
                           size: 14,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           'view',
                           style: TextStyle(
-                            color: primaryColor,
+                            color: cardColor,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),

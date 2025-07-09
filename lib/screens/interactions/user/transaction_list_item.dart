@@ -34,6 +34,9 @@ class TransactionListItem extends StatelessWidget {
 
     final iconColor = isReceived ? textMutedColor : textSurfaceMutedColor;
 
+    final theme = CupertinoTheme.of(context);
+    final primaryColor = theme.primaryColor;
+
     final rowChildren = [
       Expanded(
         child: const SizedBox(),

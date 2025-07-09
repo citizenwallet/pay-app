@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/screens/account/settings/screen.dart';
 import 'package:pay_app/screens/interactions/place/order/screen.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/state.dart';
 import 'package:provider/provider.dart';
@@ -59,6 +60,7 @@ GoRouter createRouter(
   GlobalKey<NavigatorState> appShellNavigatorKey,
   GlobalKey<NavigatorState> placeShellNavigatorKey,
   List<NavigatorObserver> observers, {
+  required Config config,
   EthereumAddress? accountAddress,
 }) =>
     GoRouter(
@@ -80,7 +82,7 @@ GoRouter createRouter(
         ShellRoute(
           navigatorKey: appShellNavigatorKey,
           builder: (context, state, child) =>
-              provideAccountState(context, state, child),
+              provideAccountState(context, state, config, child),
           routes: [
             GoRoute(
               name: 'Home',
@@ -125,7 +127,7 @@ GoRouter createRouter(
             ShellRoute(
               navigatorKey: placeShellNavigatorKey,
               builder: (context, state, child) =>
-                  providePlaceState(context, state, child),
+                  providePlaceState(context, state, config, child),
               routes: [
                 GoRoute(
                   name: 'InteractionWithPlace',
