@@ -77,4 +77,19 @@ class CardsService {
       throw Exception('Failed to fetch orders');
     }
   }
+
+  Future<void> deleteProfile(
+      SigAuthConnection connection, String serial) async {
+    try {
+      await apiService.delete(
+        url: '/app/cards/$serial/profile',
+        body: {},
+        headers: connection.toMap(),
+      );
+    } catch (e, s) {
+      debugPrint('Failed to delete card: $e');
+      debugPrint('Stack trace: $s');
+      throw Exception('Failed to delete card');
+    }
+  }
 }

@@ -205,6 +205,10 @@ class _CardModalState extends State<CardModal> {
     navigator.pop();
   }
 
+  Future<void> handleUpdateCardName(String name, String originalName) async {
+    await _cardsState.updateCardName(widget.uid, name, originalName);
+  }
+
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
@@ -239,6 +243,7 @@ class _CardModalState extends State<CardModal> {
     final orders = context.watch<CardState>().orders;
 
     final claimingCard = context.watch<CardsState>().claimingCard;
+    final updatingCardName = context.watch<CardsState>().updatingCardName;
 
     return SafeArea(
       top: _showFooter,
@@ -275,11 +280,14 @@ class _CardModalState extends State<CardModal> {
           if (card == null) const SizedBox(height: 24),
           if (card == null)
             Button(
-              onPressed: claimingCard ? null : handleSaveCard,
+              onPressed:
+                  claimingCard || updatingCardName ? null : handleSaveCard,
               text: 'Save Card',
               labelColor: whiteColor,
               color: cardColor,
-              suffix: claimingCard ? const CupertinoActivityIndicator() : null,
+              suffix: claimingCard || updatingCardName
+                  ? const CupertinoActivityIndicator()
+                  : null,
             ),
           if (card == null) const SizedBox(height: 24),
           if (card != null)
@@ -304,8 +312,8 @@ class _CardModalState extends State<CardModal> {
     final width = MediaQuery.of(context).size.width;
 
     final balance = context.select<CardState, double>((state) => state.balance);
-    final profile =
-        context.select<CardState, ProfileV1?>((state) => state.profile);
+    final profile = context
+        .select<CardsState, ProfileV1?>((state) => state.profiles[widget.uid]);
 
     final cardColor = projectCardColor(widget.project);
 
@@ -316,6 +324,8 @@ class _CardModalState extends State<CardModal> {
       profile: profile,
       balance: balance,
       onTopUpPressed: handleTopUpCard,
+      onCardNameUpdated: (name) =>
+          handleUpdateCardName(name, profile?.name ?? ''),
     );
   }
 
@@ -389,18 +399,21 @@ class _CardModalState extends State<CardModal> {
   }
 
   Widget _buildCardActions(BuildContext context) {
-    final unclaimingCard =
-        context.select<CardsState, bool>((state) => state.unclaimingCard);
+    final unclaimingCard = context.watch<CardsState>().unclaimingCard;
+    final updatingCardName = context.watch<CardsState>().updatingCardName;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Button(
-          onPressed: unclaimingCard ? null : handleUnclaimCard,
+          onPressed:
+              unclaimingCard || updatingCardName ? null : handleUnclaimCard,
           text: 'Remove Card',
           labelColor: whiteColor,
           color: dangerColor,
-          suffix: unclaimingCard ? const CupertinoActivityIndicator() : null,
+          suffix: unclaimingCard || updatingCardName
+              ? const CupertinoActivityIndicator()
+              : null,
         ),
       ],
     );

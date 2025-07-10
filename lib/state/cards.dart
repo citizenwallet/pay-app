@@ -53,6 +53,7 @@ class CardsState with ChangeNotifier {
   List<DBCard> cards = [];
   Map<String, ProfileV1> profiles = {};
 
+  bool updatingCardName = false;
   bool claimingCard = false;
   bool unclaimingCard = false;
 
@@ -76,8 +77,58 @@ class CardsState with ChangeNotifier {
     safeNotifyListeners();
   }
 
+  Future<void> updateCardName(
+      String uid, String newName, String originalName) async {
+    try {
+      updatingCardName = true;
+      profiles[uid]?.name = newName;
+      safeNotifyListeners();
+
+      final credentials = _secureService.getCredentials();
+      if (credentials == null) {
+        updatingCardName = false;
+        profiles[uid]?.name = originalName;
+        safeNotifyListeners();
+
+        return;
+      }
+
+      final (account, key) = credentials;
+
+      final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
+
+      final sigAuthService = SigAuthService(
+        credentials: key,
+        address: account,
+        redirect: redirectDomain != null ? 'https://$redirectDomain' : '',
+      );
+
+      final sigAuthConnection = sigAuthService.connect();
+
+      final updatedProfile =
+          await _cardsService.setProfile(sigAuthConnection, uid, newName);
+
+      if (updatedProfile != null) {
+        updatingCardName = false;
+        profiles[uid] = updatedProfile;
+        safeNotifyListeners();
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+      profiles[uid]?.name = originalName;
+    } finally {
+      updatingCardName = false;
+      safeNotifyListeners();
+    }
+  }
+
   Future<void> unclaim(String uid) async {
     try {
+      final card = await _cards.getByUid(uid);
+      if (card == null) {
+        return;
+      }
+
       unclaimingCard = true;
       safeNotifyListeners();
 
@@ -101,9 +152,13 @@ class CardsState with ChangeNotifier {
 
       final sigAuthConnection = sigAuthService.connect();
 
+      await _cardsService.deleteProfile(sigAuthConnection, uid);
+
       await _cardsService.unclaim(sigAuthConnection, uid);
 
       await _cards.delete(uid);
+
+      profiles.remove(card.account);
 
       cards.removeWhere((card) => card.uid == uid);
       safeNotifyListeners();

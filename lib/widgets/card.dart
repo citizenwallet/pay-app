@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
+import 'package:pay_app/widgets/text_input_modal.dart';
 
 enum TapDepth {
   none,
@@ -16,6 +18,7 @@ class Card extends StatefulWidget {
   final ProfileV1? profile;
   final double? balance;
   final VoidCallback? onTopUpPressed;
+  final Future<void> Function(String)? onCardNameUpdated;
   final Future<void> Function(String)? onCardPressed;
 
   const Card({
@@ -26,6 +29,7 @@ class Card extends StatefulWidget {
     this.profile,
     this.balance,
     this.onTopUpPressed,
+    this.onCardNameUpdated,
     this.onCardPressed,
   });
 
@@ -35,6 +39,9 @@ class Card extends StatefulWidget {
 
 class _CardState extends State<Card> {
   TapDepth tapDepth = TapDepth.none;
+
+  FocusNode nameFocusNode = FocusNode();
+  ScrollController nameScrollController = ScrollController();
 
   void handleCardTap() async {
     if (widget.onCardPressed == null) {
@@ -66,6 +73,36 @@ class _CardState extends State<Card> {
     setState(() {
       tapDepth = TapDepth.active;
     });
+  }
+
+  void handleNameTap() async {
+    if (widget.onCardNameUpdated == null) {
+      return;
+    }
+
+    HapticFeedback.lightImpact();
+
+    final newName = await showCupertinoModalPopup<String?>(
+      context: context,
+      barrierDismissible: true,
+      builder: (modalContext) => TextInputModal(
+        title: 'Edit card name',
+        placeholder: 'Enter account name',
+        initialValue: widget.profile?.name ?? '',
+      ),
+    );
+
+    if (newName == null || newName.isEmpty) {
+      return;
+    }
+
+    if (newName == widget.profile?.name) {
+      return;
+    }
+
+    HapticFeedback.heavyImpact();
+
+    await widget.onCardNameUpdated?.call(newName);
   }
 
   @override
@@ -110,16 +147,76 @@ class _CardState extends State<Card> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: Text(
-                      widget.profile?.username != null
-                          ? '@${widget.profile?.username}'
-                          : 'anonymous',
-                      style: const TextStyle(
-                        color: CupertinoColors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            (widget.onCardNameUpdated != null)
+                                ? GestureDetector(
+                                    onTap: handleNameTap,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: whiteColor.withAlpha(10),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: whiteColor.withAlpha(100),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            widget.profile != null
+                                                ? widget.profile!.name
+                                                : 'anonymous',
+                                            style: const TextStyle(
+                                              color: CupertinoColors.white,
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Icon(
+                                            CupertinoIcons.pen,
+                                            color: whiteColor,
+                                            size: 20,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    widget.profile != null
+                                        ? widget.profile!.name
+                                        : 'anonymous',
+                                    style: const TextStyle(
+                                      color: CupertinoColors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                          ],
+                        ),
+                        if (widget.profile != null) const SizedBox(height: 4),
+                        if (widget.profile != null)
+                          Text(
+                            '@${widget.profile!.username}',
+                            style: const TextStyle(
+                              color: CupertinoColors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 8),
