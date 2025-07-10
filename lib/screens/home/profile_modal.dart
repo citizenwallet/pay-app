@@ -13,6 +13,7 @@ import 'package:pay_app/theme/card_colors.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/currency.dart';
 import 'package:pay_app/utils/delay.dart';
+import 'package:pay_app/widgets/account_card.dart';
 import 'package:pay_app/widgets/button.dart';
 import 'package:pay_app/widgets/card.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
@@ -276,7 +277,7 @@ class _ProfileModalState extends State<ProfileModal> {
 
     return DismissibleModalPopup(
       modalKey: 'profile_modal',
-      maxHeight: height * 0.8,
+      maxHeight: height * 0.9,
       paddingSides: 16,
       paddingTopBottom: 0,
       topRadius: 12,
@@ -298,21 +299,21 @@ class _ProfileModalState extends State<ProfileModal> {
         children: [
           Column(
             children: [
-              const SizedBox(height: 12),
-              _buildActionButtons(),
-              const SizedBox(height: 12),
-              Container(
-                height: 1,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Color(0xFFD9D9D9),
-                ),
-              ),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 0),
                   scrollDirection: Axis.vertical,
                   children: [
+                    const SizedBox(height: 30),
+                    _buildActionButtons(),
+                    const SizedBox(height: 12),
+                    Container(
+                      height: 1,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFD9D9D9),
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     _buildTokensList(context),
                     const SizedBox(height: 12),
@@ -325,13 +326,14 @@ class _ProfileModalState extends State<ProfileModal> {
                     ),
                     const SizedBox(height: 12),
                     _buildCardsList(context, cards),
+                    const SizedBox(height: 30),
                   ],
                 ),
               ),
             ],
           ),
           Positioned(
-            top: 0,
+            top: 16,
             right: 0,
             child: CupertinoButton(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -350,20 +352,14 @@ class _ProfileModalState extends State<ProfileModal> {
   }
 
   Widget _buildActionButtons() {
+    final profile = context.select((ProfileState p) => p.profile);
+    final alias = context.select((ProfileState p) => p.alias);
+
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Text(
-              'Account',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: textColor,
-              ),
-            ),
-          ],
+        AccountCard(
+          profile: profile,
+          alias: alias,
         ),
         const SizedBox(height: 12),
         Button(

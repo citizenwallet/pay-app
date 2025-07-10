@@ -9,11 +9,13 @@ class AccountCard extends StatelessWidget {
   final ProfileV1 profile;
   final String alias;
   final String appRedirectDomain;
+  final double? size;
 
   AccountCard({
     super.key,
     required this.profile,
     required this.alias,
+    this.size,
   }) : appRedirectDomain = dotenv.get('APP_REDIRECT_DOMAIN');
 
   @override
@@ -21,7 +23,7 @@ class AccountCard extends StatelessWidget {
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
 
-    final size = (width > height ? height : width) * 0.8;
+    final size = (this.size ?? (width > height ? height : width)) * 0.8;
 
     return Stack(
       alignment: Alignment.center,
