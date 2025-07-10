@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:pay_app/screens/home/card_modal/card_modal.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/cards.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/state/cards.dart';
+import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/state.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/card_colors.dart';
@@ -115,7 +117,7 @@ class _ProfileModalState extends State<ProfileModal> {
     );
   }
 
-  Future<void> handleAddCard() async {
+  Future<void> handleAddCard(ProfileV1? profile) async {
     HapticFeedback.heavyImpact();
 
     final result = await showCupertinoModalPopup<(String, String?)?>(
@@ -132,7 +134,7 @@ class _ProfileModalState extends State<ProfileModal> {
 
     final (uid, uri) = result;
 
-    final error = await _cardsState.claim(uid, uri);
+    final error = await _cardsState.claim(uid, uri, profile?.name);
 
     if (error == null) {
       if (!mounted) {
@@ -559,6 +561,12 @@ class _ProfileModalState extends State<ProfileModal> {
 
     final claimingCard = context.watch<CardsState>().claimingCard;
 
+    final profiles = context.watch<CardsState>().profiles;
+
+    final profile = context.select<ProfileState, ProfileV1?>(
+      (state) => state.profile,
+    );
+
     return Column(
       children: [
         Row(
@@ -582,7 +590,7 @@ class _ProfileModalState extends State<ProfileModal> {
             width: width * 0.8,
             uid: card.uid,
             color: cardColor,
-            profile: null,
+            profile: profiles[card.account],
             onCardPressed: (uid) => handleCardSelect(
               widget.accountAddress,
               uid,
@@ -592,7 +600,7 @@ class _ProfileModalState extends State<ProfileModal> {
         }).toList()),
         const SizedBox(height: 12),
         Button(
-          onPressed: claimingCard ? null : handleAddCard,
+          onPressed: claimingCard ? null : () => handleAddCard(profile),
           text: 'Add Card',
           labelColor: whiteColor,
           color: primaryColor,

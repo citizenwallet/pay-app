@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/models/card.dart';
 import 'package:pay_app/services/api/api.dart';
 import 'package:pay_app/services/sigauth/sigauth.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
 
 class CardsService {
   final APIService apiService =
@@ -51,6 +52,29 @@ class CardsService {
       debugPrint('Failed to unclaim card: $e');
       debugPrint('Stack trace: $s');
       throw Exception('Failed to unclaim card');
+    }
+  }
+
+  Future<ProfileV1?> setProfile(
+      SigAuthConnection connection, String serial, String name) async {
+    try {
+      final body = {
+        'name': name,
+      };
+
+      final response = await apiService.put(
+        url: '/app/cards/$serial/profile',
+        body: body,
+        headers: connection.toMap(),
+      );
+
+      final profile = ProfileV1.fromJson(response);
+
+      return profile;
+    } catch (e, s) {
+      debugPrint('Failed to fetch orders: $e');
+      debugPrint('Stack trace: $s');
+      throw Exception('Failed to fetch orders');
     }
   }
 }

@@ -6,6 +6,8 @@ import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/pay/cards.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/sigauth/sigauth.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
+import 'package:pay_app/services/wallet/wallet.dart';
 
 enum AddCardError {
   cardAlreadyExists,
@@ -49,6 +51,7 @@ class CardsState with ChangeNotifier {
 
   // state variables here
   List<DBCard> cards = [];
+  Map<String, ProfileV1> profiles = {};
 
   bool claimingCard = false;
   bool unclaimingCard = false;
@@ -56,6 +59,20 @@ class CardsState with ChangeNotifier {
   // state methods here
   Future<void> fetchCards() async {
     cards = await _cards.getAll();
+    safeNotifyListeners();
+
+    for (final card in cards) {
+      await fetchProfile(card.account);
+    }
+  }
+
+  Future<void> fetchProfile(String address) async {
+    final profile = await getProfile(_config, address);
+
+    if (profile != null) {
+      profiles[address] = profile;
+    }
+
     safeNotifyListeners();
   }
 
@@ -98,7 +115,7 @@ class CardsState with ChangeNotifier {
     }
   }
 
-  Future<AddCardError?> claim(String uid, String? uri) async {
+  Future<AddCardError?> claim(String uid, String? uri, String? name) async {
     try {
       claimingCard = true;
       safeNotifyListeners();
@@ -159,6 +176,17 @@ class CardsState with ChangeNotifier {
 
       cards.add(card);
       safeNotifyListeners();
+
+      final profile = await _cardsService.setProfile(
+        sigAuthConnection,
+        uid,
+        name ?? 'new',
+      );
+
+      if (profile != null) {
+        profiles[profile.account] = profile;
+        safeNotifyListeners();
+      }
 
       if (uri == null) {
         claimingCard = false;
