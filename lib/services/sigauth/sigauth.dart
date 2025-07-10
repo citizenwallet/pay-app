@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:pay_app/utils/uint8.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 

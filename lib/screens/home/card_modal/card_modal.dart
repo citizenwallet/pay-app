@@ -169,7 +169,7 @@ class _CardModalState extends State<CardModal> {
     );
   }
 
-  void handleRemoveCard() async {
+  void handleUnclaimCard() async {
     final navigator = GoRouter.of(context);
 
     // confirm modal
@@ -196,7 +196,7 @@ class _CardModalState extends State<CardModal> {
       return;
     }
 
-    await _cardsState.removeCard(widget.uid);
+    await _cardsState.unclaim(widget.uid);
 
     if (!mounted) {
       return;
@@ -238,6 +238,8 @@ class _CardModalState extends State<CardModal> {
 
     final orders = context.watch<CardState>().orders;
 
+    final claimingCard = context.watch<CardsState>().claimingCard;
+
     return SafeArea(
       top: _showFooter,
       bottom: false,
@@ -273,10 +275,11 @@ class _CardModalState extends State<CardModal> {
           if (card == null) const SizedBox(height: 24),
           if (card == null)
             Button(
-              onPressed: handleSaveCard,
+              onPressed: claimingCard ? null : handleSaveCard,
               text: 'Save Card',
               labelColor: whiteColor,
               color: cardColor,
+              suffix: claimingCard ? const CupertinoActivityIndicator() : null,
             ),
           if (card == null) const SizedBox(height: 24),
           if (card != null)
@@ -386,14 +389,18 @@ class _CardModalState extends State<CardModal> {
   }
 
   Widget _buildCardActions(BuildContext context) {
+    final unclaimingCard =
+        context.select<CardsState, bool>((state) => state.unclaimingCard);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Button(
-          onPressed: handleRemoveCard,
+          onPressed: unclaimingCard ? null : handleUnclaimCard,
           text: 'Remove Card',
           labelColor: whiteColor,
           color: dangerColor,
+          suffix: unclaimingCard ? const CupertinoActivityIndicator() : null,
         ),
       ],
     );

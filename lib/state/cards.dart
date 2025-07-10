@@ -1,10 +1,15 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/db/app/db.dart';
+import 'package:pay_app/services/pay/cards.dart';
+import 'package:pay_app/services/secure/secure.dart';
+import 'package:pay_app/services/sigauth/sigauth.dart';
 
 enum AddCardError {
   cardAlreadyExists,
+  cardAlreadyClaimed,
   cardNotConfigured,
   nfcNotAvailable,
   missingCardDomain,
@@ -14,6 +19,8 @@ enum AddCardError {
 class CardsState with ChangeNotifier {
   // instantiate services here
   final CardsTable _cards = AppDBService().cards;
+  final SecureService _secureService = SecureService();
+  final CardsService _cardsService = CardsService();
 
   // private variables here
   final Config _config;
@@ -43,30 +50,80 @@ class CardsState with ChangeNotifier {
   // state variables here
   List<DBCard> cards = [];
 
+  bool claimingCard = false;
+  bool unclaimingCard = false;
+
   // state methods here
   Future<void> fetchCards() async {
     cards = await _cards.getAll();
     safeNotifyListeners();
   }
 
-  Future<void> removeCard(String uid) async {
+  Future<void> unclaim(String uid) async {
     try {
+      unclaimingCard = true;
+      safeNotifyListeners();
+
+      final credentials = _secureService.getCredentials();
+      if (credentials == null) {
+        unclaimingCard = false;
+        safeNotifyListeners();
+
+        return;
+      }
+
+      final (account, key) = credentials;
+
+      final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
+
+      final sigAuthService = SigAuthService(
+        credentials: key,
+        address: account,
+        redirect: redirectDomain != null ? 'https://$redirectDomain' : '',
+      );
+
+      final sigAuthConnection = sigAuthService.connect();
+
+      await _cardsService.unclaim(sigAuthConnection, uid);
+
       await _cards.delete(uid);
 
       cards.removeWhere((card) => card.uid == uid);
       safeNotifyListeners();
     } catch (e) {
       debugPrint(e.toString());
+    } finally {
+      unclaimingCard = false;
+      safeNotifyListeners();
     }
   }
 
-  Future<AddCardError?> addCard(String uid, String? uri) async {
+  Future<AddCardError?> claim(String uid, String? uri) async {
     try {
-      final cardAddress = await _config.cardManagerContract!.getCardAddress(
-        uid,
+      claimingCard = true;
+      safeNotifyListeners();
+
+      final credentials = _secureService.getCredentials();
+      if (credentials == null) {
+        claimingCard = false;
+        safeNotifyListeners();
+
+        return AddCardError.unknownError;
+      }
+
+      final (account, key) = credentials;
+
+      final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
+
+      final sigAuthService = SigAuthService(
+        credentials: key,
+        address: account,
+        redirect: redirectDomain != null ? 'https://$redirectDomain' : '',
       );
 
-      String project = '';
+      final sigAuthConnection = sigAuthService.connect();
+
+      String? project;
       if (uri != null) {
         final parsedUri = Uri.parse(uri);
 
@@ -80,13 +137,23 @@ class CardsState with ChangeNotifier {
         }
       }
 
+      await _cardsService.claim(
+        sigAuthConnection,
+        uid,
+        project: project,
+      );
+
+      final cardAddress = await _config.cardManagerContract!.getCardAddress(
+        uid,
+      );
+
       final existingCard = await _cards.getByUid(uid);
       if (existingCard != null) {
         return AddCardError.cardAlreadyExists;
       }
 
-      final card =
-          DBCard(uid: uid, project: project, account: cardAddress.hexEip55);
+      final card = DBCard(
+          uid: uid, project: project ?? '', account: cardAddress.hexEip55);
 
       await _cards.upsert(card);
 
@@ -94,14 +161,22 @@ class CardsState with ChangeNotifier {
       safeNotifyListeners();
 
       if (uri == null) {
+        claimingCard = false;
+        safeNotifyListeners();
         // this is not an error, it just means the card is not configured
         return AddCardError.cardNotConfigured;
       }
     } catch (e) {
       debugPrint(e.toString());
 
+      claimingCard = false;
+      safeNotifyListeners();
+
       return AddCardError.unknownError;
     }
+
+    claimingCard = false;
+    safeNotifyListeners();
 
     return null;
   }

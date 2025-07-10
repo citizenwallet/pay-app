@@ -45,7 +45,9 @@ class CardsTable extends DBTable {
   String get createQuery => '''
     CREATE TABLE $name (
       uid TEXT PRIMARY KEY,
-      project TEXT NOT NULL,
+      project TEXT,
+      created_at TEXT,
+      updated_at TEXT,
       account TEXT NOT NULL
     )
   ''';
@@ -71,6 +73,11 @@ class CardsTable extends DBTable {
         'CREATE INDEX idx_${name}_account ON $name (account)',
         'CREATE INDEX idx_${name}_project ON $name (project)',
       ],
+      3: [
+        'ALTER TABLE $name ADD COLUMN created_at TEXT',
+        'ALTER TABLE $name ADD COLUMN updated_at TEXT',
+        'UPDATE $name SET created_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP',
+      ]
     };
 
     for (var i = oldVersion + 1; i <= newVersion; i++) {

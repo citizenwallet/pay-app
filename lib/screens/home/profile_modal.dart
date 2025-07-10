@@ -132,7 +132,7 @@ class _ProfileModalState extends State<ProfileModal> {
 
     final (uid, uri) = result;
 
-    final error = await _cardsState.addCard(uid, uri);
+    final error = await _cardsState.claim(uid, uri);
 
     if (error == null) {
       if (!mounted) {
@@ -557,6 +557,8 @@ class _ProfileModalState extends State<ProfileModal> {
 
     final primaryColor = CupertinoTheme.of(context).primaryColor;
 
+    final claimingCard = context.watch<CardsState>().claimingCard;
+
     return Column(
       children: [
         Row(
@@ -590,18 +592,20 @@ class _ProfileModalState extends State<ProfileModal> {
         }).toList()),
         const SizedBox(height: 12),
         Button(
-          onPressed: () => handleAddCard(),
+          onPressed: claimingCard ? null : handleAddCard,
           text: 'Add Card',
           labelColor: whiteColor,
           color: primaryColor,
-          suffix: Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: Image.asset(
-              'assets/icons/nfc.png',
-              width: 20,
-              height: 20,
-            ),
-          ),
+          suffix: claimingCard
+              ? const CupertinoActivityIndicator()
+              : Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Image.asset(
+                    'assets/icons/nfc.png',
+                    width: 20,
+                    height: 20,
+                  ),
+                ),
         ),
       ],
     );
