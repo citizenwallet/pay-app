@@ -54,11 +54,11 @@ class PreferencesService {
     return _preferences.getString('token_address');
   }
 
-  Future setToken(String? tokenKey) async {
-    if (tokenKey == null) {
-      await _preferences.remove('token_key');
+  Future setToken(String? tokenAddress) async {
+    if (tokenAddress == null) {
+      await _preferences.remove('token_address');
     } else {
-      await _preferences.setString('token_key', tokenKey);
+      await _preferences.setString('token_address', tokenAddress);
     }
   }
 }
