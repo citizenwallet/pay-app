@@ -12,6 +12,7 @@ const String pendingTransactionId = 'TEMP_HASH';
 class Transaction {
   String id; // id from supabase
   String txHash; // hash of the transaction
+  String contract; // contract of the transaction
 
   String fromAccount; // address of the sender
   String toAccount; // address of the receiver
@@ -25,6 +26,7 @@ class Transaction {
   Transaction({
     required this.id,
     required this.txHash,
+    required this.contract,
     required this.createdAt,
     required this.fromAccount,
     required this.toAccount,
@@ -38,6 +40,7 @@ class Transaction {
     return Transaction(
       id: json['id'],
       txHash: json['hash'],
+      contract: json['contract'],
       createdAt: DateTime.parse(json['created_at']),
       fromAccount: json['from'],
       toAccount: json['to'],
@@ -53,6 +56,7 @@ class Transaction {
     return {
       'id': id,
       'txHash': txHash,
+      'contract': contract,
       'createdAt': createdAt.toIso8601String(),
       'fromAccount': fromAccount,
       'toAccount': toAccount,
@@ -69,6 +73,7 @@ class Transaction {
   Transaction copyWith({
     String? id,
     String? txHash,
+    String? contract,
     DateTime? createdAt,
     String? fromAccount,
     String? toAccount,
@@ -80,6 +85,7 @@ class Transaction {
     return Transaction(
       id: id ?? this.id,
       txHash: txHash ?? this.txHash,
+      contract: contract ?? this.contract,
       createdAt: createdAt ?? this.createdAt,
       fromAccount: fromAccount ?? this.fromAccount,
       toAccount: toAccount ?? this.toAccount,
@@ -98,6 +104,7 @@ class Transaction {
     return existing.copyWith(
       id: updated.id,
       txHash: updated.txHash,
+      contract: updated.contract,
       createdAt: updated.createdAt,
       fromAccount: updated.fromAccount,
       toAccount: updated.toAccount,

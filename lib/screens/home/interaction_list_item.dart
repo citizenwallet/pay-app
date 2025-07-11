@@ -1,11 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/services/wallet/models/userop.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pay_app/utils/date.dart';
+import 'package:provider/provider.dart';
 
 class InteractionListItem extends StatelessWidget {
   final Interaction interaction;
@@ -89,6 +91,11 @@ class Details extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final config = context.select((WalletState c) => c.config);
+
+    final logo = config.getToken(
+        '${config.getPrimaryToken().chainId}:${interaction.contract}');
+
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,6 +119,7 @@ class Details extends StatelessWidget {
             description: interaction.description,
             exchangeDirection: interaction.exchangeDirection,
             isPlace: interaction.isPlace,
+            logo: logo.logo,
           ),
         ],
       ),
@@ -168,6 +176,7 @@ class AmountDescription extends StatelessWidget {
   final String? description;
   final ExchangeDirection exchangeDirection;
   final bool isPlace;
+  final String? logo;
 
   const AmountDescription({
     super.key,
@@ -175,6 +184,7 @@ class AmountDescription extends StatelessWidget {
     required this.exchangeDirection,
     this.description,
     this.isPlace = false,
+    this.logo,
   });
 
   @override
@@ -183,6 +193,7 @@ class AmountDescription extends StatelessWidget {
       children: [
         CoinLogo(
           size: 15,
+          logo: logo,
         ),
         const SizedBox(width: 4),
         Text(

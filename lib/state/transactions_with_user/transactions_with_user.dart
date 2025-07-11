@@ -143,6 +143,7 @@ class TransactionsWithUserState with ChangeNotifier {
           createdAt: DateTime.now(),
           fromAccount: account.hexEip55,
           toAccount: toAddress,
+          contract: token.address,
           amount: parsedAmount / BigInt.from(pow(10, token.decimals)),
           exchangeDirection: ExchangeDirection.sent,
           status: TransactionStatus.sending,

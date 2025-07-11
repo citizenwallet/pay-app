@@ -16,6 +16,7 @@ class Interaction {
   final String name;
 
   // last interaction
+  final String contract;
   final double amount;
   final String? description;
 
@@ -34,6 +35,7 @@ class Interaction {
     required this.imageUrl,
     required this.name,
     required this.lastMessageAt,
+    required this.contract,
     required this.amount,
     this.isPlace = false,
     this.isTreasury = false,
@@ -55,6 +57,7 @@ class Interaction {
       withAccount: withProfile['account'],
       imageUrl: withPlace != null ? withPlace['image'] : withProfile['image'],
       name: withPlace != null ? withPlace['name'] : withProfile['name'],
+      contract: transaction['contract'],
       amount: double.tryParse(transaction['value']) ?? 0,
       description: transaction['description'],
       isPlace: withPlace != null,
@@ -77,6 +80,7 @@ class Interaction {
       'withAccount': withAccount,
       'name': name,
       'imageUrl': imageUrl,
+      'contract': contract,
       'amount': amount,
       'description': description,
       'isPlace': isPlace,
@@ -94,6 +98,7 @@ class Interaction {
     ExchangeDirection? exchangeDirection,
     String? imageUrl,
     String? name,
+    String? contract,
     double? amount,
     String? description,
     bool? hasUnreadMessages,
@@ -107,6 +112,7 @@ class Interaction {
       withAccount: withAccount,
       imageUrl: imageUrl ?? this.imageUrl,
       name: name ?? this.name,
+      contract: contract ?? this.contract,
       amount: amount ?? this.amount,
       description: description ?? this.description,
       isPlace: isPlace,
@@ -128,6 +134,7 @@ class Interaction {
       exchangeDirection: updated.exchangeDirection,
       imageUrl: updated.imageUrl,
       name: updated.name,
+      contract: updated.contract,
       amount: updated.amount,
       description: updated.description,
       hasUnreadMessages: updated.hasUnreadMessages,
