@@ -43,13 +43,13 @@ class _FooterState extends State<Footer> {
     });
   }
 
-  Future<void> sendTransaction() async {
+  Future<void> sendTransaction(String tokenAddress) async {
     HapticFeedback.heavyImpact();
 
     widget.amountFocusNode.unfocus();
     widget.messageFocusNode.unfocus();
 
-    _transactionsWithUserState.sendTransaction();
+    _transactionsWithUserState.sendTransaction(tokenAddress);
     _amountController.clear();
     _messageController.clear();
     setState(() {
@@ -105,6 +105,10 @@ class _FooterState extends State<Footer> {
     final error = toSendAmount > balance;
     final disabled = toSendAmount == 0.0 || error;
 
+    if (tokenConfig == null) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       width: width,
       padding: const EdgeInsets.symmetric(
@@ -130,7 +134,7 @@ class _FooterState extends State<Footer> {
             onAmountChange: updateAmount,
             onMessageChange: updateMessage,
             onToggleField: _toggleField,
-            onSend: sendTransaction,
+            onSend: () => sendTransaction(tokenConfig.address),
             disabled: disabled,
             error: error,
             onTopUpPressed: topUpPlugin != null

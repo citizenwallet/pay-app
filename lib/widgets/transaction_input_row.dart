@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/formatters.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
@@ -6,6 +7,8 @@ import 'package:pay_app/widgets/text_field.dart';
 
 class TransactionInputRow extends StatelessWidget {
   final bool showAmountField;
+  final TokenConfig? token;
+  final Color? color;
   final TextEditingController amountController;
   final TextEditingController messageController;
   final FocusNode amountFocusNode;
@@ -22,6 +25,8 @@ class TransactionInputRow extends StatelessWidget {
   const TransactionInputRow({
     super.key,
     required this.showAmountField,
+    this.token,
+    this.color,
     required this.amountController,
     required this.messageController,
     required this.amountFocusNode,
@@ -39,13 +44,13 @@ class TransactionInputRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = CupertinoTheme.of(context);
-    final primaryColor = theme.primaryColor;
+    final primaryColor = color ?? theme.primaryColor;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        if (!showAmountField) CoinLogo(size: 22),
+        if (!showAmountField) CoinLogo(size: 22, logo: token?.logo),
         if (!showAmountField) SizedBox(width: 4),
         if (!showAmountField)
           Text(
@@ -80,6 +85,7 @@ class TransactionInputRow extends StatelessWidget {
               ? AmountFieldWithMessageToggle(
                   disabled: disabled || loading,
                   error: error,
+                  logo: token?.logo,
                   amountController: amountController,
                   focusNode: amountFocusNode,
                   onChange: onAmountChange ?? (_) {},
@@ -198,6 +204,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
   final bool isSending;
   final bool disabled;
   final bool error;
+  final String? logo;
 
   AmountFieldWithMessageToggle({
     super.key,
@@ -207,6 +214,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
     this.isSending = false,
     this.disabled = false,
     this.error = false,
+    this.logo,
     this.onTopUpPressed,
   });
 
@@ -244,7 +252,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
                 textInputAction: TextInputAction.done,
                 prefix: Padding(
                   padding: EdgeInsets.only(left: 11.0),
-                  child: CoinLogo(size: 33),
+                  child: CoinLogo(size: 33, logo: logo),
                 ),
                 onChanged: (value) {
                   if (value.isEmpty) {

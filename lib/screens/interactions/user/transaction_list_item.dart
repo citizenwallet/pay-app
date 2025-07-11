@@ -2,24 +2,27 @@ import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
 
 import 'package:pay_app/models/transaction.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/date.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 
 class TransactionListItem extends StatelessWidget {
+  final Config config;
   final Transaction transaction;
   final bool isSending;
-  final Function(String) onRetry;
+  final Function(String, String) onRetry;
 
   const TransactionListItem({
     super.key,
+    required this.config,
     required this.transaction,
     this.isSending = false,
     required this.onRetry,
   });
 
   void handleRetry() {
-    onRetry(transaction.id);
+    onRetry(transaction.contract, transaction.id);
   }
 
   @override
@@ -34,8 +37,7 @@ class TransactionListItem extends StatelessWidget {
 
     final iconColor = isReceived ? textMutedColor : textSurfaceMutedColor;
 
-    final theme = CupertinoTheme.of(context);
-    final primaryColor = theme.primaryColor;
+    final logo = config.getToken(transaction.contract).logo;
 
     final rowChildren = [
       Expanded(
@@ -90,6 +92,7 @@ class TransactionListItem extends StatelessWidget {
                         children: [
                           Amount(
                             amount: transaction.amount,
+                            logo: logo,
                             exchangeDirection: transaction.exchangeDirection,
                           ),
                         ],
@@ -194,11 +197,13 @@ class Description extends StatelessWidget {
 
 class Amount extends StatelessWidget {
   final double amount;
+  final String? logo;
   final ExchangeDirection exchangeDirection;
 
   const Amount({
     super.key,
     required this.amount,
+    this.logo,
     required this.exchangeDirection,
   });
 
@@ -210,6 +215,7 @@ class Amount extends StatelessWidget {
       children: [
         CoinLogo(
           size: 22,
+          logo: logo,
         ),
         const SizedBox(width: 4),
         Text(

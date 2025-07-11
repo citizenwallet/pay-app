@@ -92,7 +92,11 @@ class TransactionsWithUserState with ChangeNotifier {
     safeNotifyListeners();
   }
 
-  Future<String?> sendTransaction({String? retryId}) async {
+  Future<String?> sendTransaction(
+    String tokenAddress, {
+    int? chainId,
+    String? retryId,
+  }) async {
     final tempId = retryId ?? '${pendingTransactionId}_${generateRandomId()}';
     final toRetry = sendingQueue.firstWhereOrNull((tx) => tx.id == retryId);
     if (retryId != null && toRetry == null) {
@@ -100,7 +104,11 @@ class TransactionsWithUserState with ChangeNotifier {
     }
 
     try {
-      final token = _config.getPrimaryToken();
+      print('tokenAddress: $tokenAddress');
+      final token = _config.getToken(
+        tokenAddress,
+        chainId: chainId,
+      );
 
       final doubleAmount = toRetry != null
           ? toRetry.amount.toString().replaceAll(',', '.')
@@ -164,7 +172,7 @@ class TransactionsWithUserState with ChangeNotifier {
         _config,
         account,
         key,
-        [_config.getPrimaryToken().address],
+        [token.address],
         [calldata],
       );
 
@@ -173,7 +181,7 @@ class TransactionsWithUserState with ChangeNotifier {
         'to': toAddress,
       };
 
-      if (_config.getPrimaryToken().standard == 'erc1155') {
+      if (token.standard == 'erc1155') {
         args['operator'] = account.hexEip55;
         args['id'] = '0';
         args['amount'] = parsedAmount.toString();

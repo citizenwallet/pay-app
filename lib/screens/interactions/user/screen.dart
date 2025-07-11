@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/transactions_with_user/selector.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
@@ -138,9 +139,9 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
     );
   }
 
-  void retryTransaction(String id) {
+  void retryTransaction(String tokenAddress, String id) {
     HapticFeedback.heavyImpact();
-    _transactionsWithUserState.sendTransaction(retryId: id);
+    _transactionsWithUserState.sendTransaction(tokenAddress, retryId: id);
   }
 
   void _dismissKeyboard() {
@@ -153,6 +154,10 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
     final withUser = transactionState.withUser;
 
     final transactions = context.select(selectUserTransactions);
+
+    final config = context.select<WalletState, Config?>(
+      (state) => state.config,
+    );
 
     final noUserAccount = withUser == null &&
         widget.customName.isNotEmpty &&
@@ -214,8 +219,13 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
                             (context, index) {
                               final transaction = transactions[index];
 
+                              if (config == null) {
+                                return const SizedBox.shrink();
+                              }
+
                               return TransactionListItem(
                                 key: Key(transaction.id),
+                                config: config,
                                 transaction: transaction,
                                 onRetry: retryTransaction,
                               );
