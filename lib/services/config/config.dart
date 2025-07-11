@@ -403,7 +403,8 @@ class PluginConfig {
   final PluginLaunchMode launchMode;
   final String? action;
   final bool hidden;
-  final String? token;
+  final String? tokenAddress;
+  final int? chainId;
 
   PluginConfig({
     required this.name,
@@ -412,7 +413,8 @@ class PluginConfig {
     this.launchMode = PluginLaunchMode.external,
     this.action,
     this.hidden = false,
-    this.token,
+    this.tokenAddress,
+    this.chainId,
   });
 
   factory PluginConfig.fromJson(Map<String, dynamic> json) {
@@ -425,7 +427,8 @@ class PluginConfig {
           : PluginLaunchMode.external,
       action: json['action'],
       hidden: json['hidden'] ?? false,
-      token: json['token'],
+      tokenAddress: json['token_address'],
+      chainId: json['token_chain_id'],
     );
   }
 
@@ -438,7 +441,8 @@ class PluginConfig {
       'launch_mode': launchMode.name,
       if (action != null) 'action': action,
       'hidden': hidden,
-      if (token != null) 'token': token,
+      if (tokenAddress != null) 'token_address': tokenAddress,
+      if (chainId != null) 'token_chain_id': chainId,
     };
   }
 
@@ -908,8 +912,19 @@ class Config {
     return cards?.isNotEmpty ?? false;
   }
 
-  PluginConfig? getTopUpPlugin() {
-    return plugins?.firstWhereOrNull((plugin) => plugin.action == 'topup');
+  PluginConfig? getTopUpPlugin({String? tokenAddress, int? chainId}) {
+    return plugins?.firstWhereOrNull((plugin) =>
+        plugin.action == 'topup' &&
+        (plugin.tokenAddress != null
+            ? plugin.tokenAddress == tokenAddress
+            : true) &&
+        (plugin.chainId != null ? plugin.chainId == chainId : true));
+  }
+
+  PluginConfig? getPlugin(String tokenAddress, {int? chainId}) {
+    return plugins?.firstWhereOrNull((plugin) =>
+        plugin.tokenAddress == tokenAddress &&
+        (plugin.chainId != null ? plugin.chainId == chainId : true));
   }
 
   TokenConfig getPrimaryToken() {

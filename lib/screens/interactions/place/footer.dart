@@ -113,8 +113,8 @@ class _FooterState extends State<Footer> {
       (state) => state.currentTokenConfig,
     );
 
-    final topUpPlugin = config?.plugins?.firstWhereOrNull(
-      (plugin) => plugin.action == 'topup' && plugin.token == tokenConfig?.key,
+    final topUpPlugin = config?.getTopUpPlugin(
+      tokenAddress: tokenConfig?.address,
     );
 
     final error = toSendAmount > balance;

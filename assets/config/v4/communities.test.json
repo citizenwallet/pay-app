@@ -113,13 +113,13 @@
       "url": "https://checkout.pay.brussels/topup",
       "action": "topup",
       "signature": true,
-      "token": "100:0x5815E61eF72c9E6107b5c5A05FD121F334f7a7f1"
+      "token_address": "0x5815E61eF72c9E6107b5c5A05FD121F334f7a7f1"
     },
     {
       "name": "La CLASS",
       "icon": "https://assets.citizenwallet.xyz/wallet-config/_images/class.png",
       "url": "https://class.collectif-ssa.be",
-      "token": "100:0x601D2Dc12bE367d1653d803827875c2Bcaeb4A20"
+      "token_address": "0x601D2Dc12bE367d1653d803827875c2Bcaeb4A20"
     },
     {
       "name": "Participer",
@@ -127,7 +127,7 @@
       "url": "https://class.collectif-ssa.be/en-pratique/",
       "action": "topup",
       "signature": true,
-      "token": "100:0x601D2Dc12bE367d1653d803827875c2Bcaeb4A20"
+      "token_address": "0x601D2Dc12bE367d1653d803827875c2Bcaeb4A20"
     }
   ],
   "config_location": "https://wallet.pay.brussels/config/community.json",

@@ -100,8 +100,8 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
       (state) => state.currentTokenConfig,
     );
 
-    final topUpPlugin = config?.plugins?.firstWhereOrNull(
-      (plugin) => plugin.action == 'topup' && plugin.token == tokenConfig?.key,
+    final topUpPlugin = config?.getTopUpPlugin(
+      tokenAddress: tokenConfig?.address,
     );
 
     final profile = context.watch<ProfileState>().profile;
