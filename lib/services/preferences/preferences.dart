@@ -50,8 +50,8 @@ class PreferencesService {
     return _preferences.getBool('contact_permission');
   }
 
-  String? get tokenKey {
-    return _preferences.getString('token_key');
+  String? get tokenAddress {
+    return _preferences.getString('token_address');
   }
 
   Future setToken(String? tokenKey) async {

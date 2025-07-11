@@ -399,8 +399,8 @@ class _ProfileModalState extends State<ProfileModal> {
       (state) => state.config,
     );
 
-    final currentToken = context.select<WalletState, String?>(
-      (state) => state.currentToken,
+    final currentTokenAddress = context.select<WalletState, String?>(
+      (state) => state.currentTokenAddress,
     );
 
     final tokenLoadingStates = context.watch<WalletState>().tokenLoadingStates;
@@ -446,18 +446,18 @@ class _ProfileModalState extends State<ProfileModal> {
         ),
         const SizedBox(height: 12),
         ...(config.tokens.entries.map((entry) {
-          final tokenKey = entry.key;
+          final tokenAddress = entry.value.address;
           final tokenConfig = entry.value;
-          final isTokenLoading = tokenLoadingStates[tokenKey] ?? false;
+          final isTokenLoading = tokenLoadingStates[tokenAddress] ?? false;
           final formattedBalance = formatCurrency(
-            tokenBalances[tokenKey] ?? '0',
+            tokenBalances[tokenAddress] ?? '0',
             tokenConfig.decimals,
           );
 
-          final isSelected = currentToken == tokenKey;
+          final isSelected = currentTokenAddress == tokenAddress;
 
           return GestureDetector(
-            onTap: () => handleTokenSelect(tokenKey),
+            onTap: () => handleTokenSelect(tokenAddress),
             child: Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(12),

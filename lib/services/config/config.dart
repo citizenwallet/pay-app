@@ -936,7 +936,11 @@ class Config {
     return primaryToken;
   }
 
-  TokenConfig getToken(String key) {
+  TokenConfig getToken(String tokenAddress, {int? chainId}) {
+    final primaryToken = getPrimaryToken();
+
+    final key = '${chainId ?? primaryToken.chainId}:$tokenAddress';
+
     final token = tokens[key];
     if (token == null) {
       throw Exception('Token not found in config');
@@ -944,7 +948,12 @@ class Config {
     return token;
   }
 
-  Future<ERC20Contract> getTokenContract(String key) async {
+  Future<ERC20Contract> getTokenContract(String tokenAddress,
+      {int? chainId}) async {
+    final primaryToken = getPrimaryToken();
+
+    final key = '${chainId ?? primaryToken.chainId}:$tokenAddress';
+
     final token = tokens[key];
     if (token == null) {
       throw Exception('Token not found in config');
@@ -959,7 +968,12 @@ class Config {
     return contract;
   }
 
-  Future<ERC1155Contract> getToken1155Contract(String key) async {
+  Future<ERC1155Contract> getToken1155Contract(String tokenAddress,
+      {int? chainId}) async {
+    final primaryToken = getPrimaryToken();
+
+    final key = '${chainId ?? primaryToken.chainId}:$tokenAddress';
+
     final token = tokens[key];
     if (token == null) {
       throw Exception('Token not found in config');

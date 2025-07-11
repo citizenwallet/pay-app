@@ -93,18 +93,19 @@ Future<String> getBalance(
   Config config,
   EthereumAddress addr, {
   String? tokenAddress,
+  int? chainId,
   BigInt? tokenId,
 }) async {
   try {
     final tokenStandard = tokenAddress != null
-        ? config.getToken(tokenAddress).standard
+        ? config.getToken(tokenAddress, chainId: chainId).standard
         : config.getPrimaryToken().standard;
 
     BigInt balance = BigInt.zero;
     switch (tokenStandard) {
       case 'erc20':
         final tokenContract = tokenAddress != null
-            ? await config.getTokenContract(tokenAddress)
+            ? await config.getTokenContract(tokenAddress, chainId: chainId)
             : config.token20Contract;
 
         balance = await tokenContract.getBalance(addr.hexEip55).timeout(
@@ -114,7 +115,7 @@ Future<String> getBalance(
         break;
       case 'erc1155':
         final tokenContract = tokenAddress != null
-            ? await config.getToken1155Contract(tokenAddress)
+            ? await config.getToken1155Contract(tokenAddress, chainId: chainId)
             : config.token1155Contract;
 
         balance = await tokenContract

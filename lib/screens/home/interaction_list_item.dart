@@ -93,8 +93,7 @@ class Details extends StatelessWidget {
   Widget build(BuildContext context) {
     final config = context.select((WalletState c) => c.config);
 
-    final logo = config.getToken(
-        '${config.getPrimaryToken().chainId}:${interaction.contract}');
+    final logo = config.getToken(interaction.contract);
 
     return Expanded(
       child: Column(

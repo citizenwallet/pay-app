@@ -34,7 +34,7 @@ class WalletState with ChangeNotifier {
   bool _loadingTokenBalances = false;
   bool get loadingTokenBalances => _loadingTokenBalances;
 
-  String? currentToken;
+  String? currentTokenAddress;
   TokenConfig? currentTokenConfig;
 
   Color get tokenPrimaryColor => currentTokenConfig?.color != null
@@ -66,12 +66,13 @@ class WalletState with ChangeNotifier {
       safeNotifyListeners();
 
       final tokenConfig = config.getToken(
-        _preferencesService.tokenKey ?? config.getPrimaryToken().key,
+        _preferencesService.tokenAddress ?? config.getPrimaryToken().address,
       );
 
       _decimals = tokenConfig.decimals;
 
-      currentToken = _preferencesService.tokenKey ?? tokenConfig.key;
+      currentTokenAddress =
+          _preferencesService.tokenAddress ?? tokenConfig.address;
       currentTokenConfig = tokenConfig;
 
       safeNotifyListeners();
@@ -135,7 +136,7 @@ class WalletState with ChangeNotifier {
     _balance = await getBalance(
       _config,
       _address!,
-      tokenAddress: currentToken,
+      tokenAddress: currentTokenAddress,
     );
     await _preferencesService.setBalance(_balance);
     safeNotifyListeners();
@@ -159,20 +160,20 @@ class WalletState with ChangeNotifier {
       final balances = <String, String>{};
 
       for (final tokenEntry in _config.tokens.entries) {
-        final tokenKey = tokenEntry.key;
+        final tokenAddress = tokenEntry.value.address;
         try {
           final balance = await getBalance(
             _config,
             _address!,
-            tokenAddress: tokenKey,
+            tokenAddress: tokenAddress,
           );
 
-          balances[tokenKey] = balance;
+          balances[tokenAddress] = balance;
         } catch (e) {
-          debugPrint('Error loading balance for token $tokenKey: $e');
-          balances[tokenKey] = '0';
+          debugPrint('Error loading balance for token $tokenAddress: $e');
+          balances[tokenAddress] = '0';
         } finally {
-          tokenLoadingStates[tokenKey] = false;
+          tokenLoadingStates[tokenAddress] = false;
           safeNotifyListeners();
         }
       }
@@ -217,24 +218,24 @@ class WalletState with ChangeNotifier {
     }
   }
 
-  String getTokenBalance(String tokenKey) {
-    return _tokenBalances[tokenKey] ?? '0';
+  String getTokenBalance(String tokenAddress) {
+    return _tokenBalances[tokenAddress] ?? '0';
   }
 
-  bool isTokenLoading(String tokenKey) {
-    return tokenLoadingStates[tokenKey] ?? false;
+  bool isTokenLoading(String tokenAddress) {
+    return tokenLoadingStates[tokenAddress] ?? false;
   }
 
-  void setCurrentToken(String tokenKey) {
-    currentToken = tokenKey;
-    currentTokenConfig = _config.getToken(tokenKey);
+  void setCurrentToken(String tokenAddress) {
+    currentTokenAddress = tokenAddress;
+    currentTokenConfig = _config.getToken(tokenAddress);
 
-    final tokenConfig = _config.getToken(tokenKey);
+    final tokenConfig = _config.getToken(tokenAddress);
 
     _decimals = tokenConfig.decimals;
-    _balance = tokenBalances[tokenKey] ?? '0';
+    _balance = tokenBalances[tokenAddress] ?? '0';
 
-    _preferencesService.setToken(tokenKey);
+    _preferencesService.setToken(tokenAddress);
     safeNotifyListeners();
 
     updateBalance();
