@@ -818,7 +818,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                 ),
               ),
-              if (!loading)
+              if (!loading && !isSearching)
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 100),
                   left: 0,
