@@ -55,12 +55,16 @@ class ScanState with ChangeNotifier {
     message = 'Bring the card close to the phone';
     safeNotifyListeners();
 
-    final (uid, uri) = await _nfc.readTag(
-      message: message,
-      successMessage: 'Card identified',
-    );
+    try {
+      final (uid, uri) = await _nfc.readTag(
+        message: message,
+        successMessage: 'Card identified',
+      );
 
-    return (uid, uri);
+      return (uid, uri);
+    } catch (e) {
+      return null;
+    }
   }
 
   Future<(String, String?)?> configureNFC() async {

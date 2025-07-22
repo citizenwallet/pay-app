@@ -86,6 +86,11 @@ class NFCModalState extends State<NFCModal>
       return;
     }
 
+    if (result == null) {
+      handleDismiss(context);
+      return;
+    }
+
     handleSubmit(context);
   }
 
