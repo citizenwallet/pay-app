@@ -474,6 +474,7 @@ class _ProfileModalState extends State<ProfileModal> {
             ),
           ),
         ),
+        const SizedBox(height: 12),
       ],
     );
   }
@@ -630,6 +631,7 @@ class _ProfileModalState extends State<ProfileModal> {
             ),
           );
         }).toList()),
+        const SizedBox(height: 12),
       ],
     );
   }
@@ -695,6 +697,7 @@ class _ProfileModalState extends State<ProfileModal> {
                   ),
                 ),
         ),
+        const SizedBox(height: 30),
       ],
     );
   }
