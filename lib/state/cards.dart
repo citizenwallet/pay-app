@@ -221,6 +221,9 @@ class CardsState with ChangeNotifier {
 
       final existingCard = await _cards.getByUid(uid);
       if (existingCard != null) {
+        claimingCard = false;
+        safeNotifyListeners();
+
         return AddCardError.cardAlreadyExists;
       }
 

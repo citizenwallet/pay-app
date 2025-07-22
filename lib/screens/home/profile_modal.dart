@@ -188,7 +188,7 @@ class _ProfileModalState extends State<ProfileModal> {
         alignment: Alignment.bottomCenter,
         builder: (context, toast) => Toast(
           icon: const Text('✅'),
-          title: const Text('Card already exists'),
+          title: const Text('Card already added'),
         ),
       );
     }
