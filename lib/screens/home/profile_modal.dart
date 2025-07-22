@@ -333,8 +333,8 @@ class _ProfileModalState extends State<ProfileModal> {
                       pinned: false,
                       floating: false,
                       delegate: PersistentHeaderDelegate(
-                        expandedHeight: 400,
-                        minHeight: 260,
+                        expandedHeight: 440,
+                        minHeight: 290,
                         builder: (_, shrink) {
                           final atTop = shrink == 0;
 
@@ -346,7 +346,7 @@ class _ProfileModalState extends State<ProfileModal> {
                               });
                             });
                             Future.delayed(
-                                Duration(milliseconds: !atTop ? 30 : 10), () {
+                                Duration(milliseconds: atTop ? 30 : 10), () {
                               setState(() {
                                 _showShrinkingHeader = !atTop;
                               });
@@ -389,8 +389,16 @@ class _ProfileModalState extends State<ProfileModal> {
             ],
           ),
           if (_showFixedHeader)
-            SizedBox(
-              height: 400,
+            Container(
+              height: 440,
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: dividerMutedColor,
+                    width: 1,
+                  ),
+                ),
+              ),
               child: _buildAccountCard(
                 ValueKey('account_card_fixed'),
                 0,
@@ -421,6 +429,7 @@ class _ProfileModalState extends State<ProfileModal> {
       Key? key, double shrink, ProfileV1 profile, String alias) {
     return Column(
       children: [
+        const SizedBox(height: 40),
         Expanded(
           child: AccountCard(
             key: key,
