@@ -13,12 +13,14 @@ import 'package:pay_app/theme/card_colors.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/currency.dart';
 import 'package:pay_app/utils/delay.dart';
+import 'package:pay_app/utils/ratio.dart';
 import 'package:pay_app/widgets/account_card.dart';
 import 'package:pay_app/widgets/button.dart';
 import 'package:pay_app/widgets/card.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
 import 'package:pay_app/widgets/modals/nfc_modal.dart';
+import 'package:pay_app/widgets/persistent_header_delegate.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
@@ -33,6 +35,12 @@ class ProfileModal extends StatefulWidget {
 }
 
 class _ProfileModalState extends State<ProfileModal> {
+  final ScrollController _controller = ScrollController();
+
+  bool _atTop = true;
+  bool _showFixedHeader = true;
+  bool _showShrinkingHeader = false;
+
   late WalletState _walletState;
   late CardsState _cardsState;
 
@@ -48,11 +56,19 @@ class _ProfileModalState extends State<ProfileModal> {
     });
   }
 
-  void onLoad() async {
+  Future<void> onLoad() async {
     await delay(const Duration(milliseconds: 100));
 
     _walletState.loadTokenBalances();
-    _cardsState.fetchCards();
+    await _cardsState.fetchCards();
+  }
+
+  void handleScrollToTop() {
+    _controller.animateTo(
+      0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   void handleEditProfile() {
@@ -275,6 +291,11 @@ class _ProfileModalState extends State<ProfileModal> {
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
 
+    final cards = context.watch<CardsState>().cards;
+
+    final profile = context.select((ProfileState p) => p.profile);
+    final alias = context.select((ProfileState p) => p.alias);
+
     return DismissibleModalPopup(
       modalKey: 'profile_modal',
       maxHeight: height * 0.9,
@@ -284,13 +305,16 @@ class _ProfileModalState extends State<ProfileModal> {
       onDismissed: (dir) {
         handleClose(context);
       },
-      child: _buildContent(context),
+      child: _buildContent(context, cards, profile, alias),
     );
   }
 
-  Widget _buildContent(BuildContext context) {
-    final cards = context.watch<CardsState>().cards;
-
+  Widget _buildContent(
+    BuildContext context,
+    List<DBCard> cards,
+    ProfileV1 profile,
+    String alias,
+  ) {
     return SafeArea(
       top: false,
       bottom: false,
@@ -300,38 +324,80 @@ class _ProfileModalState extends State<ProfileModal> {
           Column(
             children: [
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 0),
-                  scrollDirection: Axis.vertical,
-                  children: [
-                    const SizedBox(height: 30),
-                    _buildActionButtons(),
-                    const SizedBox(height: 12),
-                    Container(
-                      height: 1,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFD9D9D9),
+                child: CustomScrollView(
+                  controller: _controller,
+                  scrollBehavior: const CupertinoScrollBehavior(),
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverPersistentHeader(
+                      pinned: false,
+                      floating: false,
+                      delegate: PersistentHeaderDelegate(
+                        expandedHeight: 400,
+                        minHeight: 260,
+                        builder: (_, shrink) {
+                          final atTop = shrink == 0;
+
+                          if (_atTop != atTop) {
+                            Future.delayed(
+                                Duration(milliseconds: atTop ? 10 : 30), () {
+                              setState(() {
+                                _showFixedHeader = atTop;
+                              });
+                            });
+                            Future.delayed(
+                                Duration(milliseconds: !atTop ? 30 : 10), () {
+                              setState(() {
+                                _showShrinkingHeader = !atTop;
+                              });
+                            });
+                          }
+                          _atTop = atTop;
+
+                          final maxShrink = shrink > 0.30 ? 0.30 : shrink;
+
+                          return GestureDetector(
+                            onTap: handleScrollToTop,
+                            child: Opacity(
+                              opacity: _showShrinkingHeader ? 1 : 0,
+                              child: _buildAccountCard(
+                                ValueKey('account_card'),
+                                maxShrink,
+                                profile,
+                                alias,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    _buildTokensList(context),
-                    const SizedBox(height: 12),
-                    Container(
-                      height: 1,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFD9D9D9),
+                    SliverToBoxAdapter(
+                      child: _buildActionButtons(
+                        profile,
+                        alias,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    _buildCardsList(context, cards),
-                    const SizedBox(height: 30),
+                    SliverToBoxAdapter(
+                      child: _buildTokensList(context),
+                    ),
+                    SliverToBoxAdapter(
+                      child: _buildCardsList(context, cards),
+                    ),
                   ],
                 ),
               ),
             ],
           ),
+          if (_showFixedHeader)
+            SizedBox(
+              height: 400,
+              child: _buildAccountCard(
+                ValueKey('account_card_fixed'),
+                0,
+                profile,
+                alias,
+              ),
+            ),
           Positioned(
             top: 16,
             right: 0,
@@ -351,16 +417,25 @@ class _ProfileModalState extends State<ProfileModal> {
     );
   }
 
-  Widget _buildActionButtons() {
-    final profile = context.select((ProfileState p) => p.profile);
-    final alias = context.select((ProfileState p) => p.alias);
-
+  Widget _buildAccountCard(
+      Key? key, double shrink, ProfileV1 profile, String alias) {
     return Column(
       children: [
-        AccountCard(
-          profile: profile,
-          alias: alias,
+        Expanded(
+          child: AccountCard(
+            key: key,
+            profile: profile,
+            alias: alias,
+            shrink: shrink,
+          ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(ProfileV1 profile, String alias) {
+    return Column(
+      children: [
         const SizedBox(height: 12),
         Button(
           onPressed: handleEditProfile,
