@@ -312,8 +312,8 @@ class _CardModalState extends State<CardModal> {
     final width = MediaQuery.of(context).size.width;
 
     final balance = context.select<CardState, double>((state) => state.balance);
-    final profile = context
-        .select<CardsState, ProfileV1?>((state) => state.profiles[widget.uid]);
+    final profile =
+        context.select<CardState, ProfileV1?>((state) => state.profile);
 
     final cardColor = projectCardColor(widget.project);
 
