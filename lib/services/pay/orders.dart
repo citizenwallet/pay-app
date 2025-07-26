@@ -16,12 +16,14 @@ class OrdersService {
     int? limit,
     int? offset,
     int? placeId,
+    String? tokenAddress,
   }) async {
     try {
       final queryParams = {
         if (limit != null) 'limit': limit.toString(),
         if (offset != null) 'offset': offset.toString(),
         if (placeId != null) 'placeId': placeId.toString(),
+        if (tokenAddress != null) 'token': tokenAddress,
       };
 
       String url = '/accounts/$account/orders';

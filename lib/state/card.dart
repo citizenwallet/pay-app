@@ -58,7 +58,7 @@ class CardState with ChangeNotifier {
   bool toppingUp = false;
 
   // state methods here
-  Future<void> fetchCardDetails(String? address) async {
+  Future<void> fetchCardDetails(String? address, String? tokenAddress) async {
     try {
       card = address != null
           ? DBCard(
@@ -79,15 +79,23 @@ class CardState with ChangeNotifier {
       safeNotifyListeners();
 
       if (card != null) {
-        fetchOrders(address: address, refresh: true);
+        fetchOrders(
+          address: address,
+          tokenAddress: tokenAddress,
+          refresh: true,
+        );
       }
 
       profile = await getProfile(_config, cardAddress!.hexEip55);
       safeNotifyListeners();
 
-      _balance = await getBalance(_config, cardAddress!);
+      _balance = await getBalance(
+        _config,
+        cardAddress!,
+        tokenAddress: tokenAddress,
+      );
 
-      startPolling();
+      startPolling(tokenAddress);
     } catch (e) {
       debugPrint(e.toString());
     } finally {
@@ -96,11 +104,11 @@ class CardState with ChangeNotifier {
     }
   }
 
-  void startPolling() {
+  void startPolling(String? tokenAddress) {
     stopPolling();
 
     _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
-      updateBalance();
+      updateBalance(tokenAddress);
     });
   }
 
@@ -109,12 +117,13 @@ class CardState with ChangeNotifier {
     _timer = null;
   }
 
-  Future<void> updateBalance() async {
+  Future<void> updateBalance(String? tokenAddress) async {
     if (cardAddress == null) {
       return;
     }
 
-    _balance = await getBalance(_config, cardAddress!);
+    _balance =
+        await getBalance(_config, cardAddress!, tokenAddress: tokenAddress);
     safeNotifyListeners();
   }
 
@@ -122,7 +131,8 @@ class CardState with ChangeNotifier {
   int ordersOffset = 0;
   bool hasMoreOrders = true;
 
-  Future<void> fetchOrders({String? address, bool refresh = false}) async {
+  Future<void> fetchOrders(
+      {String? address, String? tokenAddress, bool refresh = false}) async {
     try {
       if (address == null && cardAddress == null) {
         throw Exception('Card address not found');
@@ -142,6 +152,7 @@ class CardState with ChangeNotifier {
       final orders = await ordersService.getOrders(
         limit: ordersLimit,
         offset: ordersOffset,
+        tokenAddress: tokenAddress,
       );
 
       if (orders.orders.length >= ordersLimit) {

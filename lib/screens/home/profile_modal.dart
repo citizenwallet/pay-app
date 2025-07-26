@@ -111,6 +111,7 @@ class _ProfileModalState extends State<ProfileModal> {
     String? myAddress,
     String? cardId,
     String? project,
+    String? tokenAddress,
   ) async {
     if (myAddress == null) {
       return;
@@ -144,6 +145,7 @@ class _ProfileModalState extends State<ProfileModal> {
             uid: cardId,
             address: cardId == null ? myAddress : null,
             project: project,
+            tokenAddress: tokenAddress,
           ),
         );
       },
@@ -455,6 +457,7 @@ class _ProfileModalState extends State<ProfileModal> {
                 profile.account,
                 null,
                 'main',
+                widget.tokenAddress,
               ),
               logo: tokenConfig?.logo,
               balance: balance,
@@ -547,6 +550,7 @@ class _ProfileModalState extends State<ProfileModal> {
                     widget.accountAddress,
                     uid,
                     card.project,
+                    widget.tokenAddress,
                   ),
                   logo: tokenConfig?.logo,
                   balance: cardBalances[card.account],

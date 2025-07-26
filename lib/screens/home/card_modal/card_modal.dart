@@ -22,8 +22,10 @@ class CardModal extends StatefulWidget {
   final String? uid;
   final String? address;
   final String? project;
+  final String? tokenAddress;
 
-  const CardModal({super.key, this.uid, this.address, this.project});
+  const CardModal(
+      {super.key, this.uid, this.address, this.project, this.tokenAddress});
 
   @override
   State<CardModal> createState() => _CardModalState();
@@ -67,7 +69,7 @@ class _CardModalState extends State<CardModal> {
   }
 
   void onLoad() async {
-    await _cardState.fetchCardDetails(widget.address);
+    await _cardState.fetchCardDetails(widget.address, widget.tokenAddress);
   }
 
   void onFocus() {
@@ -86,12 +88,15 @@ class _CardModalState extends State<CardModal> {
         return;
       }
 
-      _cardState.fetchOrders();
+      _cardState.fetchOrders(tokenAddress: widget.tokenAddress);
     }
   }
 
   Future<void> handleFetchOrders() async {
-    return _cardState.fetchOrders(refresh: true);
+    return _cardState.fetchOrders(
+      refresh: true,
+      tokenAddress: widget.tokenAddress,
+    );
   }
 
   void handleTopUpCard() async {
@@ -411,6 +416,12 @@ class _CardModalState extends State<CardModal> {
               ),
             ),
           ),
+          if (orders.isEmpty)
+            SliverFillRemaining(
+              child: Center(
+                child: Text('No orders found'),
+              ),
+            ),
           SliverToBoxAdapter(
             child: ordersLoading
                 ? Row(
