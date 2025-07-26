@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:pay_app/services/config/config.dart';
@@ -24,7 +23,6 @@ class ProfileBar extends StatefulWidget {
   final Color backgroundColor;
   final Future<void> Function() onProfileTap;
   final Function(String) onTopUpTap;
-  final Function() onSettingsTap;
 
   const ProfileBar({
     super.key,
@@ -33,7 +31,6 @@ class ProfileBar extends StatefulWidget {
     required this.backgroundColor,
     required this.onProfileTap,
     required this.onTopUpTap,
-    required this.onSettingsTap,
   });
 
   @override

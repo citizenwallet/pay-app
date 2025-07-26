@@ -84,7 +84,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   bool _stopInitRetries = false;
   bool _pauseDeepLinkHandling = false;
-  bool _hasOpenedProfileModal = false;
 
   late AnimationController _backgroundColorController;
   late Animation<Color?> _backgroundColorAnimation;
@@ -364,6 +363,8 @@ class _HomeScreenState extends State<HomeScreen>
       return;
     }
 
+    _backgroundColorController.forward();
+
     HapticFeedback.heavyImpact();
 
     await showCupertinoModalPopup(
@@ -380,6 +381,8 @@ class _HomeScreenState extends State<HomeScreen>
         );
       },
     );
+
+    _backgroundColorController.reverse();
   }
 
   Future<void> handleInteractionWithContact(
@@ -446,9 +449,6 @@ class _HomeScreenState extends State<HomeScreen>
     _searchFocusNode.unfocus();
 
     _stopInitRetries = true;
-    setState(() {
-      _hasOpenedProfileModal = true;
-    });
 
     _backgroundColorController.forward();
 
@@ -462,10 +462,6 @@ class _HomeScreenState extends State<HomeScreen>
         accountAddress: myAddress,
       ),
     );
-
-    setState(() {
-      _hasOpenedProfileModal = false;
-    });
 
     _backgroundColorController.reverse();
 
@@ -487,6 +483,8 @@ class _HomeScreenState extends State<HomeScreen>
       _stopInitRetries = false;
       return;
     }
+
+    _backgroundColorController.forward();
 
     HapticFeedback.heavyImpact();
 
@@ -516,6 +514,8 @@ class _HomeScreenState extends State<HomeScreen>
 
     _stopInitRetries = false;
 
+    _backgroundColorController.reverse();
+
     if (result == null) {
       return;
     }
@@ -543,26 +543,11 @@ class _HomeScreenState extends State<HomeScreen>
     await _walletState.updateBalance();
   }
 
-  void handleSettingsTap(String myAddress) async {
-    _searchFocusNode.unfocus();
-
-    final navigator = GoRouter.of(context);
-
-    _stopInitRetries = true;
-
-    HapticFeedback.heavyImpact();
-
-    await navigator.push('/$myAddress/my-account/settings');
-
-    _stopInitRetries = false;
-
-    clearSearch();
-    onLoad();
-  }
-
   Future<void> handleQRScan(String myAddress, Function() callback,
       {String? manualResult}) async {
     _stopInitRetries = true;
+
+    _backgroundColorController.forward();
 
     final result = manualResult ??
         await showCupertinoModalPopup<String?>(
@@ -572,6 +557,8 @@ class _HomeScreenState extends State<HomeScreen>
             modalKey: 'home-qr-scanner',
           ),
         );
+
+    _backgroundColorController.reverse();
 
     callback();
 
@@ -738,8 +725,6 @@ class _HomeScreenState extends State<HomeScreen>
                             onProfileTap: () =>
                                 handleProfileTap(myAddress ?? ''),
                             onTopUpTap: handleTopUp,
-                            onSettingsTap: () =>
-                                handleSettingsTap(myAddress ?? ''),
                           ),
                         ),
                         SliverPersistentHeader(
@@ -901,7 +886,6 @@ class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
   final Color backgroundColor;
   final Future<void> Function() onProfileTap;
   final Function(String) onTopUpTap;
-  final Function() onSettingsTap;
 
   ProfileBarDelegate({
     required this.loading,
@@ -909,7 +893,6 @@ class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
     required this.backgroundColor,
     required this.onProfileTap,
     required this.onTopUpTap,
-    required this.onSettingsTap,
   });
 
   @override
@@ -921,7 +904,6 @@ class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
       backgroundColor: backgroundColor,
       onProfileTap: onProfileTap,
       onTopUpTap: onTopUpTap,
-      onSettingsTap: onSettingsTap,
     );
   }
 

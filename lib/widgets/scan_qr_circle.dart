@@ -90,7 +90,7 @@ class _ScanQrCircleState extends State<ScanQrCircle> {
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
         child: Center(
           child: Icon(
-            CupertinoIcons.qrcode_viewfinder,
+            CupertinoIcons.arrow_up,
             size: 60,
             color: primaryColor,
           ),
