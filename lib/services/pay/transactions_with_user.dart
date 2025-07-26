@@ -12,14 +12,18 @@ class TransactionsService {
   TransactionsService(
       {required this.firstAccount, required this.secondAccount});
 
-  Future<List<Transaction>> getTransactionsWithUser() async {
+  Future<(List<Transaction>, int)> getTransactionsWithUser({
+    int limit = 10,
+    int offset = 0,
+  }) async {
     try {
       final response = await apiService.get(
           url:
-              '/accounts/$firstAccount/transactions/with-account/$secondAccount');
+              '/accounts/$firstAccount/transactions/with-account/$secondAccount?limit=$limit&offset=$offset');
 
       final Map<String, dynamic> data = response;
       final List<dynamic> transactionsApiResponse = data['transactions'];
+      final int count = data['count'];
 
       /* Example API Response:
        * {
@@ -40,9 +44,10 @@ class TransactionsService {
        * }
        */
 
-      return transactionsApiResponse
-          .map((t) => Transaction.fromJson(t))
-          .toList();
+      return (
+        transactionsApiResponse.map((t) => Transaction.fromJson(t)).toList(),
+        count
+      );
     } catch (e, s) {
       debugPrint('Failed to fetch transactions: $e');
       debugPrint('Stack trace: $s');

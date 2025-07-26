@@ -8,6 +8,7 @@ import 'package:pay_app/utils/date.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 
 class TransactionListItem extends StatelessWidget {
+  final String account;
   final Config config;
   final Transaction transaction;
   final bool isSending;
@@ -15,6 +16,7 @@ class TransactionListItem extends StatelessWidget {
 
   const TransactionListItem({
     super.key,
+    required this.account,
     required this.config,
     required this.transaction,
     this.isSending = false,
@@ -27,8 +29,8 @@ class TransactionListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isReceived =
-        transaction.exchangeDirection == ExchangeDirection.received;
+    final exchangeDirection = transaction.exchangeDirection(account);
+    final isReceived = exchangeDirection == ExchangeDirection.received;
 
     const bubbleBorderRadius = 20.0;
     const bubbleCornerBorderRadius = 2.0;
@@ -93,7 +95,7 @@ class TransactionListItem extends StatelessWidget {
                           Amount(
                             amount: transaction.amount,
                             logo: logo,
-                            exchangeDirection: transaction.exchangeDirection,
+                            exchangeDirection: exchangeDirection,
                           ),
                         ],
                       ),
@@ -101,7 +103,7 @@ class TransactionListItem extends StatelessWidget {
                           transaction.description!.isNotEmpty) ...[
                         SizedBox(height: 4),
                         Description(
-                          exchangeDirection: transaction.exchangeDirection,
+                          exchangeDirection: exchangeDirection,
                           description: transaction.description,
                         ),
                       ],
@@ -111,7 +113,7 @@ class TransactionListItem extends StatelessWidget {
                         children: [
                           TimeAgo(
                             createdAt: transaction.createdAt,
-                            exchangeDirection: transaction.exchangeDirection,
+                            exchangeDirection: exchangeDirection,
                           ),
                           const SizedBox(width: 4),
                           if (transaction.status == TransactionStatus.sending)
@@ -196,7 +198,7 @@ class Description extends StatelessWidget {
 }
 
 class Amount extends StatelessWidget {
-  final double amount;
+  final String amount;
   final String? logo;
   final ExchangeDirection exchangeDirection;
 
@@ -219,7 +221,7 @@ class Amount extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         Text(
-          amount.toStringAsFixed(2),
+          amount,
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w600,

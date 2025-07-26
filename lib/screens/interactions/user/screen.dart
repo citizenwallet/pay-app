@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -9,7 +7,6 @@ import 'package:pay_app/state/transactions_with_user/selector.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
-import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
 
@@ -46,6 +43,8 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
   late WalletState _walletState;
   late TopupState _topupState;
 
+  bool _isLoadingMore = false;
+
   @override
   void initState() {
     super.initState();
@@ -74,6 +73,17 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
 
     if (messageFocusNode.hasFocus) {
       messageFocusNode.unfocus();
+    }
+
+    // Check if user has scrolled to the bottom to load more transactions
+    if (scrollController.position.pixels >=
+        scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoadingMore && !_transactionsWithUserState.loadingMore) {
+        _isLoadingMore = true;
+        _transactionsWithUserState.loadMoreTransactions().then((_) {
+          _isLoadingMore = false;
+        });
+      }
     }
   }
 
@@ -212,7 +222,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
                             ),
                           ),
                         ),
-                      if (!noUserAccount)
+                      if (!noUserAccount) ...[
                         SliverList(
                           delegate: SliverChildBuilderDelegate(
                             childCount: transactions.length,
@@ -225,6 +235,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
 
                               return TransactionListItem(
                                 key: Key(transaction.id),
+                                account: _walletState.address!.hexEip55,
                                 config: config,
                                 transaction: transaction,
                                 onRetry: retryTransaction,
@@ -232,6 +243,23 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
                             },
                           ),
                         ),
+                        // Loading indicator for pagination
+                        SliverToBoxAdapter(
+                          child: Consumer<TransactionsWithUserState>(
+                            builder: (context, state, child) {
+                              if (state.loadingMore) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Center(
+                                    child: CupertinoActivityIndicator(),
+                                  ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

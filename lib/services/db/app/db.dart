@@ -1,5 +1,6 @@
 import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/db/app/contacts.dart';
+import 'package:pay_app/services/db/app/transactions.dart';
 import 'package:pay_app/services/db/db.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -14,6 +15,7 @@ class AppDBService extends DBService {
 
   late ContactsTable contacts;
   late CardsTable cards;
+  late TransactionsTable transactions;
 
   @override
   Future<Database> openDB(String path) async {
@@ -21,18 +23,21 @@ class AppDBService extends DBService {
       onConfigure: (db) async {
         contacts = ContactsTable(db);
         cards = CardsTable(db);
+        transactions = TransactionsTable(db);
       },
       onCreate: (db, version) async {
         await contacts.create(db);
         await cards.create(db);
+        await transactions.create(db);
         return;
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         await contacts.migrate(db, oldVersion, newVersion);
         await cards.migrate(db, oldVersion, newVersion);
+        await transactions.migrate(db, oldVersion, newVersion);
         return;
       },
-      version: 3,
+      version: 5,
     );
 
     final db = await databaseFactory.openDatabase(
