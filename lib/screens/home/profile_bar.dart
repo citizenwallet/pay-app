@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/screens/home/token_modal.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/state/profile.dart';
@@ -32,13 +33,31 @@ class ProfileBar extends StatefulWidget {
 }
 
 class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
+  late WalletState _walletState;
+
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _walletState = context.read<WalletState>();
+    });
   }
 
   Future<void> handleProfileTap() async {
     await widget.onProfileTap();
+  }
+
+  Future<void> handleBalanceTap() async {
+    final selectedToken = await showCupertinoModalPopup<String?>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => const TokenModal(),
+    );
+
+    if (selectedToken != null) {
+      _walletState.setCurrentToken(selectedToken);
+    }
   }
 
   @override
@@ -79,6 +98,10 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
     final width = MediaQuery.of(context).size.width;
     final adjustedWidth = widget.shrink * width;
 
+    final primaryColor = context.select<WalletState, Color>(
+      (state) => state.tokenPrimaryColor,
+    );
+
     return BlurryChild(
       child: Container(
         width: width,
@@ -98,28 +121,19 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Card(
-                      width: (adjustedWidth < 340 ? 340 : adjustedWidth) * 0.8,
-                      uid: profile.account,
-                      color: primaryColor,
-                      profile: profile,
-                      icon: CupertinoIcons.device_phone_portrait,
-                      onTopUpPressed: !widget.loading && topUpPlugin != null
-                          ? () => widget.onTopUpTap(topUpPlugin.url)
-                          : null,
-                      onCardPressed: (_) => handleProfileTap(),
-                      // onCardPressed: (_) => handleCardSelect(
-                      //   profile.account,
-                      //   null,
-                      //   'main',
-                      // ),
-                      balance: balance,
-                    ),
-                  ],
+                Card(
+                  width: (adjustedWidth < 360 ? 360 : adjustedWidth) * 0.8,
+                  uid: profile.account,
+                  color: primaryColor,
+                  profile: profile,
+                  icon: CupertinoIcons.device_phone_portrait,
+                  onTopUpPressed: !widget.loading && topUpPlugin != null
+                      ? () => widget.onTopUpTap(topUpPlugin.url)
+                      : null,
+                  onCardPressed: (_) => handleProfileTap(),
+                  onCardBalanceTapped: handleBalanceTap,
+                  logo: tokenConfig?.logo,
+                  balance: balance,
                 ),
               ],
             ),

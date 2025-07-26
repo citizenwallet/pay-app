@@ -62,11 +62,12 @@ class CardsState with ChangeNotifier {
   bool unclaimingCard = false;
 
   // state methods here
-  Future<void> fetchCards() async {
+  Future<void> fetchCards({String? tokenAddress}) async {
     cards = await _cards.getAll();
     safeNotifyListeners();
 
-    final token = _config.getPrimaryToken();
+    final token =
+        _config.getToken(tokenAddress ?? _config.getPrimaryToken().address);
 
     for (final card in cards) {
       await fetchProfile(card.account);
@@ -74,6 +75,7 @@ class CardsState with ChangeNotifier {
       final balance = await getBalance(
         _config,
         EthereumAddress.fromHex(card.account),
+        tokenAddress: token.address,
       );
       final formattedBalance =
           (double.tryParse(balance) ?? 0.0) / pow(10, token.decimals);

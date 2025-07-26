@@ -441,7 +441,8 @@ class _HomeScreenState extends State<HomeScreen>
     clearSearch();
   }
 
-  Future<void> handleProfileTap(String myAddress) async {
+  Future<void> handleProfileTap(String myAddress,
+      {String? tokenAddress}) async {
     _searchFocusNode.unfocus();
 
     _stopInitRetries = true;
@@ -450,20 +451,17 @@ class _HomeScreenState extends State<HomeScreen>
 
     HapticFeedback.heavyImpact();
 
-    final selectedToken = await showCupertinoDialog<String?>(
+    await showCupertinoDialog<String?>(
       context: context,
       barrierDismissible: true,
       useRootNavigator: false,
       builder: (modalContext) => ProfileModal(
         accountAddress: myAddress,
+        tokenAddress: tokenAddress,
       ),
     );
 
     _backgroundColorController.reverse();
-
-    if (selectedToken != null) {
-      _walletState.setCurrentToken(selectedToken);
-    }
 
     _stopInitRetries = false;
 
@@ -686,6 +684,9 @@ class _HomeScreenState extends State<HomeScreen>
 
     final safeBottomPadding = MediaQuery.of(context).padding.bottom;
 
+    final tokenAddress =
+        context.select((WalletState state) => state.currentTokenAddress);
+
     final nothingFound = _searchController.text.isNotEmpty &&
         interactions.isEmpty &&
         places.isEmpty &&
@@ -721,8 +722,9 @@ class _HomeScreenState extends State<HomeScreen>
                             accountAddress: myAddress ?? '',
                             backgroundColor:
                                 _backgroundColorAnimation.value ?? whiteColor,
-                            onProfileTap: () =>
-                                handleProfileTap(myAddress ?? ''),
+                            onProfileTap: () => handleProfileTap(
+                                myAddress ?? '',
+                                tokenAddress: tokenAddress),
                             onTopUpTap: handleTopUp,
                           ),
                         ),

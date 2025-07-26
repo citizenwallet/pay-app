@@ -18,12 +18,14 @@ class Card extends StatefulWidget {
   final Color color;
   final EdgeInsets? margin;
   final ProfileV1? profile;
+  final String? logo;
   final double? balance;
   final IconData? icon;
   final VoidCallback? onTopUpPressed;
   final Future<void> Function()? onCardNameTapped;
   final Future<void> Function(String)? onCardNameUpdated;
   final Future<void> Function(String)? onCardPressed;
+  final Future<void> Function()? onCardBalanceTapped;
 
   const Card({
     super.key,
@@ -32,12 +34,14 @@ class Card extends StatefulWidget {
     required this.color,
     this.margin,
     this.profile,
+    this.logo,
     this.balance,
     this.icon,
     this.onTopUpPressed,
     this.onCardNameTapped,
     this.onCardNameUpdated,
     this.onCardPressed,
+    this.onCardBalanceTapped,
   });
 
   @override
@@ -119,6 +123,16 @@ class _CardState extends State<Card> {
     await widget.onCardNameUpdated?.call(newName);
   }
 
+  void handleBalanceTap() async {
+    if (widget.onCardBalanceTapped == null) {
+      return;
+    }
+
+    HapticFeedback.lightImpact();
+
+    await widget.onCardBalanceTapped?.call();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Standard credit card proportions: 1.586 (width:height ratio)
@@ -129,6 +143,8 @@ class _CardState extends State<Card> {
     };
 
     double cardHeight = cardWidth / 1.586;
+
+    final balanceTappable = widget.onCardBalanceTapped != null;
 
     final container = AnimatedContainer(
       duration: const Duration(milliseconds: 100),
@@ -293,21 +309,48 @@ class _CardState extends State<Card> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          CoinLogo(size: 20),
-                          const SizedBox(width: 4),
-                          Text(
-                            widget.balance!.toStringAsFixed(2),
-                            style: TextStyle(
-                              color: CupertinoColors.white,
-                              fontSize: 20,
-                              letterSpacing: 1,
-                            ),
+                      GestureDetector(
+                        onTap: balanceTappable ? handleBalanceTap : null,
+                        child: Container(
+                          decoration: balanceTappable
+                              ? BoxDecoration(
+                                  color: whiteColor.withAlpha(10),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: whiteColor.withAlpha(100),
+                                    width: 1,
+                                  ),
+                                )
+                              : null,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
                           ),
-                        ],
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              CoinLogo(size: 20, logo: widget.logo),
+                              const SizedBox(width: 4),
+                              Text(
+                                widget.balance!.toStringAsFixed(2),
+                                style: TextStyle(
+                                  color: CupertinoColors.white,
+                                  fontSize: 20,
+                                  letterSpacing: 1,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (balanceTappable) const SizedBox(width: 4),
+                              if (balanceTappable)
+                                Icon(
+                                  CupertinoIcons.chevron_down,
+                                  color: CupertinoColors.white,
+                                  size: 14,
+                                ),
+                            ],
+                          ),
+                        ),
                       )
                     ],
                   ),

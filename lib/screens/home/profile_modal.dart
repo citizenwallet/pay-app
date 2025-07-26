@@ -13,15 +13,11 @@ import 'package:pay_app/state/state.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/card_colors.dart';
 import 'package:pay_app/theme/colors.dart';
-import 'package:pay_app/utils/currency.dart';
 import 'package:pay_app/utils/delay.dart';
-import 'package:pay_app/widgets/account_card.dart';
 import 'package:pay_app/widgets/button.dart';
 import 'package:pay_app/widgets/card.dart';
-import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
 import 'package:pay_app/widgets/modals/nfc_modal.dart';
-import 'package:pay_app/widgets/persistent_header_delegate.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
@@ -29,8 +25,13 @@ import 'package:web3dart/web3dart.dart';
 
 class ProfileModal extends StatefulWidget {
   final String accountAddress;
+  final String? tokenAddress;
 
-  const ProfileModal({super.key, required this.accountAddress});
+  const ProfileModal({
+    super.key,
+    required this.accountAddress,
+    this.tokenAddress,
+  });
 
   @override
   State<ProfileModal> createState() => _ProfileModalState();
@@ -43,14 +44,12 @@ class _ProfileModalState extends State<ProfileModal> {
   Timer? _displayCardsTimer;
   bool _displayCards = false;
 
-  late WalletState _walletState;
   late CardsState _cardsState;
 
   @override
   void initState() {
     super.initState();
 
-    _walletState = context.read<WalletState>();
     _cardsState = context.read<CardsState>();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -77,8 +76,7 @@ class _ProfileModalState extends State<ProfileModal> {
       });
     });
 
-    _walletState.loadTokenBalances();
-    await _cardsState.fetchCards();
+    await _cardsState.fetchCards(tokenAddress: widget.tokenAddress);
   }
 
   void handleScrollToTop() {
@@ -107,12 +105,6 @@ class _ProfileModalState extends State<ProfileModal> {
     final navigator = GoRouter.of(context);
     HapticFeedback.heavyImpact();
     navigator.pop();
-  }
-
-  void handleTokenSelect(String tokenKey) {
-    final navigator = GoRouter.of(context);
-    HapticFeedback.heavyImpact();
-    navigator.pop(tokenKey);
   }
 
   Future<void> handleCardSelect(
@@ -347,6 +339,15 @@ class _ProfileModalState extends State<ProfileModal> {
     const headerHeight = 276.9;
 
     final balance = context.watch<WalletState>().balance;
+
+    final tokenConfig = context.select<WalletState, TokenConfig?>(
+      (state) => state.currentTokenConfig,
+    );
+
+    final primaryColor = context.select<WalletState, Color>(
+      (state) => state.tokenPrimaryColor,
+    );
+
     return SafeArea(
       top: false,
       bottom: false,
@@ -377,6 +378,8 @@ class _ProfileModalState extends State<ProfileModal> {
                         context,
                         cards,
                         cardBalances,
+                        tokenConfig,
+                        primaryColor,
                       ),
                     ],
                   ),
@@ -395,6 +398,8 @@ class _ProfileModalState extends State<ProfileModal> {
                 profile,
                 alias,
                 balance,
+                tokenConfig,
+                primaryColor,
               ),
             ),
           ),
@@ -418,6 +423,7 @@ class _ProfileModalState extends State<ProfileModal> {
               context,
               profile,
               alias,
+              primaryColor,
             ),
           ),
         ],
@@ -431,6 +437,8 @@ class _ProfileModalState extends State<ProfileModal> {
     ProfileV1 profile,
     String alias,
     double balance,
+    TokenConfig? tokenConfig,
+    Color primaryColor,
   ) {
     return Column(
       children: [
@@ -448,6 +456,7 @@ class _ProfileModalState extends State<ProfileModal> {
                 null,
                 'main',
               ),
+              logo: tokenConfig?.logo,
               balance: balance,
             ),
           ],
@@ -460,6 +469,7 @@ class _ProfileModalState extends State<ProfileModal> {
     BuildContext context,
     ProfileV1 profile,
     String alias,
+    Color primaryColor,
   ) {
     final claimingCard = context.watch<CardsState>().claimingCard;
     return Column(
@@ -500,167 +510,12 @@ class _ProfileModalState extends State<ProfileModal> {
     );
   }
 
-  Widget _buildTokensList(BuildContext context) {
-    final config = context.select<WalletState, Config>(
-      (state) => state.config,
-    );
-
-    final currentTokenAddress = context.select<WalletState, String?>(
-      (state) => state.currentTokenAddress,
-    );
-
-    final tokenLoadingStates = context.watch<WalletState>().tokenLoadingStates;
-    final tokenBalances = context.watch<WalletState>().tokenBalances;
-
-    final theme = CupertinoTheme.of(context);
-    final primaryColor = theme.primaryColor;
-
-    if (config.tokens.isEmpty) {
-      return const Center(
-        child: CupertinoActivityIndicator(),
-      );
-    }
-
-    if (config.tokens.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        child: Text(
-          'No tokens available',
-          style: TextStyle(
-            color: textMutedColor,
-            fontSize: 16,
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Text(
-              'Tokens',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: textColor,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        ...(config.tokens.entries.map((entry) {
-          final tokenAddress = entry.value.address;
-          final tokenConfig = entry.value;
-          final isTokenLoading = tokenLoadingStates[tokenAddress] ?? false;
-          final formattedBalance = formatCurrency(
-            tokenBalances[tokenAddress] ?? '0',
-            tokenConfig.decimals,
-          );
-
-          final isSelected = currentTokenAddress == tokenAddress;
-
-          return GestureDetector(
-            onTap: () => handleTokenSelect(tokenAddress),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                border: Border.all(
-                  color: isSelected ? primaryColor : backgroundColor,
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  // Token logo
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: primaryColor.withAlpha(20),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: tokenConfig.logo != null
-                        ? CoinLogo(
-                            size: 40,
-                            logo: tokenConfig.logo,
-                          )
-                        : Icon(
-                            CupertinoIcons.circle_fill,
-                            color: primaryColor,
-                            size: 40,
-                          ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Token info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          tokenConfig.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          tokenConfig.symbol,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: textMutedColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Balance
-                  if (isTokenLoading)
-                    CupertinoActivityIndicator(
-                      radius: 8,
-                      color: textMutedColor,
-                    )
-                  else ...[
-                    tokenConfig.logo != null
-                        ? CoinLogo(
-                            size: 20,
-                            logo: tokenConfig.logo,
-                          )
-                        : Icon(
-                            CupertinoIcons.circle_fill,
-                            color: primaryColor,
-                            size: 20,
-                          ),
-                    const SizedBox(width: 4),
-                    Text(
-                      formattedBalance,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ]
-                ],
-              ),
-            ),
-          );
-        }).toList()),
-        const SizedBox(height: 12),
-      ],
-    );
-  }
-
   List<Widget> _buildCardsList(
     BuildContext context,
     List<DBCard> cards,
     Map<String, double> cardBalances,
+    TokenConfig? tokenConfig,
+    Color primaryColor,
   ) {
     final width = MediaQuery.of(context).size.width;
 
@@ -693,6 +548,7 @@ class _ProfileModalState extends State<ProfileModal> {
                     uid,
                     card.project,
                   ),
+                  logo: tokenConfig?.logo,
                   balance: cardBalances[card.account],
                 ),
               ],
