@@ -338,7 +338,7 @@ class _CardModalState extends State<CardModal> {
   Widget _buildCard(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
 
-    final balance = context.select<CardState, double>((state) => state.balance);
+    final balance = context.select<CardState, String>((state) => state.balance);
     final profile =
         context.select<CardState, ProfileV1?>((state) => state.profile);
 

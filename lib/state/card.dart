@@ -7,13 +7,16 @@ import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/pay/orders.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
+import 'package:pay_app/utils/currency.dart';
 import 'package:web3dart/web3dart.dart';
 
 class CardState with ChangeNotifier {
   // instantiate services here
   final CardsTable _cards = AppDBService().cards;
+  final PreferencesService _preferences = PreferencesService();
 
   final Config _config;
 
@@ -22,8 +25,7 @@ class CardState with ChangeNotifier {
   Timer? _timer;
 
   // constructor here
-  CardState(this._config, {required this.cardId})
-      : _decimals = _config.getPrimaryToken().decimals;
+  CardState(this._config, {required this.cardId});
 
   bool _mounted = true;
   void safeNotifyListeners() {
@@ -46,10 +48,7 @@ class CardState with ChangeNotifier {
   EthereumAddress? cardAddress;
   ProfileV1? profile;
 
-  String _balance = '0';
-  final int _decimals;
-  double get doubleBalance => double.tryParse(_balance) ?? 0.0;
-  double get balance => doubleBalance / pow(10, _decimals);
+  String balance = '0';
 
   DBCard? card;
   bool ordersLoading = false;
@@ -60,6 +59,9 @@ class CardState with ChangeNotifier {
   // state methods here
   Future<void> fetchCardDetails(String? address, String? tokenAddress) async {
     try {
+      final token =
+          _config.getToken(tokenAddress ?? _config.getPrimaryToken().address);
+
       card = address != null
           ? DBCard(
               uid: address,
@@ -76,6 +78,9 @@ class CardState with ChangeNotifier {
           : await _config.cardManagerContract!.getCardAddress(
               cardId,
             );
+      final balances = _preferences.tokenBalances(cardAddress!.hexEip55);
+      this.balance = balances[token.address] ?? '0.0';
+
       safeNotifyListeners();
 
       if (card != null) {
@@ -89,11 +94,16 @@ class CardState with ChangeNotifier {
       profile = await getProfile(_config, cardAddress!.hexEip55);
       safeNotifyListeners();
 
-      _balance = await getBalance(
+      final balance = await getBalance(
         _config,
         cardAddress!,
         tokenAddress: tokenAddress,
       );
+
+      final formattedBalance = formatCurrency(balance, token.decimals);
+
+      balances[token.address] = formattedBalance;
+      _preferences.setTokenBalances(cardAddress!.hexEip55, balances);
 
       startPolling(tokenAddress);
     } catch (e) {
@@ -122,8 +132,22 @@ class CardState with ChangeNotifier {
       return;
     }
 
-    _balance =
-        await getBalance(_config, cardAddress!, tokenAddress: tokenAddress);
+    final token =
+        _config.getToken(tokenAddress ?? _config.getPrimaryToken().address);
+
+    final balance = await getBalance(
+      _config,
+      cardAddress!,
+      tokenAddress: tokenAddress,
+    );
+
+    final formattedBalance = formatCurrency(balance, token.decimals);
+
+    final balances = _preferences.tokenBalances(cardAddress!.hexEip55);
+    balances[token.address] = formattedBalance;
+    _preferences.setTokenBalances(cardAddress!.hexEip55, balances);
+
+    this.balance = formattedBalance;
     safeNotifyListeners();
   }
 

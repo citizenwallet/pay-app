@@ -62,8 +62,8 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final balance = context.select<WalletState, double>(
-      (state) => state.balance,
+    final balance = context.select<WalletState, String>(
+      (state) => state.tokenBalances[state.currentTokenAddress] ?? '0.0',
     );
     final config = context.select<WalletState, Config?>(
       (state) => state.config,
@@ -90,7 +90,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
   Widget _buildProfileCard(
     BuildContext context,
     ProfileV1 profile,
-    double balance,
+    String balance,
     TokenConfig? tokenConfig,
     PluginConfig? topUpPlugin,
   ) {

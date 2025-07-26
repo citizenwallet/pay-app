@@ -101,23 +101,25 @@ class _FooterState extends State<Footer> {
 
   @override
   Widget build(BuildContext context) {
-    final balance = context.watch<WalletState>().balance;
-
     final toSendAmount = context.watch<OrdersWithPlaceState>().toSendAmount;
     final placeMenu = context.watch<OrdersWithPlaceState>().placeMenu;
 
     final config = context.select<WalletState, Config?>(
       (state) => state.config,
     );
-    final tokenConfig = context.select<WalletState, TokenConfig?>(
+    final tokenConfig = context.select<WalletState, TokenConfig>(
       (state) => state.currentTokenConfig,
     );
+
+    final balance =
+        context.watch<WalletState>().tokenBalances[tokenConfig.address] ??
+            '0.0';
 
     final topUpPlugin = config?.getTopUpPlugin(
       tokenAddress: tokenConfig?.address,
     );
 
-    final error = toSendAmount > balance;
+    final error = toSendAmount > double.parse(balance);
     final disabled = toSendAmount == 0.0 || error;
 
     final paying = context.watch<OrdersWithPlaceState>().paying;

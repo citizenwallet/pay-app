@@ -10,6 +10,7 @@ import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/sigauth/sigauth.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
+import 'package:pay_app/utils/currency.dart';
 import 'package:web3dart/credentials.dart';
 
 enum AddCardError {
@@ -54,7 +55,7 @@ class CardsState with ChangeNotifier {
 
   // state variables here
   List<DBCard> cards = [];
-  Map<String, double> cardBalances = {};
+  Map<String, String> cardBalances = {};
   Map<String, ProfileV1> profiles = {};
 
   bool updatingCardName = false;
@@ -77,10 +78,8 @@ class CardsState with ChangeNotifier {
         EthereumAddress.fromHex(card.account),
         tokenAddress: token.address,
       );
-      final formattedBalance =
-          (double.tryParse(balance) ?? 0.0) / pow(10, token.decimals);
 
-      cardBalances[card.account] = formattedBalance;
+      cardBalances[card.account] = formatCurrency(balance, token.decimals);
     }
   }
 

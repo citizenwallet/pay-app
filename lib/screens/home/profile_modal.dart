@@ -332,7 +332,7 @@ class _ProfileModalState extends State<ProfileModal> {
   Widget _buildContent(
     BuildContext context,
     List<DBCard> cards,
-    Map<String, double> cardBalances,
+    Map<String, String> cardBalances,
     ProfileV1 profile,
     String alias,
   ) {
@@ -340,7 +340,10 @@ class _ProfileModalState extends State<ProfileModal> {
     final safeArea = MediaQuery.of(context).padding;
     const headerHeight = 276.9;
 
-    final balance = context.watch<WalletState>().balance;
+    final balance = context.watch<WalletState>().tokenBalances[
+            widget.tokenAddress ??
+                context.read<WalletState>().currentTokenAddress] ??
+        '0.0';
 
     final tokenConfig = context.select<WalletState, TokenConfig?>(
       (state) => state.currentTokenConfig,
@@ -438,7 +441,7 @@ class _ProfileModalState extends State<ProfileModal> {
     double width,
     ProfileV1 profile,
     String alias,
-    double balance,
+    String balance,
     TokenConfig? tokenConfig,
     Color primaryColor,
   ) {
@@ -516,7 +519,7 @@ class _ProfileModalState extends State<ProfileModal> {
   List<Widget> _buildCardsList(
     BuildContext context,
     List<DBCard> cards,
-    Map<String, double> cardBalances,
+    Map<String, String> cardBalances,
     TokenConfig? tokenConfig,
     Color primaryColor,
   ) {

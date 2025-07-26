@@ -32,13 +32,20 @@ class PreferencesService {
     return ProfileV1.fromJson(jsonDecode(json));
   }
 
-  // save balance
-  Future setBalance(String balance) async {
-    await _preferences.setString('balance', balance);
+  // save token balances
+  Future setTokenBalances(String account, Map<String, String> balances) async {
+    await _preferences.setString(
+      'token_balances_$account',
+      jsonEncode(balances),
+    );
   }
 
-  String? get balance {
-    return _preferences.getString('balance');
+  Map<String, String> tokenBalances(String account) {
+    final json = _preferences.getString('token_balances_$account');
+    if (json == null) {
+      return {};
+    }
+    return Map<String, String>.from(jsonDecode(json));
   }
 
   // save contact permission

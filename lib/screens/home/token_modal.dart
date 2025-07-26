@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
-import 'package:pay_app/utils/currency.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
 import 'package:provider/provider.dart';
@@ -121,10 +120,7 @@ class _TokenModalState extends State<TokenModal> {
           final tokenAddress = entry.value.address;
           final tokenConfig = entry.value;
           final isTokenLoading = tokenLoadingStates[tokenAddress] ?? false;
-          final formattedBalance = formatCurrency(
-            tokenBalances[tokenAddress] ?? '0',
-            tokenConfig.decimals,
-          );
+          final balance = tokenBalances[tokenAddress] ?? '0';
 
           final isSelected = currentTokenAddress == tokenAddress;
 
@@ -206,7 +202,7 @@ class _TokenModalState extends State<TokenModal> {
                           ),
                     const SizedBox(width: 4),
                     Text(
-                      formattedBalance,
+                      balance,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

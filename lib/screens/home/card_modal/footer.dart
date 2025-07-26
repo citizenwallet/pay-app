@@ -86,28 +86,27 @@ class _FooterState extends State<Footer> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final balance = context.watch<WalletState>().balance;
 
-    final config = context.select<WalletState, Config?>(
+    final config = context.select<WalletState, Config>(
       (state) => state.config,
     );
-    final tokenConfig = context.select<WalletState, TokenConfig?>(
+    final tokenConfig = context.select<WalletState, TokenConfig>(
       (state) => state.currentTokenConfig,
     );
 
-    final topUpPlugin = config?.getTopUpPlugin(
-      tokenAddress: tokenConfig?.address,
+    final balance =
+        context.watch<WalletState>().tokenBalances[tokenConfig.address] ??
+            '0.0';
+
+    final topUpPlugin = config.getTopUpPlugin(
+      tokenAddress: tokenConfig.address,
     );
 
     final toSendAmount =
         context.watch<TransactionsWithUserState>().toSendAmount;
 
-    final error = toSendAmount > balance;
+    final error = toSendAmount > double.parse(balance);
     final disabled = toSendAmount == 0.0 || error;
-
-    if (tokenConfig == null) {
-      return const SizedBox.shrink();
-    }
 
     return Container(
       width: width,

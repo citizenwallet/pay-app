@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/services/config/config.dart';
@@ -22,17 +21,21 @@ class Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final balance = context.watch<WalletState>().balance;
-    final insufficientBalance = balance < checkout.total;
-
-    final disabled = checkout.total == 0 || balance < checkout.total;
-
     final config = context.select<WalletState, Config?>(
       (state) => state.config,
     );
-    final tokenConfig = context.select<WalletState, TokenConfig?>(
+    final tokenConfig = context.select<WalletState, TokenConfig>(
       (state) => state.currentTokenConfig,
     );
+
+    final balance =
+        context.watch<WalletState>().tokenBalances[tokenConfig.address] ??
+            '0.0';
+
+    final insufficientBalance = double.parse(balance) < checkout.total;
+
+    final disabled =
+        checkout.total == 0 || double.parse(balance) < checkout.total;
 
     final topUpPlugin = config?.getTopUpPlugin(
       tokenAddress: tokenConfig?.address,

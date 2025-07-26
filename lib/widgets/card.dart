@@ -19,7 +19,7 @@ class Card extends StatefulWidget {
   final EdgeInsets? margin;
   final ProfileV1? profile;
   final String? logo;
-  final double? balance;
+  final String? balance;
   final IconData? icon;
   final VoidCallback? onTopUpPressed;
   final Future<void> Function()? onCardNameTapped;
@@ -333,7 +333,7 @@ class _CardState extends State<Card> {
                               CoinLogo(size: 20, logo: widget.logo),
                               const SizedBox(width: 4),
                               Text(
-                                widget.balance!.toStringAsFixed(2),
+                                widget.balance!,
                                 style: TextStyle(
                                   color: CupertinoColors.white,
                                   fontSize: 20,

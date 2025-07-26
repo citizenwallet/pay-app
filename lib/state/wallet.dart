@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/services/config/config.dart';
@@ -7,6 +6,7 @@ import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
+import 'package:pay_app/utils/currency.dart';
 import 'package:web3dart/web3dart.dart';
 
 class WalletState with ChangeNotifier {
@@ -19,26 +19,19 @@ class WalletState with ChangeNotifier {
   EthereumAddress? _address;
   EthereumAddress? get address => _address;
 
-  String _balance = '0';
-  int _decimals = 6;
-  double get doubleBalance =>
-      double.tryParse(_preferencesService.balance ?? _balance) ?? 0.0;
-  double get balance => doubleBalance / pow(10, _decimals);
-
   // Token balances management
-  Map<String, String> _tokenBalances = {};
-  Map<String, String> get tokenBalances => _tokenBalances;
+  Map<String, String> tokenBalances = {};
 
   Map<String, bool> tokenLoadingStates = {};
 
   bool _loadingTokenBalances = false;
   bool get loadingTokenBalances => _loadingTokenBalances;
 
-  String? currentTokenAddress;
-  TokenConfig? currentTokenConfig;
+  String currentTokenAddress;
+  TokenConfig currentTokenConfig;
 
-  Color get tokenPrimaryColor => currentTokenConfig?.color != null
-      ? Color(int.parse(currentTokenConfig!.color!.replaceAll('#', '0xFF')))
+  Color get tokenPrimaryColor => currentTokenConfig.color != null
+      ? Color(int.parse(currentTokenConfig.color!.replaceAll('#', '0xFF')))
       : primaryColor;
 
   bool loading = false;
@@ -58,7 +51,9 @@ class WalletState with ChangeNotifier {
     super.dispose();
   }
 
-  WalletState(this._config);
+  WalletState(this._config)
+      : currentTokenAddress = _config.getPrimaryToken().address,
+        currentTokenConfig = _config.getPrimaryToken();
 
   Future<bool?> init() async {
     try {
@@ -68,8 +63,6 @@ class WalletState with ChangeNotifier {
       final tokenConfig = config.getToken(
         _preferencesService.tokenAddress ?? config.getPrimaryToken().address,
       );
-
-      _decimals = tokenConfig.decimals;
 
       currentTokenAddress =
           _preferencesService.tokenAddress ?? tokenConfig.address;
@@ -86,6 +79,9 @@ class WalletState with ChangeNotifier {
       final (account, key) = credentials;
 
       _address = account;
+
+      tokenBalances = _preferencesService.tokenBalances(_address!.hexEip55);
+      safeNotifyListeners();
 
       final expired = await _config.sessionManagerModuleContract.isExpired(
         account,
@@ -133,13 +129,23 @@ class WalletState with ChangeNotifier {
   }
 
   Future<void> updateBalance() async {
-    _balance = await getBalance(
+    tokenBalances = _preferencesService.tokenBalances(_address!.hexEip55);
+    safeNotifyListeners();
+
+    final balance = await getBalance(
       _config,
       _address!,
       tokenAddress: currentTokenAddress,
     );
-    await _preferencesService.setBalance(_balance);
+
+    final token = _config.getToken(currentTokenAddress);
+
+    tokenBalances[currentTokenAddress] =
+        formatCurrency(balance, token.decimals);
     safeNotifyListeners();
+
+    await _preferencesService.setTokenBalances(
+        _address!.hexEip55, tokenBalances);
   }
 
   Future<void> loadTokenBalances() async {
@@ -148,6 +154,7 @@ class WalletState with ChangeNotifier {
     }
 
     try {
+      tokenBalances = _preferencesService.tokenBalances(_address!.hexEip55);
       _loadingTokenBalances = true;
       safeNotifyListeners();
 
@@ -168,7 +175,8 @@ class WalletState with ChangeNotifier {
             tokenAddress: tokenAddress,
           );
 
-          balances[tokenAddress] = balance;
+          balances[tokenAddress] =
+              formatCurrency(balance, tokenEntry.value.decimals);
         } catch (e) {
           debugPrint('Error loading balance for token $tokenAddress: $e');
           balances[tokenAddress] = '0';
@@ -178,8 +186,13 @@ class WalletState with ChangeNotifier {
         }
       }
 
-      _tokenBalances = balances;
+      tokenBalances = balances;
       safeNotifyListeners();
+
+      await _preferencesService.setTokenBalances(
+        _address!.hexEip55,
+        tokenBalances,
+      );
     } catch (e) {
       debugPrint('Error loading token balances: $e');
     } finally {
@@ -194,24 +207,35 @@ class WalletState with ChangeNotifier {
     }
 
     try {
+      tokenBalances = _preferencesService.tokenBalances(_address!.hexEip55);
+      safeNotifyListeners();
+
       final balances = <String, String>{};
 
       for (final tokenEntry in _config.tokens.entries) {
         final tokenKey = tokenEntry.key;
+        final tokenAddress = tokenEntry.value.address;
         try {
           final balance = await getBalance(
             _config,
             _address!,
-            tokenAddress: tokenKey,
+            tokenAddress: tokenAddress,
           );
-          balances[tokenKey] = balance;
+          balances[tokenAddress] = formatCurrency(
+            balance,
+            tokenEntry.value.decimals,
+          );
         } catch (e) {
           debugPrint('Error updating balance for token $tokenKey: $e');
-          balances[tokenKey] = _tokenBalances[tokenKey] ?? '0';
+          balances[tokenKey] = tokenBalances[tokenKey] ?? '0';
         }
       }
 
-      _tokenBalances = balances;
+      tokenBalances = balances;
+      await _preferencesService.setTokenBalances(
+        _address!.hexEip55,
+        tokenBalances,
+      );
       safeNotifyListeners();
     } catch (e) {
       debugPrint('Error updating token balances: $e');
@@ -219,7 +243,7 @@ class WalletState with ChangeNotifier {
   }
 
   String getTokenBalance(String tokenAddress) {
-    return _tokenBalances[tokenAddress] ?? '0';
+    return tokenBalances[tokenAddress] ?? '0';
   }
 
   bool isTokenLoading(String tokenAddress) {
@@ -230,11 +254,6 @@ class WalletState with ChangeNotifier {
     currentTokenAddress = tokenAddress;
     currentTokenConfig = _config.getToken(tokenAddress);
 
-    final tokenConfig = _config.getToken(tokenAddress);
-
-    _decimals = tokenConfig.decimals;
-    _balance = tokenBalances[tokenAddress] ?? '0';
-
     _preferencesService.setToken(tokenAddress);
     safeNotifyListeners();
 
@@ -243,9 +262,7 @@ class WalletState with ChangeNotifier {
 
   void clear() {
     _address = null;
-    _balance = '0';
-    _tokenBalances = {};
-    _decimals = 6;
+    tokenBalances = {};
     _preferencesService.setToken(null);
     safeNotifyListeners();
   }
