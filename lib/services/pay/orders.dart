@@ -12,10 +12,11 @@ class OrdersService {
 
   OrdersService({required this.account});
 
-  Future<({List<Order> orders, int total})> getOrders({
+  Future<(List<Order> orders, int total)> getOrders({
     int? limit,
     int? offset,
     int? placeId,
+    String? slug,
     String? tokenAddress,
   }) async {
     try {
@@ -23,6 +24,7 @@ class OrdersService {
         if (limit != null) 'limit': limit.toString(),
         if (offset != null) 'offset': offset.toString(),
         if (placeId != null) 'placeId': placeId.toString(),
+        if (slug != null) 'slug': slug,
         if (tokenAddress != null) 'token': tokenAddress,
       };
 
@@ -40,8 +42,8 @@ class OrdersService {
           .toList();
 
       return (
-        orders: orders,
-        total: response['total'] as int,
+        orders,
+        response['total'] as int,
       );
     } catch (e, s) {
       debugPrint('Failed to fetch orders: $e');

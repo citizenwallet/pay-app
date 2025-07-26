@@ -173,23 +173,23 @@ class CardState with ChangeNotifier {
       final ordersService =
           OrdersService(account: address ?? cardAddress!.hexEip55);
 
-      final orders = await ordersService.getOrders(
+      final (orders, total) = await ordersService.getOrders(
         limit: ordersLimit,
         offset: ordersOffset,
         tokenAddress: tokenAddress,
       );
 
-      if (orders.orders.length >= ordersLimit) {
+      if (orders.length >= ordersLimit) {
         ordersOffset += ordersLimit;
       }
 
       if (refresh) {
-        this.orders = orders.orders;
+        this.orders = orders;
       } else {
-        _upsertOrders(orders.orders);
+        _upsertOrders(orders);
       }
 
-      hasMoreOrders = orders.total > this.orders.length;
+      hasMoreOrders = total > this.orders.length;
       safeNotifyListeners();
     } catch (e) {
       debugPrint(e.toString());

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:collection/collection.dart';
 import 'package:pay_app/models/place.dart';
 import 'package:web3dart/web3dart.dart' show EthereumAddress;
@@ -60,6 +62,7 @@ class Order {
   final DateTime? completedAt;
   final double total;
   final double due;
+  final String slug;
   final int placeId;
   final List<OrderItem> items;
   final OrderStatus status;
@@ -76,6 +79,7 @@ class Order {
     this.completedAt,
     required this.total,
     required this.due,
+    required this.slug,
     required this.placeId,
     required this.items,
     required this.status,
@@ -88,6 +92,7 @@ class Order {
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
+    final place = OrderPlace.fromJson(json['place']);
     return Order(
       id: json['id'],
       createdAt: DateTime.parse(json['created_at']),
@@ -96,6 +101,7 @@ class Order {
           : null,
       total: json['total'].toDouble() / 100,
       due: json['due'].toDouble() / 100,
+      slug: place.slug,
       placeId: json['place_id'],
       items: (json['items'] as List)
           .map((item) => OrderItem.fromJson(item))
@@ -108,8 +114,55 @@ class Order {
           ? EthereumAddress.fromHex(json['account'])
           : null,
       fees: (json['fees'] ?? 0).toDouble() / 100,
-      place: OrderPlace.fromJson(json['place']),
+      place: place,
     );
+  }
+
+  factory Order.fromMap(Map<String, dynamic> json) {
+    final place = OrderPlace.fromJson(jsonDecode(json['place'] ?? '{}'));
+    return Order(
+      id: json['id'],
+      createdAt: DateTime.parse(json['created_at']),
+      completedAt: json['completed_at'] != null
+          ? DateTime.parse(json['completed_at'])
+          : null,
+      total: json['total'].toDouble() / 100,
+      due: json['due'].toDouble() / 100,
+      slug: place.slug,
+      placeId: json['place_id'],
+      items: (jsonDecode(json['items'] ?? '[]') as List)
+          .map((item) => OrderItem.fromJson(item))
+          .toList(),
+      status: _parseOrderStatus(json['status']),
+      description: json['description'],
+      txHash: json['tx_hash'],
+      type: _parseOrderType(json['type']),
+      account: json['account'] != null
+          ? EthereumAddress.fromHex(json['account'])
+          : null,
+      fees: (json['fees'] ?? 0).toDouble() / 100,
+      place: place,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'created_at': createdAt.toIso8601String(),
+      'completed_at': completedAt?.toIso8601String(),
+      'total': (total * 100).toInt(),
+      'due': (due * 100).toInt(),
+      'slug': slug,
+      'place_id': placeId,
+      'items': jsonEncode(items.map((item) => item.toMap()).toList()),
+      'status': status.name,
+      'description': description,
+      'tx_hash': txHash,
+      'type': type?.name,
+      'account': account?.hexEip55,
+      'fees': (fees * 100).toInt(),
+      'place': jsonEncode(place.toMap()),
+    };
   }
 
   static OrderStatus _parseOrderStatus(String status) {
@@ -141,5 +194,12 @@ class OrderItem {
       id: json['id'],
       quantity: json['quantity'],
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'quantity': quantity,
+    };
   }
 }

@@ -50,6 +50,7 @@ class _InteractionWithPlaceScreenState
 
     amountFocusNode.addListener(_onAmountFocus);
     messageFocusNode.addListener(_onMessageFocus);
+    scrollController.addListener(_onScroll);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ordersWithPlaceState = context.read<OrdersWithPlaceState>();
@@ -60,7 +61,15 @@ class _InteractionWithPlaceScreenState
   }
 
   void onLoad() async {
-    final placeWithMenu = await _ordersWithPlaceState.fetchPlaceAndMenu();
+    _ordersWithPlaceState.fetchPlaceAndMenu().then((placeWithMenu) {
+      if (widget.openMenu &&
+          placeWithMenu != null &&
+          (placeWithMenu.place.display == Display.menu ||
+              placeWithMenu.place.display == Display.amountAndMenu) &&
+          placeWithMenu.items.isNotEmpty) {
+        handleMenuPressed();
+      }
+    });
 
     if (widget.orderId != null) {
       _ordersWithPlaceState.loadExternalOrder(widget.slug, widget.orderId!);
@@ -78,14 +87,6 @@ class _InteractionWithPlaceScreenState
       );
 
       return;
-    }
-
-    if (widget.openMenu &&
-        placeWithMenu != null &&
-        (placeWithMenu.place.display == Display.menu ||
-            placeWithMenu.place.display == Display.amountAndMenu) &&
-        placeWithMenu.items.isNotEmpty) {
-      handleMenuPressed();
     }
   }
 
@@ -120,10 +121,18 @@ class _InteractionWithPlaceScreenState
     );
   }
 
+  void _onScroll() {
+    if (scrollController.position.pixels >=
+        scrollController.position.maxScrollExtent - 200) {
+      _ordersWithPlaceState.loadMoreOrders();
+    }
+  }
+
   @override
   void dispose() {
     amountFocusNode.removeListener(_onAmountFocus);
     messageFocusNode.removeListener(_onMessageFocus);
+    scrollController.removeListener(_onScroll);
     amountFocusNode.dispose();
     messageFocusNode.dispose();
     scrollController.dispose();
@@ -237,9 +246,6 @@ class _InteractionWithPlaceScreenState
     );
   }
 
-  final List<Order> orders = [
-]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
   void handleOrderPressed(Order order) {
     final navigator = GoRouter.of(context);
 
@@ -256,8 +262,11 @@ class _InteractionWithPlaceScreenState
   @override
   Widget build(BuildContext context) {
     final place = context.select((OrdersWithPlaceState state) => state.place);
-
     final orders = context.select((OrdersWithPlaceState state) => state.orders);
+    final loadingMore =
+        context.select((OrdersWithPlaceState state) => state.loadingMore);
+    final hasMoreOrders =
+        context.select((OrdersWithPlaceState state) => state.hasMoreOrders);
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemBackground,
@@ -275,20 +284,38 @@ class _InteractionWithPlaceScreenState
                     '',
               ),
               Expanded(
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  controller: scrollController,
-                  reverse: true,
+                child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 15),
-                  children: [
-                    for (var order in orders)
-                      OrderListItem(
-                        key: Key('order-${order.id}'),
-                        order: order,
-                        mappedItems: place?.mappedItems ?? {},
-                        onPressed: handleOrderPressed,
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    controller: scrollController,
+                    reverse: true,
+                    slivers: [
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          childCount: orders.length + (hasMoreOrders ? 1 : 0),
+                          (context, index) {
+                            if (index == orders.length && hasMoreOrders) {
+                              return Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Center(
+                                  child: loadingMore
+                                      ? const CupertinoActivityIndicator()
+                                      : const SizedBox.shrink(),
+                                ),
+                              );
+                            }
+                            return OrderListItem(
+                              key: Key('order-${orders[index].id}'),
+                              order: orders[index],
+                              mappedItems: place?.mappedItems ?? {},
+                              onPressed: handleOrderPressed,
+                            );
+                          },
+                        ),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               Footer(
