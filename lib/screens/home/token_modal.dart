@@ -17,6 +17,23 @@ class TokenModal extends StatefulWidget {
 }
 
 class _TokenModalState extends State<TokenModal> {
+  late WalletState _walletState;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _walletState = context.read<WalletState>();
+
+      onLoad();
+    });
+  }
+
+  Future<void> onLoad() async {
+    await _walletState.loadTokenBalances();
+  }
+
   void handleTokenSelect(String tokenKey) {
     final navigator = GoRouter.of(context);
     HapticFeedback.heavyImpact();
