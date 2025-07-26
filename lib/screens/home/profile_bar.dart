@@ -1,23 +1,16 @@
-import 'dart:math';
-
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/services.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
+import 'package:pay_app/widgets/blurry_child.dart';
+import 'package:pay_app/widgets/card.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
-import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:provider/provider.dart';
 
-enum TapDepth {
-  none,
-  tapped,
-  active,
-}
-
 class ProfileBar extends StatefulWidget {
+  final double shrink;
   final bool loading;
   final String accountAddress;
   final Color backgroundColor;
@@ -26,6 +19,7 @@ class ProfileBar extends StatefulWidget {
 
   const ProfileBar({
     super.key,
+    required this.shrink,
     required this.loading,
     required this.accountAddress,
     required this.backgroundColor,
@@ -38,60 +32,19 @@ class ProfileBar extends StatefulWidget {
 }
 
 class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
-  TapDepth _tapDepth = TapDepth.none;
-  late AnimationController _rotationController;
-  late Animation<double> _rotationAnimation;
-
   @override
   void initState() {
     super.initState();
-    _rotationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
-    _rotationAnimation = Tween<double>(
-      begin: 0.0,
-      end: pi,
-    ).animate(CurvedAnimation(
-      parent: _rotationController,
-      curve: Curves.easeInOut,
-    ));
   }
 
-  @override
-  void dispose() {
-    _rotationController.dispose();
-    super.dispose();
-  }
-
-  void handleProfileTap() async {
+  Future<void> handleProfileTap() async {
     await widget.onProfileTap();
-
-    setState(() {
-      _tapDepth = TapDepth.none;
-    });
-    _rotationController.reverse();
-  }
-
-  void handleTapIn() {
-    HapticFeedback.lightImpact();
-    setState(() {
-      _tapDepth = TapDepth.tapped;
-    });
-  }
-
-  void handleTapOut() {
-    HapticFeedback.heavyImpact();
-    setState(() {
-      _tapDepth = TapDepth.active;
-    });
-    _rotationController.forward();
   }
 
   @override
   Widget build(BuildContext context) {
-    final balance = context.select<WalletState, String>(
-      (state) => state.balance.toStringAsFixed(2),
+    final balance = context.select<WalletState, double>(
+      (state) => state.balance,
     );
     final config = context.select<WalletState, Config?>(
       (state) => state.config,
@@ -118,111 +71,59 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
   Widget _buildProfileCard(
     BuildContext context,
     ProfileV1 profile,
-    String balance,
+    double balance,
     TokenConfig? tokenConfig,
     PluginConfig? topUpPlugin,
   ) {
-    return GestureDetector(
-      onTap: widget.loading ? null : handleProfileTap,
-      onTapDown: widget.loading ? null : (_) => handleTapIn(),
-      onTapUp: widget.loading ? null : (_) => handleTapOut(),
-      onTapCancel: widget.loading ? null : () => handleTapOut(),
+    final safeArea = MediaQuery.of(context).padding;
+    final width = MediaQuery.of(context).size.width;
+    final adjustedWidth = widget.shrink * width;
+
+    return BlurryChild(
       child: Container(
-        height: 120,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 6,
-        ),
+        width: width,
         decoration: BoxDecoration(
-          color: widget.backgroundColor,
           border: Border(
             bottom: BorderSide(
-              color: Color(0xFFD9D9D9),
+              color: blackColor.withAlpha(40),
               width: 1,
             ),
           ),
         ),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeInOut,
-          decoration: BoxDecoration(
-            color: switch (_tapDepth) {
-              TapDepth.tapped => primaryColor.withAlpha(60),
-              TapDepth.active => primaryColor.withAlpha(40),
-              _ => primaryColor.withAlpha(20),
-            },
-            borderRadius: BorderRadius.circular(60),
-            border: Border.all(
-              color: switch (_tapDepth) {
-                TapDepth.tapped => primaryColor.withAlpha(80),
-                TapDepth.active => primaryColor.withAlpha(60),
-                _ => primaryColor.withAlpha(40),
-              },
-              width: switch (_tapDepth) {
-                TapDepth.tapped => 3,
-                TapDepth.active => 2,
-                _ => 1,
-              },
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Row(
-                children: [
-                  ProfileCircle(
-                    size: 70,
-                    borderWidth: 3,
-                    borderColor: primaryColor,
-                    imageUrl: profile.imageMedium,
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Name(name: '@${profile.username}'),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Balance(balance: balance, logo: tokenConfig?.logo),
-                          const SizedBox(width: 16),
-                          if (!widget.loading && topUpPlugin != null)
-                            TopUpButton(
-                                onTopUpTap: () =>
-                                    widget.onTopUpTap(topUpPlugin.url)),
-                        ],
-                      )
-                    ],
-                  )
-                ],
-              ),
-              Padding(
-                padding: EdgeInsets.only(right: 2),
-                child: Center(
-                  child: AnimatedBuilder(
-                    animation: _rotationAnimation,
-                    builder: (context, child) {
-                      return Transform.rotate(
-                        angle: _rotationAnimation.value,
-                        child: Icon(
-                          CupertinoIcons.chevron_down,
-                          color: iconColor,
-                          size: 24,
-                        ),
-                      );
-                    },
-                  ),
+        padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
+        child: Column(
+          children: [
+            SizedBox(height: safeArea.top),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Card(
+                      width: (adjustedWidth < 340 ? 340 : adjustedWidth) * 0.8,
+                      uid: profile.account,
+                      color: primaryColor,
+                      profile: profile,
+                      icon: CupertinoIcons.device_phone_portrait,
+                      onTopUpPressed: !widget.loading && topUpPlugin != null
+                          ? () => widget.onTopUpTap(topUpPlugin.url)
+                          : null,
+                      onCardPressed: (_) => handleProfileTap(),
+                      // onCardPressed: (_) => handleCardSelect(
+                      //   profile.account,
+                      //   null,
+                      //   'main',
+                      // ),
+                      balance: balance,
+                    ),
+                  ],
                 ),
-              )
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
       ),
     );

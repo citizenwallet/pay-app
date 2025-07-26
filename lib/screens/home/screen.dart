@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:dart_debouncer/dart_debouncer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
@@ -12,10 +10,8 @@ import 'package:pay_app/screens/home/card_modal/card_modal.dart';
 import 'package:pay_app/screens/home/contact_list_item.dart';
 import 'package:pay_app/screens/home/profile_list_item.dart';
 import 'package:pay_app/screens/home/profile_modal.dart';
-import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
-import 'package:pay_app/state/card.dart';
 import 'package:pay_app/state/contacts/contacts.dart';
 import 'package:pay_app/state/contacts/selectors.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
@@ -670,6 +666,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final safeTopPadding = MediaQuery.of(context).padding.top;
     final double heightFactor = 1 - (_scrollOffset / _maxScrollOffset);
 
     final loading = context.select((WalletState state) => state.loading);
@@ -703,6 +700,7 @@ class _HomeScreenState extends State<HomeScreen>
             onTap: _dismissKeyboard,
             behavior: HitTestBehavior.opaque,
             child: SafeArea(
+              top: false,
               bottom: false,
               child: Stack(
                 alignment: Alignment.topCenter,
@@ -718,6 +716,7 @@ class _HomeScreenState extends State<HomeScreen>
                           floating: true,
                           pinned: true,
                           delegate: ProfileBarDelegate(
+                            safeTopPadding: safeTopPadding,
                             loading: loading,
                             accountAddress: myAddress ?? '',
                             backgroundColor:
@@ -881,6 +880,7 @@ class _HomeScreenState extends State<HomeScreen>
 }
 
 class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
+  final double safeTopPadding;
   final bool loading;
   final String accountAddress;
   final Color backgroundColor;
@@ -888,6 +888,7 @@ class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
   final Function(String) onTopUpTap;
 
   ProfileBarDelegate({
+    required this.safeTopPadding,
     required this.loading,
     required this.accountAddress,
     required this.backgroundColor,
@@ -899,6 +900,7 @@ class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
     return ProfileBar(
+      shrink: 1 - (shrinkOffset / 240),
       loading: loading,
       accountAddress: accountAddress,
       backgroundColor: backgroundColor,
@@ -908,10 +910,10 @@ class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  double get maxExtent => 120.0; // Maximum height of header
+  double get maxExtent => 240.0 + safeTopPadding; // Maximum height of header
 
   @override
-  double get minExtent => 120.0; // Minimum height of header
+  double get minExtent => 200.0 + safeTopPadding; // Minimum height of header
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>

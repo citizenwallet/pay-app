@@ -130,197 +130,203 @@ class _CardState extends State<Card> {
 
     double cardHeight = cardWidth / 1.586;
 
+    final container = AnimatedContainer(
+      duration: const Duration(milliseconds: 100),
+      curve: Curves.easeInOut,
+      width: cardWidth,
+      height: cardHeight,
+      margin: widget.margin,
+      decoration: BoxDecoration(
+        color: widget.color,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: CupertinoColors.white.withAlpha(160)),
+        boxShadow: [
+          BoxShadow(
+            color: blackColor.withAlpha(60),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          ProfileCircle(
+                            size: 24,
+                            imageUrl: widget.profile?.imageSmall,
+                            borderColor: whiteColor,
+                            borderWidth: 2,
+                          ),
+                          const SizedBox(width: 4),
+                          (widget.onCardNameUpdated != null ||
+                                  widget.onCardNameTapped != null)
+                              ? GestureDetector(
+                                  onTap: handleNameTap,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: whiteColor.withAlpha(10),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: whiteColor.withAlpha(100),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          widget.profile != null
+                                              ? widget.profile!.name
+                                              : 'anonymous',
+                                          style: const TextStyle(
+                                            color: CupertinoColors.white,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          CupertinoIcons.pen,
+                                          color: whiteColor,
+                                          size: 20,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  widget.profile != null
+                                      ? widget.profile!.name
+                                      : 'anonymous',
+                                  style: const TextStyle(
+                                    color: CupertinoColors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                        ],
+                      ),
+                      if (widget.profile != null) const SizedBox(height: 4),
+                      if (widget.profile != null)
+                        Text(
+                          '@${widget.profile!.username}',
+                          style: const TextStyle(
+                            color: CupertinoColors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                widget.icon != null
+                    ? Icon(
+                        widget.icon,
+                        color: CupertinoColors.white,
+                        size: 24,
+                      )
+                    : Image.asset(
+                        'assets/icons/nfc.png',
+                        color: CupertinoColors.white,
+                        width: 24,
+                        height: 24,
+                      ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (widget.onTopUpPressed != null)
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    color: whiteColor,
+                    borderRadius: BorderRadius.circular(8),
+                    minSize: 0,
+                    onPressed: widget.onTopUpPressed,
+                    child: SizedBox(
+                      width: 100,
+                      height: 28,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(
+                            CupertinoIcons.plus,
+                            color: widget.color,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'add funds',
+                            style: TextStyle(
+                              color: widget.color,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (widget.balance != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          CoinLogo(size: 20),
+                          const SizedBox(width: 4),
+                          Text(
+                            widget.balance!.toStringAsFixed(2),
+                            style: TextStyle(
+                              color: CupertinoColors.white,
+                              fontSize: 20,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (widget.onCardPressed == null) {
+      return container;
+    }
+
     return GestureDetector(
       onTap: handleCardTap,
       onTapDown: handleTapDown,
       onTapUp: handleTapUp,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        curve: Curves.easeInOut,
-        width: cardWidth,
-        height: cardHeight,
-        margin: widget.margin,
-        decoration: BoxDecoration(
-          color: widget.color,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: CupertinoColors.white.withAlpha(160)),
-          boxShadow: [
-            BoxShadow(
-              color: blackColor.withAlpha(60),
-              blurRadius: 10,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            ProfileCircle(
-                              size: 24,
-                              imageUrl: widget.profile?.imageSmall,
-                              borderColor: whiteColor,
-                              borderWidth: 2,
-                            ),
-                            const SizedBox(width: 4),
-                            (widget.onCardNameUpdated != null ||
-                                    widget.onCardNameTapped != null)
-                                ? GestureDetector(
-                                    onTap: handleNameTap,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: whiteColor.withAlpha(10),
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: whiteColor.withAlpha(100),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Text(
-                                            widget.profile != null
-                                                ? widget.profile!.name
-                                                : 'anonymous',
-                                            style: const TextStyle(
-                                              color: CupertinoColors.white,
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Icon(
-                                            CupertinoIcons.pen,
-                                            color: whiteColor,
-                                            size: 20,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  )
-                                : Text(
-                                    widget.profile != null
-                                        ? widget.profile!.name
-                                        : 'anonymous',
-                                    style: const TextStyle(
-                                      color: CupertinoColors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                          ],
-                        ),
-                        if (widget.profile != null) const SizedBox(height: 4),
-                        if (widget.profile != null)
-                          Text(
-                            '@${widget.profile!.username}',
-                            style: const TextStyle(
-                              color: CupertinoColors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  widget.icon != null
-                      ? Icon(
-                          widget.icon,
-                          color: CupertinoColors.white,
-                          size: 24,
-                        )
-                      : Image.asset(
-                          'assets/icons/nfc.png',
-                          color: CupertinoColors.white,
-                          width: 24,
-                          height: 24,
-                        ),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (widget.onTopUpPressed != null)
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      color: whiteColor,
-                      borderRadius: BorderRadius.circular(8),
-                      minSize: 0,
-                      onPressed: widget.onTopUpPressed,
-                      child: SizedBox(
-                        width: 100,
-                        height: 28,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Icon(
-                              CupertinoIcons.plus,
-                              color: widget.color,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'add funds',
-                              style: TextStyle(
-                                color: widget.color,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  if (widget.balance != null)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            CoinLogo(size: 20),
-                            const SizedBox(width: 4),
-                            Text(
-                              widget.balance!.toStringAsFixed(2),
-                              style: TextStyle(
-                                color: CupertinoColors.white,
-                                fontSize: 20,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                          ],
-                        )
-                      ],
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+      child: container,
     );
   }
 }
