@@ -2,11 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/state/account.dart';
 import 'package:pay_app/state/onboarding.dart';
-import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
-import 'package:pay_app/widgets/account_card.dart';
-import 'package:pay_app/widgets/button.dart';
 
 import 'package:pay_app/widgets/wide_button.dart';
 import 'package:provider/provider.dart';
@@ -132,9 +129,6 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
   Widget build(BuildContext context) {
     final safeAreaBottom = MediaQuery.of(context).padding.bottom;
 
-    final profile = context.select((ProfileState p) => p.profile);
-    final alias = context.select((ProfileState p) => p.alias);
-
     final isLoggingOut = context.select((AccountState a) => a.loggingOut);
     final isDeletingData = context.select((AccountState a) => a.deletingData);
 
@@ -143,6 +137,14 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
+        middle: Text(
+          'Settings',
+          style: TextStyle(
+            fontSize: 27,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF000000),
+          ),
+        ),
         leading: CupertinoButton(
           padding: EdgeInsets.zero,
           onPressed: goBack,
@@ -163,38 +165,19 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
               scrollDirection: Axis.vertical,
               padding: const EdgeInsets.symmetric(horizontal: 15),
               children: [
-                Center(
-                  child: AccountCard(
-                    profile: profile,
-                    alias: alias,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Button(
-                      onPressed: isLoggingOut ? null : handleEditAccount,
-                      text: 'Edit account',
-                      color: primaryColor.withAlpha(30),
-                      labelColor: primaryColor,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  height: 1,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFD9D9D9),
-                  ),
-                ),
-                const SizedBox(height: 20),
                 // Notifications(),
-                // const SizedBox(height: 20),
+                const SizedBox(height: 20),
                 About(),
-                const SizedBox(height: 60),
+                const SizedBox(height: 40),
+                Text(
+                  'Account',
+                  style: TextStyle(
+                    fontSize: 27,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF000000),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 WideButton(
                   color: const Color(0xFF4D4D4D),
                   onPressed: handleLogout,
