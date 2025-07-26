@@ -13,7 +13,6 @@ import 'package:pay_app/theme/card_colors.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/currency.dart';
 import 'package:pay_app/utils/delay.dart';
-import 'package:pay_app/utils/ratio.dart';
 import 'package:pay_app/widgets/account_card.dart';
 import 'package:pay_app/widgets/button.dart';
 import 'package:pay_app/widgets/card.dart';
@@ -39,7 +38,6 @@ class _ProfileModalState extends State<ProfileModal> {
 
   bool _atTop = true;
   bool _showFixedHeader = true;
-  bool _showShrinkingHeader = false;
 
   late WalletState _walletState;
   late CardsState _cardsState;
@@ -315,6 +313,7 @@ class _ProfileModalState extends State<ProfileModal> {
     ProfileV1 profile,
     String alias,
   ) {
+    final width = MediaQuery.of(context).size.width;
     return SafeArea(
       top: false,
       bottom: false,
@@ -339,16 +338,9 @@ class _ProfileModalState extends State<ProfileModal> {
                           final atTop = shrink == 0;
 
                           if (_atTop != atTop) {
-                            Future.delayed(
-                                Duration(milliseconds: atTop ? 10 : 30), () {
+                            Future.delayed(Duration(milliseconds: 10), () {
                               setState(() {
                                 _showFixedHeader = atTop;
-                              });
-                            });
-                            Future.delayed(
-                                Duration(milliseconds: atTop ? 30 : 10), () {
-                              setState(() {
-                                _showShrinkingHeader = !atTop;
                               });
                             });
                           }
@@ -358,14 +350,11 @@ class _ProfileModalState extends State<ProfileModal> {
 
                           return GestureDetector(
                             onTap: handleScrollToTop,
-                            child: Opacity(
-                              opacity: _showShrinkingHeader ? 1 : 0,
-                              child: _buildAccountCard(
-                                ValueKey('account_card'),
-                                maxShrink,
-                                profile,
-                                alias,
-                              ),
+                            child: _buildAccountCard(
+                              ValueKey('account_card'),
+                              maxShrink,
+                              profile,
+                              alias,
                             ),
                           );
                         },
@@ -377,9 +366,9 @@ class _ProfileModalState extends State<ProfileModal> {
                         alias,
                       ),
                     ),
-                    SliverToBoxAdapter(
-                      child: _buildTokensList(context),
-                    ),
+                    // SliverToBoxAdapter(
+                    //   child: _buildTokensList(context),
+                    // ),
                     SliverToBoxAdapter(
                       child: _buildCardsList(context, cards),
                     ),
@@ -391,6 +380,7 @@ class _ProfileModalState extends State<ProfileModal> {
           if (_showFixedHeader)
             Container(
               height: 440,
+              width: width * 0.8,
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
@@ -398,12 +388,6 @@ class _ProfileModalState extends State<ProfileModal> {
                     width: 1,
                   ),
                 ),
-              ),
-              child: _buildAccountCard(
-                ValueKey('account_card_fixed'),
-                0,
-                profile,
-                alias,
               ),
             ),
           Positioned(
