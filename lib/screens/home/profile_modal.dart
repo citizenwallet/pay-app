@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -37,8 +39,9 @@ class ProfileModal extends StatefulWidget {
 class _ProfileModalState extends State<ProfileModal> {
   final ScrollController _controller = ScrollController();
 
-  bool _atTop = true;
-  bool _showFixedHeader = true;
+  bool _displayAccountCard = false;
+  Timer? _displayCardsTimer;
+  bool _displayCards = false;
 
   late WalletState _walletState;
   late CardsState _cardsState;
@@ -55,8 +58,24 @@ class _ProfileModalState extends State<ProfileModal> {
     });
   }
 
+  @override
+  void dispose() {
+    _displayCardsTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> onLoad() async {
     await delay(const Duration(milliseconds: 100));
+
+    setState(() {
+      _displayAccountCard = true;
+    });
+
+    _displayCardsTimer = Timer(const Duration(milliseconds: 200), () {
+      setState(() {
+        _displayCards = true;
+      });
+    });
 
     _walletState.loadTokenBalances();
     await _cardsState.fetchCards();
@@ -334,35 +353,49 @@ class _ProfileModalState extends State<ProfileModal> {
       child: Stack(
         alignment: Alignment.topCenter,
         children: [
-          Column(
-            children: [
-              Expanded(
-                child: CustomScrollView(
-                  controller: _controller,
-                  scrollBehavior: const CupertinoScrollBehavior(),
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: SizedBox(height: headerHeight + safeArea.top),
-                    ),
-                    ..._buildCardsList(
-                      context,
-                      cards,
-                      cardBalances,
-                    ),
-                  ],
+          AnimatedOpacity(
+            opacity: _displayCards ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 300),
+            child: Column(
+              children: [
+                Expanded(
+                  child: CustomScrollView(
+                    controller: _controller,
+                    scrollBehavior: const CupertinoScrollBehavior(),
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                          height: _displayCards
+                              ? headerHeight + safeArea.top
+                              : 70 + safeArea.top,
+                        ),
+                      ),
+                      ..._buildCardsList(
+                        context,
+                        cards,
+                        cardBalances,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           Positioned(
             top: 70 + safeArea.top,
-            child: _buildAccountCard(
-              ValueKey('account_card'),
-              width,
-              profile,
-              alias,
-              balance,
+            child: AnimatedOpacity(
+              opacity: _displayAccountCard ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: _buildAccountCard(
+                ValueKey('account_card'),
+                width,
+                profile,
+                alias,
+                balance,
+              ),
             ),
           ),
           Positioned(
@@ -631,15 +664,7 @@ class _ProfileModalState extends State<ProfileModal> {
   ) {
     final width = MediaQuery.of(context).size.width;
 
-    final primaryColor = CupertinoTheme.of(context).primaryColor;
-
-    final claimingCard = context.watch<CardsState>().claimingCard;
-
     final profiles = context.watch<CardsState>().profiles;
-
-    final profile = context.select<ProfileState, ProfileV1?>(
-      (state) => state.profile,
-    );
 
     return [
       if (cards.isNotEmpty)
@@ -661,6 +686,7 @@ class _ProfileModalState extends State<ProfileModal> {
                   width: width * 0.75,
                   uid: card.uid,
                   color: cardColor,
+                  margin: const EdgeInsets.only(bottom: 12),
                   profile: profiles[card.account],
                   onCardPressed: (uid) => handleCardSelect(
                     widget.accountAddress,

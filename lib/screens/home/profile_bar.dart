@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:pay_app/services/config/config.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
@@ -20,6 +21,7 @@ enum TapDepth {
 class ProfileBar extends StatefulWidget {
   final bool loading;
   final String accountAddress;
+  final Color backgroundColor;
   final Future<void> Function() onProfileTap;
   final Function(String) onTopUpTap;
   final Function() onSettingsTap;
@@ -28,6 +30,7 @@ class ProfileBar extends StatefulWidget {
     super.key,
     required this.loading,
     required this.accountAddress,
+    required this.backgroundColor,
     required this.onProfileTap,
     required this.onTopUpTap,
     required this.onSettingsTap,
@@ -106,9 +109,22 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
 
     final profile = context.watch<ProfileState>().profile;
 
-    final theme = CupertinoTheme.of(context);
-    final primaryColor = theme.primaryColor;
+    return _buildProfileCard(
+      context,
+      profile,
+      balance,
+      tokenConfig,
+      topUpPlugin,
+    );
+  }
 
+  Widget _buildProfileCard(
+    BuildContext context,
+    ProfileV1 profile,
+    String balance,
+    TokenConfig? tokenConfig,
+    PluginConfig? topUpPlugin,
+  ) {
     return GestureDetector(
       onTap: widget.loading ? null : handleProfileTap,
       onTapDown: widget.loading ? null : (_) => handleTapIn(),
@@ -121,7 +137,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
           vertical: 6,
         ),
         decoration: BoxDecoration(
-          color: CupertinoColors.systemBackground,
+          color: widget.backgroundColor,
           border: Border(
             bottom: BorderSide(
               color: Color(0xFFD9D9D9),

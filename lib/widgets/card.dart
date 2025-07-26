@@ -16,6 +16,7 @@ class Card extends StatefulWidget {
   final String uid;
   final double width;
   final Color color;
+  final EdgeInsets? margin;
   final ProfileV1? profile;
   final double? balance;
   final IconData? icon;
@@ -29,6 +30,7 @@ class Card extends StatefulWidget {
     required this.uid,
     this.width = 200,
     required this.color,
+    this.margin,
     this.profile,
     this.balance,
     this.icon,
@@ -137,6 +139,7 @@ class _CardState extends State<Card> {
         curve: Curves.easeInOut,
         width: cardWidth,
         height: cardHeight,
+        margin: widget.margin,
         decoration: BoxDecoration(
           color: widget.color,
           borderRadius: BorderRadius.circular(12),
