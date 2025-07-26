@@ -23,6 +23,7 @@ import 'package:pay_app/widgets/persistent_header_delegate.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
+import 'package:web3dart/web3dart.dart';
 
 class ProfileModal extends StatefulWidget {
   final String accountAddress;
@@ -69,7 +70,7 @@ class _ProfileModalState extends State<ProfileModal> {
     );
   }
 
-  void handleEditProfile() {
+  Future<void> handleEditProfile() async {
     final navigator = GoRouter.of(context);
     HapticFeedback.heavyImpact();
 
@@ -97,7 +98,7 @@ class _ProfileModalState extends State<ProfileModal> {
 
   Future<void> handleCardSelect(
     String? myAddress,
-    String cardId,
+    String? cardId,
     String? project,
   ) async {
     if (myAddress == null) {
@@ -106,9 +107,11 @@ class _ProfileModalState extends State<ProfileModal> {
 
     final config = context.read<WalletState>().config;
 
-    final cardAddress = await config.cardManagerContract!.getCardAddress(
-      cardId,
-    );
+    final cardAddress = cardId != null
+        ? await config.cardManagerContract!.getCardAddress(
+            cardId,
+          )
+        : EthereumAddress.fromHex(myAddress);
 
     if (!mounted) {
       return;
@@ -123,10 +126,14 @@ class _ProfileModalState extends State<ProfileModal> {
         return provideCardState(
           context,
           config,
-          cardId,
+          cardId ?? myAddress,
           cardAddress.hexEip55,
           myAddress,
-          CardModal(uid: cardId, project: project),
+          CardModal(
+            uid: cardId,
+            address: cardId == null ? myAddress : null,
+            project: project,
+          ),
         );
       },
     );
@@ -290,30 +297,37 @@ class _ProfileModalState extends State<ProfileModal> {
     final height = MediaQuery.of(context).size.height;
 
     final cards = context.watch<CardsState>().cards;
+    final cardBalances = context.watch<CardsState>().cardBalances;
 
     final profile = context.select((ProfileState p) => p.profile);
     final alias = context.select((ProfileState p) => p.alias);
 
     return DismissibleModalPopup(
       modalKey: 'profile_modal',
-      maxHeight: height * 0.9,
+      backgroundColor: blackColor,
+      maxHeight: height,
       paddingSides: 16,
       paddingTopBottom: 0,
       topRadius: 12,
       onDismissed: (dir) {
         handleClose(context);
       },
-      child: _buildContent(context, cards, profile, alias),
+      child: _buildContent(context, cards, cardBalances, profile, alias),
     );
   }
 
   Widget _buildContent(
     BuildContext context,
     List<DBCard> cards,
+    Map<String, double> cardBalances,
     ProfileV1 profile,
     String alias,
   ) {
     final width = MediaQuery.of(context).size.width;
+    final safeArea = MediaQuery.of(context).padding;
+    const headerHeight = 276.9;
+
+    final balance = context.watch<WalletState>().balance;
     return SafeArea(
       top: false,
       bottom: false,
@@ -326,82 +340,51 @@ class _ProfileModalState extends State<ProfileModal> {
                 child: CustomScrollView(
                   controller: _controller,
                   scrollBehavior: const CupertinoScrollBehavior(),
-                  physics: const BouncingScrollPhysics(),
+                  physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
-                    SliverPersistentHeader(
-                      pinned: false,
-                      floating: false,
-                      delegate: PersistentHeaderDelegate(
-                        expandedHeight: 440,
-                        minHeight: 290,
-                        builder: (_, shrink) {
-                          final atTop = shrink == 0;
-
-                          if (_atTop != atTop) {
-                            Future.delayed(Duration(milliseconds: 10), () {
-                              setState(() {
-                                _showFixedHeader = atTop;
-                              });
-                            });
-                          }
-                          _atTop = atTop;
-
-                          final maxShrink = shrink > 0.30 ? 0.30 : shrink;
-
-                          return GestureDetector(
-                            onTap: handleScrollToTop,
-                            child: _buildAccountCard(
-                              ValueKey('account_card'),
-                              maxShrink,
-                              profile,
-                              alias,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
                     SliverToBoxAdapter(
-                      child: _buildActionButtons(
-                        profile,
-                        alias,
-                      ),
+                      child: SizedBox(height: headerHeight + safeArea.top),
                     ),
-                    // SliverToBoxAdapter(
-                    //   child: _buildTokensList(context),
-                    // ),
-                    SliverToBoxAdapter(
-                      child: _buildCardsList(context, cards),
+                    ..._buildCardsList(
+                      context,
+                      cards,
+                      cardBalances,
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          if (_showFixedHeader)
-            Container(
-              height: 440,
-              width: width * 0.8,
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: dividerMutedColor,
-                    width: 1,
-                  ),
-                ),
-              ),
-            ),
           Positioned(
-            top: 16,
+            top: 70 + safeArea.top,
+            child: _buildAccountCard(
+              ValueKey('account_card'),
+              width,
+              profile,
+              alias,
+              balance,
+            ),
+          ),
+          Positioned(
+            top: 10 + safeArea.top,
             right: 0,
             child: CupertinoButton(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              color: whiteColor,
-              borderRadius: BorderRadius.circular(8),
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+              color: blackColor,
+              borderRadius: BorderRadius.circular(16),
               onPressed: () => handleClose(context),
               child: Icon(
                 CupertinoIcons.xmark,
-                color: textColor,
+                color: whiteColor,
               ),
+            ),
+          ),
+          Positioned(
+            bottom: safeArea.bottom,
+            child: _buildActionButtons(
+              context,
+              profile,
+              alias,
             ),
           ),
         ],
@@ -410,38 +393,59 @@ class _ProfileModalState extends State<ProfileModal> {
   }
 
   Widget _buildAccountCard(
-      Key? key, double shrink, ProfileV1 profile, String alias) {
+    Key? key,
+    double width,
+    ProfileV1 profile,
+    String alias,
+    double balance,
+  ) {
     return Column(
       children: [
-        const SizedBox(height: 40),
-        Expanded(
-          child: AccountCard(
-            key: key,
-            profile: profile,
-            alias: alias,
-            shrink: shrink,
-          ),
-        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Card(
+              width: width * 0.8,
+              uid: profile.account,
+              color: primaryColor,
+              profile: profile,
+              icon: CupertinoIcons.device_phone_portrait,
+              onCardPressed: (_) => handleCardSelect(
+                profile.account,
+                null,
+                'main',
+              ),
+              balance: balance,
+            ),
+          ],
+        )
       ],
     );
   }
 
-  Widget _buildActionButtons(ProfileV1 profile, String alias) {
+  Widget _buildActionButtons(
+    BuildContext context,
+    ProfileV1 profile,
+    String alias,
+  ) {
+    final claimingCard = context.watch<CardsState>().claimingCard;
     return Column(
       children: [
-        const SizedBox(height: 12),
         Button(
-          onPressed: handleEditProfile,
-          text: 'Edit Profile',
+          onPressed: claimingCard ? null : () => handleAddCard(profile),
+          text: 'Add Card',
           labelColor: whiteColor,
-          prefix: Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Icon(
-              CupertinoIcons.pencil,
-              color: whiteColor,
-              size: 18,
-            ),
-          ),
+          color: primaryColor,
+          suffix: claimingCard
+              ? const CupertinoActivityIndicator()
+              : Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Image.asset(
+                    'assets/icons/nfc.png',
+                    width: 20,
+                    height: 20,
+                  ),
+                ),
         ),
         const SizedBox(height: 12),
         Button(
@@ -620,7 +624,11 @@ class _ProfileModalState extends State<ProfileModal> {
     );
   }
 
-  Widget _buildCardsList(BuildContext context, List<DBCard> cards) {
+  List<Widget> _buildCardsList(
+    BuildContext context,
+    List<DBCard> cards,
+    Map<String, double> cardBalances,
+  ) {
     final width = MediaQuery.of(context).size.width;
 
     final primaryColor = CupertinoTheme.of(context).primaryColor;
@@ -633,56 +641,42 @@ class _ProfileModalState extends State<ProfileModal> {
       (state) => state.profile,
     );
 
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Text(
-              'Cards',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: textColor,
-              ),
-            ),
-          ],
+    return [
+      if (cards.isNotEmpty)
+        SliverToBoxAdapter(
+          child: const SizedBox(height: 20),
         ),
-        const SizedBox(height: 12),
-        ...(cards.map((card) {
-          final cardColor = projectCardColor(card.project);
+      SliverList(
+        delegate: SliverChildBuilderDelegate(
+          childCount: cards.length,
+          (context, index) {
+            final card = cards[index];
 
-          return Card(
-            width: width * 0.8,
-            uid: card.uid,
-            color: cardColor,
-            profile: profiles[card.account],
-            onCardPressed: (uid) => handleCardSelect(
-              widget.accountAddress,
-              uid,
-              card.project,
-            ),
-          );
-        }).toList()),
-        const SizedBox(height: 12),
-        Button(
-          onPressed: claimingCard ? null : () => handleAddCard(profile),
-          text: 'Add Card',
-          labelColor: whiteColor,
-          color: primaryColor,
-          suffix: claimingCard
-              ? const CupertinoActivityIndicator()
-              : Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Image.asset(
-                    'assets/icons/nfc.png',
-                    width: 20,
-                    height: 20,
+            final cardColor = projectCardColor(card.project);
+
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Card(
+                  width: width * 0.75,
+                  uid: card.uid,
+                  color: cardColor,
+                  profile: profiles[card.account],
+                  onCardPressed: (uid) => handleCardSelect(
+                    widget.accountAddress,
+                    uid,
+                    card.project,
                   ),
+                  balance: cardBalances[card.account],
                 ),
+              ],
+            );
+          },
         ),
-        const SizedBox(height: 30),
-      ],
-    );
+      ),
+      SliverToBoxAdapter(
+        child: const SizedBox(height: 60),
+      ),
+    ];
   }
 }

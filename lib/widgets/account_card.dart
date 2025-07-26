@@ -11,6 +11,7 @@ class AccountCard extends StatelessWidget {
   final String appRedirectDomain;
   final double? size;
   final double? shrink;
+  final Function()? onEditProfile;
 
   AccountCard({
     super.key,
@@ -18,6 +19,7 @@ class AccountCard extends StatelessWidget {
     required this.alias,
     this.size,
     this.shrink,
+    this.onEditProfile,
   }) : appRedirectDomain = dotenv.get('APP_REDIRECT_DOMAIN');
 
   @override
@@ -54,19 +56,43 @@ class AccountCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ProfileCircle(
-                      size: 20,
-                      imageUrl: profile.imageSmall,
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      '@${profile.username}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 17,
-                        color: textMutedColor,
+                    GestureDetector(
+                      onTap: onEditProfile,
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: primaryColor,
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        padding: EdgeInsets.fromLTRB(6, 0, 10, 0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ProfileCircle(
+                              size: 34,
+                              imageUrl: profile.imageSmall,
+                              borderColor: whiteColor,
+                              borderWidth: 2,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '@${profile.username}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 17,
+                                color: whiteColor,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Icon(
+                              CupertinoIcons.pencil,
+                              color: whiteColor,
+                              size: 18,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],

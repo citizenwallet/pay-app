@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/services/config/config.dart';
-import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/photos/photos.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';

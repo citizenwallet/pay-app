@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 class DismissibleModalPopup extends StatefulWidget {
   final String? modalKey;
   final Widget child;
+  final Color? backgroundColor;
   final double? maxHeight;
   final double paddingSides;
   final double paddingTopBottom;
@@ -14,6 +15,7 @@ class DismissibleModalPopup extends StatefulWidget {
   const DismissibleModalPopup({
     super.key,
     required this.child,
+    this.backgroundColor,
     this.modalKey,
     this.maxHeight = 200,
     this.paddingSides = 10,
@@ -69,7 +71,7 @@ class DismissibleModalPopupState extends State<DismissibleModalPopup> {
           widget.paddingTopBottom,
         ),
         decoration: BoxDecoration(
-          color: CupertinoColors.systemBackground,
+          color: widget.backgroundColor ?? CupertinoColors.systemBackground,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(widget.topRadius),
             topRight: Radius.circular(widget.topRadius),

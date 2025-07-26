@@ -19,10 +19,11 @@ import 'package:pay_app/widgets/card.dart' show Card;
 import 'package:provider/provider.dart';
 
 class CardModal extends StatefulWidget {
-  final String uid;
+  final String? uid;
+  final String? address;
   final String? project;
 
-  const CardModal({super.key, required this.uid, this.project});
+  const CardModal({super.key, this.uid, this.address, this.project});
 
   @override
   State<CardModal> createState() => _CardModalState();
@@ -66,7 +67,7 @@ class _CardModalState extends State<CardModal> {
   }
 
   void onLoad() async {
-    await _cardState.fetchCardDetails();
+    await _cardState.fetchCardDetails(widget.address);
   }
 
   void onFocus() {
@@ -80,9 +81,6 @@ class _CardModalState extends State<CardModal> {
         scrollController.position.maxScrollExtent - 80) {
       final hasMore = context.read<CardState>().hasMoreOrders;
       final ordersLoading = context.read<CardState>().ordersLoading;
-
-      print('hasMore: $hasMore');
-      print('ordersLoading: $ordersLoading');
 
       if (!hasMore || ordersLoading) {
         return;
@@ -170,6 +168,12 @@ class _CardModalState extends State<CardModal> {
   }
 
   void handleUnclaimCard() async {
+    final uid = widget.uid;
+
+    if (uid == null) {
+      return;
+    }
+
     final navigator = GoRouter.of(context);
 
     // confirm modal
@@ -196,7 +200,7 @@ class _CardModalState extends State<CardModal> {
       return;
     }
 
-    await _cardsState.unclaim(widget.uid);
+    await _cardsState.unclaim(uid);
 
     if (!mounted) {
       return;
@@ -206,7 +210,25 @@ class _CardModalState extends State<CardModal> {
   }
 
   Future<void> handleUpdateCardName(String name, String originalName) async {
-    await _cardsState.updateCardName(widget.uid, name, originalName);
+    final uid = widget.uid;
+
+    if (uid == null) {
+      return;
+    }
+
+    await _cardsState.updateCardName(uid, name, originalName);
+  }
+
+  Future<void> handleEditProfile() async {
+    final navigator = GoRouter.of(context);
+
+    await navigator.push('/${widget.address}/my-account/edit');
+
+    if (!mounted) {
+      return;
+    }
+
+    onLoad();
   }
 
   @override
@@ -317,15 +339,25 @@ class _CardModalState extends State<CardModal> {
 
     final cardColor = projectCardColor(widget.project);
 
+    final uid = widget.uid;
+    final address = widget.address;
+
+    if (uid == null && address == null) {
+      return const SizedBox.shrink();
+    }
+
     return Card(
       width: width * 0.8,
-      uid: widget.uid,
+      uid: uid ?? address!,
       color: cardColor,
       profile: profile,
       balance: balance,
-      onTopUpPressed: handleTopUpCard,
-      onCardNameUpdated: (name) =>
-          handleUpdateCardName(name, profile?.name ?? ''),
+      icon: uid == null ? CupertinoIcons.device_phone_portrait : null,
+      onTopUpPressed: uid == null ? null : handleTopUpCard,
+      onCardNameTapped: uid == null ? handleEditProfile : null,
+      onCardNameUpdated: uid == null
+          ? null
+          : (name) => handleUpdateCardName(name, profile?.name ?? ''),
     );
   }
 
@@ -362,9 +394,10 @@ class _CardModalState extends State<CardModal> {
           SliverToBoxAdapter(
             child: const SizedBox(height: 24),
           ),
-          SliverToBoxAdapter(
-            child: _buildCardActions(context),
-          ),
+          if (widget.uid != null)
+            SliverToBoxAdapter(
+              child: _buildCardActions(context),
+            ),
           SliverList(
             delegate: SliverChildBuilderDelegate(
               childCount: orders.length,

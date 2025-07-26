@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
+import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:pay_app/widgets/text_input_modal.dart';
 
 enum TapDepth {
@@ -17,7 +18,9 @@ class Card extends StatefulWidget {
   final Color color;
   final ProfileV1? profile;
   final double? balance;
+  final IconData? icon;
   final VoidCallback? onTopUpPressed;
+  final Future<void> Function()? onCardNameTapped;
   final Future<void> Function(String)? onCardNameUpdated;
   final Future<void> Function(String)? onCardPressed;
 
@@ -28,7 +31,9 @@ class Card extends StatefulWidget {
     required this.color,
     this.profile,
     this.balance,
+    this.icon,
     this.onTopUpPressed,
+    this.onCardNameTapped,
     this.onCardNameUpdated,
     this.onCardPressed,
   });
@@ -76,6 +81,13 @@ class _CardState extends State<Card> {
   }
 
   void handleNameTap() async {
+    if (widget.onCardNameTapped != null) {
+      HapticFeedback.heavyImpact();
+
+      await widget.onCardNameTapped?.call();
+      return;
+    }
+
     if (widget.onCardNameUpdated == null) {
       return;
     }
@@ -128,12 +140,12 @@ class _CardState extends State<Card> {
         decoration: BoxDecoration(
           color: widget.color,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: CupertinoColors.white),
+          border: Border.all(color: CupertinoColors.white.withAlpha(160)),
           boxShadow: [
             BoxShadow(
-              color: blackColor.withAlpha(10),
+              color: blackColor.withAlpha(60),
               blurRadius: 10,
-              offset: const Offset(0, 4),
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -153,7 +165,15 @@ class _CardState extends State<Card> {
                       children: [
                         Row(
                           children: [
-                            (widget.onCardNameUpdated != null)
+                            ProfileCircle(
+                              size: 24,
+                              imageUrl: widget.profile?.imageSmall,
+                              borderColor: whiteColor,
+                              borderWidth: 2,
+                            ),
+                            const SizedBox(width: 4),
+                            (widget.onCardNameUpdated != null ||
+                                    widget.onCardNameTapped != null)
                                 ? GestureDetector(
                                     onTap: handleNameTap,
                                     child: Container(
@@ -220,12 +240,18 @@ class _CardState extends State<Card> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Image.asset(
-                    'assets/icons/nfc.png',
-                    color: CupertinoColors.white,
-                    width: 24,
-                    height: 24,
-                  ),
+                  widget.icon != null
+                      ? Icon(
+                          widget.icon,
+                          color: CupertinoColors.white,
+                          size: 24,
+                        )
+                      : Image.asset(
+                          'assets/icons/nfc.png',
+                          color: CupertinoColors.white,
+                          width: 24,
+                          height: 24,
+                        ),
                 ],
               ),
               Row(

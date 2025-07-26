@@ -103,7 +103,7 @@ class TextInputModalState extends State<TextInputModal> {
                   title: widget.title,
                   color: CupertinoColors.systemBackground,
                   actionButton: CupertinoButton(
-                    padding: const EdgeInsets.all(5),
+                    padding: const EdgeInsets.all(10),
                     onPressed: () => handleDismiss(context),
                     child: Icon(
                       CupertinoIcons.xmark,
@@ -199,7 +199,11 @@ class TextInputModalState extends State<TextInputModal> {
                                 const BorderRadius.all(Radius.circular(5.0)),
                           ),
                           onSubmitted: (_) {
-                            handleSubmitConfirm(context);
+                            if (widget.confirm) {
+                              handleSubmitConfirm(context);
+                            } else {
+                              handleSubmit(context);
+                            }
                           },
                         ),
                       const SizedBox(

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/services/config/config.dart';
@@ -8,6 +10,7 @@ import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/sigauth/sigauth.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
+import 'package:web3dart/credentials.dart';
 
 enum AddCardError {
   cardAlreadyExists,
@@ -51,6 +54,7 @@ class CardsState with ChangeNotifier {
 
   // state variables here
   List<DBCard> cards = [];
+  Map<String, double> cardBalances = {};
   Map<String, ProfileV1> profiles = {};
 
   bool updatingCardName = false;
@@ -62,8 +66,19 @@ class CardsState with ChangeNotifier {
     cards = await _cards.getAll();
     safeNotifyListeners();
 
+    final token = _config.getPrimaryToken();
+
     for (final card in cards) {
       await fetchProfile(card.account);
+
+      final balance = await getBalance(
+        _config,
+        EthereumAddress.fromHex(card.account),
+      );
+      final formattedBalance =
+          (double.tryParse(balance) ?? 0.0) / pow(10, token.decimals);
+
+      cardBalances[card.account] = formattedBalance;
     }
   }
 

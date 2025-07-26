@@ -58,20 +58,28 @@ class CardState with ChangeNotifier {
   bool toppingUp = false;
 
   // state methods here
-  Future<void> fetchCardDetails() async {
+  Future<void> fetchCardDetails(String? address) async {
     try {
-      card = await _cards.getByUid(cardId);
+      card = address != null
+          ? DBCard(
+              uid: address,
+              project: 'main',
+              account: address,
+            )
+          : await _cards.getByUid(cardId);
 
       loading = true;
       safeNotifyListeners();
 
-      cardAddress = await _config.cardManagerContract!.getCardAddress(
-        cardId,
-      );
+      cardAddress = address != null
+          ? EthereumAddress.fromHex(address)
+          : await _config.cardManagerContract!.getCardAddress(
+              cardId,
+            );
       safeNotifyListeners();
 
       if (card != null) {
-        fetchOrders(refresh: true);
+        fetchOrders(address: address, refresh: true);
       }
 
       profile = await getProfile(_config, cardAddress!.hexEip55);
@@ -114,9 +122,9 @@ class CardState with ChangeNotifier {
   int ordersOffset = 0;
   bool hasMoreOrders = true;
 
-  Future<void> fetchOrders({bool refresh = false}) async {
+  Future<void> fetchOrders({String? address, bool refresh = false}) async {
     try {
-      if (cardAddress == null) {
+      if (address == null && cardAddress == null) {
         throw Exception('Card address not found');
       }
 
@@ -128,7 +136,8 @@ class CardState with ChangeNotifier {
         hasMoreOrders = true;
       }
 
-      final ordersService = OrdersService(account: cardAddress!.hexEip55);
+      final ordersService =
+          OrdersService(account: address ?? cardAddress!.hexEip55);
 
       final orders = await ordersService.getOrders(
         limit: ordersLimit,
