@@ -13,7 +13,6 @@ import 'package:provider/provider.dart';
 // screens
 import 'package:pay_app/screens/home/screen.dart';
 import 'package:pay_app/screens/onboarding/screen.dart';
-import 'package:pay_app/screens/account/view/screen.dart';
 import 'package:pay_app/screens/account/edit/screen.dart';
 import 'package:pay_app/screens/interactions/place/screen.dart';
 import 'package:pay_app/screens/interactions/place/menu/screen.dart';
@@ -95,15 +94,6 @@ GoRouter createRouter(
                   accountAddress: accountAddress,
                   deepLink: deepLink,
                 );
-              },
-            ),
-            GoRoute(
-              name: 'MyAccount',
-              path: '/:account/my-account',
-              builder: (context, state) {
-                final accountAddress = state.pathParameters['account']!;
-
-                return MyAccount(accountAddress: accountAddress);
               },
             ),
             GoRoute(

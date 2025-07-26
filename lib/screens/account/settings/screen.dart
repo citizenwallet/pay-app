@@ -45,12 +45,6 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
     GoRouter.of(context).pop();
   }
 
-  void handleEditAccount() {
-    final navigator = GoRouter.of(context);
-
-    navigator.push('/${widget.accountAddress}/my-account/edit');
-  }
-
   void handleLogout() async {
     final navigator = GoRouter.of(context);
 
