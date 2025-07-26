@@ -60,8 +60,8 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
   }
 
   void onLoad() async {
+    _transactionsWithUserState.getTransactionsWithUser();
     await _transactionsWithUserState.getProfileOfWithUser();
-    await _transactionsWithUserState.getTransactionsWithUser();
     _transactionsWithUserState.startPolling(
         updateBalance: _walletState.updateBalance);
   }
