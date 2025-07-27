@@ -70,6 +70,39 @@ class CardsState with ChangeNotifier {
     cards = await _cards.getAll();
     safeNotifyListeners();
 
+    final credentials = _secureService.getCredentials();
+    if (credentials == null) {
+      return;
+    }
+
+    final (account, key) = credentials;
+
+    final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
+
+    final sigAuthService = SigAuthService(
+      credentials: key,
+      address: account,
+      redirect: redirectDomain != null ? 'https://$redirectDomain' : '',
+    );
+
+    final sigAuthConnection = sigAuthService.connect();
+
+    _cardsService
+        .getCards(sigAuthConnection, account.hexEip55)
+        .then((cards) async {
+      final newCards = cards
+          .map((e) => DBCard(
+                uid: e.serial,
+                project: e.project ?? '',
+                account: e.owner,
+              ))
+          .toList();
+      _cards.upsertMany(newCards);
+
+      this.cards = await _cards.getAll();
+      safeNotifyListeners();
+    });
+
     final token =
         _config.getToken(tokenAddress ?? _config.getPrimaryToken().address);
 

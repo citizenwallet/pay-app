@@ -11,6 +11,26 @@ class CardsService {
 
   CardsService();
 
+  Future<List<Card>> getCards(
+    SigAuthConnection connection,
+    String owner,
+  ) async {
+    try {
+      final response = await apiService.get(
+        url: '/app/cards?owner=$owner',
+        headers: connection.toMap(),
+      );
+
+      final List<dynamic> cards = response['cards'];
+
+      return cards.map((e) => Card.fromJson(e)).toList();
+    } catch (e, s) {
+      debugPrint('Failed to fetch cards: $e');
+      debugPrint('Stack trace: $s');
+      throw Exception('Failed to fetch cards');
+    }
+  }
+
   Future<Card> claim(
     SigAuthConnection connection,
     String serial, {

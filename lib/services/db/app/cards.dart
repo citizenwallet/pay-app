@@ -133,6 +133,14 @@ class CardsTable extends DBTable {
     );
   }
 
+  Future<void> upsertMany(List<DBCard> cards) async {
+    await db.transaction((txn) async {
+      for (final card in cards) {
+        await upsert(card);
+      }
+    });
+  }
+
   Future<void> delete(String uid) async {
     await db.delete(
       name,
