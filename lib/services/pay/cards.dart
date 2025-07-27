@@ -78,7 +78,7 @@ class CardsService {
     }
   }
 
-  Future<void> deleteProfile(
+  Future<bool> deleteProfile(
       SigAuthConnection connection, String serial) async {
     try {
       await apiService.delete(
@@ -86,10 +86,12 @@ class CardsService {
         body: {},
         headers: connection.toMap(),
       );
+
+      return true;
     } catch (e, s) {
       debugPrint('Failed to delete card: $e');
       debugPrint('Stack trace: $s');
-      throw Exception('Failed to delete card');
+      return false;
     }
   }
 }

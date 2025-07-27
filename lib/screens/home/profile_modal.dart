@@ -16,6 +16,7 @@ import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/widgets/button.dart';
 import 'package:pay_app/widgets/cards/card.dart';
+import 'package:pay_app/widgets/cards/card_skeleton.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
 import 'package:pay_app/widgets/modals/nfc_modal.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
@@ -525,6 +526,8 @@ class _ProfileModalState extends State<ProfileModal> {
   ) {
     final width = MediaQuery.of(context).size.width;
 
+    final updatingCardNameUid = context.watch<CardsState>().updatingCardNameUid;
+
     final profiles = context.watch<CardsState>().profiles;
 
     return [
@@ -543,21 +546,27 @@ class _ProfileModalState extends State<ProfileModal> {
             return Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Card(
-                  width: width * 0.75,
-                  uid: card.uid,
-                  color: cardColor,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  profile: profiles[card.account],
-                  onCardPressed: (uid) => handleCardSelect(
-                    widget.accountAddress,
-                    uid,
-                    card.project,
-                    widget.tokenAddress,
+                if (updatingCardNameUid == card.uid)
+                  CardSkeleton(
+                    width: width * 0.75,
+                    color: cardColor,
                   ),
-                  logo: tokenConfig?.logo,
-                  balance: cardBalances[card.account],
-                ),
+                if (updatingCardNameUid != card.uid)
+                  Card(
+                    width: width * 0.75,
+                    uid: card.uid,
+                    color: cardColor,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    profile: profiles[card.account],
+                    onCardPressed: (uid) => handleCardSelect(
+                      widget.accountAddress,
+                      uid,
+                      card.project,
+                      widget.tokenAddress,
+                    ),
+                    logo: tokenConfig?.logo,
+                    balance: cardBalances[card.account],
+                  ),
               ],
             );
           },

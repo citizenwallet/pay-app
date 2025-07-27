@@ -61,6 +61,7 @@ class CardsState with ChangeNotifier {
   Map<String, ProfileV1> profiles = {};
 
   bool updatingCardName = false;
+  String? updatingCardNameUid;
   bool claimingCard = false;
   bool unclaimingCard = false;
 
@@ -180,7 +181,7 @@ class CardsState with ChangeNotifier {
 
       final sigAuthConnection = sigAuthService.connect();
 
-      await _cardsService.deleteProfile(sigAuthConnection, uid);
+      _cardsService.deleteProfile(sigAuthConnection, uid);
 
       await _cardsService.unclaim(sigAuthConnection, uid);
 
@@ -200,6 +201,7 @@ class CardsState with ChangeNotifier {
 
   Future<AddCardError?> claim(String uid, String? uri, String? name) async {
     try {
+      updatingCardNameUid = uid;
       claimingCard = true;
       safeNotifyListeners();
 
@@ -275,6 +277,7 @@ class CardsState with ChangeNotifier {
       }
 
       if (uri == null) {
+        updatingCardNameUid = null;
         claimingCard = false;
         safeNotifyListeners();
         // this is not an error, it just means the card is not configured
@@ -283,12 +286,14 @@ class CardsState with ChangeNotifier {
     } catch (e) {
       debugPrint(e.toString());
 
+      updatingCardNameUid = null;
       claimingCard = false;
       safeNotifyListeners();
 
       return AddCardError.unknownError;
     }
 
+    updatingCardNameUid = null;
     claimingCard = false;
     safeNotifyListeners();
 
