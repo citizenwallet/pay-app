@@ -18,6 +18,14 @@ class PreferencesService {
     await _preferences.remove('profile');
   }
 
+  Future setTwoFAAddress(String salt, String address) async {
+    await _preferences.setString('twofa_address_$salt', address);
+  }
+
+  String? getTwoFAAddress(String salt) {
+    return _preferences.getString('twofa_address_$salt');
+  }
+
   // save token balances
   Future setTokenBalances(String account, Map<String, String> balances) async {
     await _preferences.setString(

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/indexer/signed_request.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/session/session.dart';
 import 'package:pay_app/services/wallet/contracts/erc20.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
@@ -737,12 +738,26 @@ Future<SUJSONRPCResponse> requestBundler(
 }
 
 Future<EthereumAddress> getTwoFAAddress(
+  PreferencesService preferences,
   Config config,
   String source,
   String type,
 ) async {
   final provider = EthereumAddress.fromHex(
-      config.getPrimarySessionManager().providerAddress);
+    config.getPrimarySessionManager().providerAddress,
+  );
   final salt = generateSessionSalt(source, type);
-  return await config.twoFAFactoryContract.getAddress(provider, salt);
+
+  final cachedAddress =
+      preferences.getTwoFAAddress(bytesToHex(salt, include0x: true));
+  if (cachedAddress != null) {
+    return EthereumAddress.fromHex(cachedAddress);
+  }
+
+  final address = await config.twoFAFactoryContract.getAddress(provider, salt);
+
+  preferences.setTwoFAAddress(
+      bytesToHex(salt, include0x: true), address.hexEip55);
+
+  return address;
 }

@@ -2,12 +2,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
+import 'package:pay_app/services/db/app/contacts.dart';
+import 'package:pay_app/services/db/app/db.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:web3dart/web3dart.dart';
 
 class ContactsState extends ChangeNotifier {
   // instantiate services here
+  final PreferencesService _preferences = PreferencesService();
+  final ContactsTable _contacts = AppDBService().contacts;
   final ContactsService _contactsService = ContactsService();
 
   final Config _config;
@@ -93,10 +98,21 @@ class ContactsState extends ChangeNotifier {
           'sms',
         ).then((value) async {
           if (value != null) {
+            final contact = await _contacts.getByAccount(value.hexEip55);
+            final cachedProfile = contact?.getProfile();
+            if (cachedProfile != null) {
+              customContactProfile = cachedProfile;
+              safeNotifyListeners();
+            }
+
             customContactProfile = await getProfile(
               _config,
               value.hexEip55,
             );
+
+            if (customContactProfile != null) {
+              _contacts.upsert(DBContact.fromProfile(customContactProfile!));
+            }
 
             safeNotifyListeners();
           }
@@ -111,9 +127,18 @@ class ContactsState extends ChangeNotifier {
 
     if (!isPotentialNumber) {
       try {
+        final potentialUsername = query.trim().replaceFirst('@', '');
+
+        final contact = await _contacts.getByUsername(potentialUsername);
+        final cachedProfile = contact?.getProfile();
+        if (cachedProfile != null) {
+          customContactProfileByUsername = cachedProfile;
+          safeNotifyListeners();
+        }
+
         final result = await getProfileByUsername(
           _config,
-          query.trim().replaceFirst('@', ''),
+          potentialUsername,
         );
 
         print('result: $result');
@@ -131,9 +156,27 @@ class ContactsState extends ChangeNotifier {
 
   Future<ProfileV1?> getContactProfileFromUsername(String query) async {
     try {
+      final potentialUsername = query.trim().replaceFirst('@', '');
+
+      final contact = await _contacts.getByUsername(potentialUsername);
+      final cachedProfile = contact?.getProfile();
+      if (cachedProfile != null) {
+        getProfileByUsername(
+          _config,
+          potentialUsername,
+        ).then((result) => {
+              if (result != null)
+                {
+                  _contacts.upsert(DBContact.fromProfile(result)),
+                }
+            });
+
+        return cachedProfile;
+      }
+
       final result = await getProfileByUsername(
         _config,
-        query.trim().replaceFirst('@', ''),
+        potentialUsername,
       );
 
       return result;
@@ -146,6 +189,22 @@ class ContactsState extends ChangeNotifier {
 
   Future<ProfileV1?> getContactProfileFromAddress(String address) async {
     try {
+      final contact = await _contacts.getByAccount(address);
+      final cachedProfile = contact?.getProfile();
+      if (cachedProfile != null) {
+        getProfile(
+          _config,
+          address,
+        ).then((result) => {
+              if (result != null)
+                {
+                  _contacts.upsert(DBContact.fromProfile(result)),
+                }
+            });
+
+        return cachedProfile;
+      }
+
       final result = await getProfile(
         _config,
         address,
@@ -171,6 +230,7 @@ class ContactsState extends ChangeNotifier {
       }
 
       return await getTwoFAAddress(
+        _preferences,
         _config,
         parsedNumber,
         type,
