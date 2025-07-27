@@ -27,7 +27,6 @@ class Place {
   });
 
   factory Place.fromJson(Map<String, dynamic> json) {
-    print('Place.fromJson: $json');
     final accounts = json['accounts'] as List<dynamic>?;
     final account = accounts?.first ?? json['account'] ?? '';
 
