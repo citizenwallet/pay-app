@@ -48,7 +48,7 @@ class OrderPlace {
   }
 
   factory OrderPlace.fromMap(Map<String, dynamic> json) {
-    final accounts = jsonDecode(json['accounts'] ?? '[]') as List<dynamic>;
+    final accounts = (json['accounts'] ?? []) as List<dynamic>;
     final account = accounts.first;
 
     return OrderPlace(
@@ -64,7 +64,7 @@ class OrderPlace {
     return {
       'slug': slug,
       'display': display.name,
-      'accounts': jsonEncode([account]),
+      'accounts': [account],
     };
   }
 }
