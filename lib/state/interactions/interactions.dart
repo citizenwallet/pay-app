@@ -4,10 +4,12 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/services/db/app/db.dart';
+import 'package:pay_app/services/db/app/interactions.dart';
 import 'package:pay_app/services/db/app/places_with_menu.dart';
 import 'package:pay_app/services/pay/interactions.dart';
 
 class InteractionState with ChangeNotifier {
+  final InteractionsTable _interactionsTable = AppDBService().interactions;
   final PlacesWithMenuTable _placesWithMenuTable =
       AppDBService().placesWithMenu;
 
@@ -22,6 +24,7 @@ class InteractionState with ChangeNotifier {
 
   bool loading = false;
   bool error = false;
+  bool syncing = false; // New flag for sync status
 
   bool searching = false;
 
@@ -56,25 +59,18 @@ class InteractionState with ChangeNotifier {
     safeNotifyListeners();
   }
 
-  // TODO: paginate interactions
+  // Load interactions from local database first, then sync with remote
   Future<void> getInteractions() async {
     loading = true;
     error = false;
     safeNotifyListeners();
 
     try {
-      final interactions = await apiService.getInteractions();
+      // First, load from local database for immediate display
+      await _loadFromLocalDatabase();
 
-      interactionsMap = {for (var i in interactions) i.withAccount: true};
-
-      if (interactions.isNotEmpty) {
-        final upsertedInteractions = _upsertInteractions(interactions);
-        this.interactions = upsertedInteractions;
-        interactionsMap = {
-          for (var i in upsertedInteractions) i.withAccount: true
-        };
-        safeNotifyListeners();
-      }
+      // Then sync with remote API in background
+      await _syncWithRemoteAPI();
     } catch (e, s) {
       debugPrint('Error fetching interactions: $e');
       debugPrint('Stack trace: $s');
@@ -86,6 +82,62 @@ class InteractionState with ChangeNotifier {
       error = true;
     } finally {
       loading = false;
+      safeNotifyListeners();
+    }
+  }
+
+  // Load interactions from local database
+  Future<void> _loadFromLocalDatabase() async {
+    try {
+      final localInteractions = await _interactionsTable.getAll();
+
+      if (localInteractions.isNotEmpty) {
+        interactions = localInteractions;
+        interactionsMap = {
+          for (var i in localInteractions) i.withAccount: true
+        };
+        safeNotifyListeners();
+      }
+    } catch (e, s) {
+      debugPrint('Error loading from local database: $e');
+      debugPrint('Stack trace: $s');
+      // Don't set error here as we'll try remote API
+    }
+  }
+
+  // Sync with remote API and update local database
+  Future<void> _syncWithRemoteAPI() async {
+    syncing = true;
+    safeNotifyListeners();
+
+    try {
+      final remoteInteractions = await apiService.getInteractions();
+
+      if (remoteInteractions.isNotEmpty) {
+        // Store remote interactions in local database
+        await _interactionsTable.upsertMany(remoteInteractions);
+
+        // Update places with menu if any
+        for (final interaction in remoteInteractions) {
+          if (interaction.isPlace && interaction.place != null) {
+            await _placesWithMenuTable.upsert(interaction.place!);
+          }
+        }
+
+        // Reload from local database to get the updated data
+        await _loadFromLocalDatabase();
+      }
+    } catch (e, s) {
+      debugPrint('Error syncing with remote API: $e');
+      debugPrint('Stack trace: $s');
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'Error syncing interactions with remote API',
+      );
+      // Don't set error here as we have local data
+    } finally {
+      syncing = false;
       safeNotifyListeners();
     }
   }
@@ -118,18 +170,26 @@ class InteractionState with ChangeNotifier {
           await apiService.getNewInteractions(interactionsFromDate);
 
       if (newInteractions.isNotEmpty) {
-        final upsertedInteractions = _upsertInteractions(newInteractions);
-        interactions = upsertedInteractions;
-        interactionsMap = {
-          for (var i in upsertedInteractions) i.withAccount: true
-        };
+        // Store new interactions in local database
+        await _interactionsTable.upsertMany(newInteractions);
+
+        // Update places with menu if any
+        for (final interaction in newInteractions) {
+          if (interaction.isPlace && interaction.place != null) {
+            await _placesWithMenuTable.upsert(interaction.place!);
+          }
+        }
+
+        // Reload from local database to get the updated data
+        await _loadFromLocalDatabase();
+
         interactionsFromDate = DateTime.now();
-        safeNotifyListeners();
         updateBalance?.call();
       }
     } catch (e, s) {
       debugPrint('Error polling interactions: $e');
       debugPrint('Stack trace: $s');
+      // Don't set error here as polling failures shouldn't break the UI
     }
   }
 
@@ -162,20 +222,93 @@ class InteractionState with ChangeNotifier {
     }
 
     try {
+      // Update local database first for immediate UI feedback
+      await _interactionsTable.updateUnreadStatus(interaction.id, false);
+
+      // Update local state
       final index = interactions
           .indexWhere((i) => i.withAccount == interaction.withAccount);
-      if (index < 0) {
-        return;
+      if (index >= 0) {
+        interactions[index].hasUnreadMessages = false;
+        safeNotifyListeners();
       }
 
-      interactions[index].hasUnreadMessages = false;
-      safeNotifyListeners();
-
+      // Sync with remote API
       await apiService.setInteractionAsRead(interaction.id);
-      getInteractions();
     } catch (e, s) {
       debugPrint('Error marking interaction as read: $e');
       debugPrint('Stack trace: $s');
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'Error marking interaction as read',
+      );
+    }
+  }
+
+  // Force refresh from remote API
+  Future<void> refreshFromRemote() async {
+    syncing = true;
+    safeNotifyListeners();
+
+    try {
+      await _syncWithRemoteAPI();
+    } finally {
+      syncing = false;
+      safeNotifyListeners();
+    }
+  }
+
+  // Get interactions for a specific account from local database
+  Future<List<Interaction>> getInteractionsForAccount(
+    String account, {
+    int? limit,
+    int? offset,
+  }) async {
+    try {
+      return await _interactionsTable.getInteractionsForAccount(
+        account,
+        limit: limit,
+        offset: offset,
+      );
+    } catch (e, s) {
+      debugPrint('Error getting interactions for account: $e');
+      debugPrint('Stack trace: $s');
+      return [];
+    }
+  }
+
+  // Get place interactions from local database
+  Future<List<Interaction>> getPlaceInteractions({
+    int? limit,
+    int? offset,
+  }) async {
+    try {
+      return await _interactionsTable.getPlaceInteractions(
+        limit: limit,
+        offset: offset,
+      );
+    } catch (e, s) {
+      debugPrint('Error getting place interactions: $e');
+      debugPrint('Stack trace: $s');
+      return [];
+    }
+  }
+
+  // Get unread interactions from local database
+  Future<List<Interaction>> getUnreadInteractions({
+    int? limit,
+    int? offset,
+  }) async {
+    try {
+      return await _interactionsTable.getUnreadInteractions(
+        limit: limit,
+        offset: offset,
+      );
+    } catch (e, s) {
+      debugPrint('Error getting unread interactions: $e');
+      debugPrint('Stack trace: $s');
+      return [];
     }
   }
 }

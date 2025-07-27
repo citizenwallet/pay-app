@@ -161,6 +161,9 @@ class _HomeScreenState extends State<HomeScreen>
     _interactionState.startPolling(updateBalance: _walletState.updateBalance);
     await _placesState.getAllPlaces();
     await _profileState.giveProfileUsername();
+
+    // Force refresh from remote API on initial load
+    await _interactionState.refreshFromRemote();
   }
 
   Future<void> handleDeepLink(String accountAddress, String? deepLink) async {
@@ -741,7 +744,7 @@ class _HomeScreenState extends State<HomeScreen>
                             onSearch: handleSearch,
                             onCancel: clearSearch,
                             isSearching: isSearching,
-                            searching: searching,
+                            searching: searching || _interactionState.syncing,
                             backgroundColor: _backgroundColorAnimation.value,
                           ),
                         ),

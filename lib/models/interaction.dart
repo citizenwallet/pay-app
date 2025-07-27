@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:pay_app/models/place.dart';
 import 'package:pay_app/models/place_with_menu.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/models/userop.dart';
@@ -59,7 +58,9 @@ class Interaction {
 
     return Interaction(
       id: json['id'],
-      exchangeDirection: parseExchangeDirection(json['exchange_direction']),
+      exchangeDirection: ExchangeDirection.values.firstWhere(
+          (e) => e.name == json['exchange_direction'],
+          orElse: () => ExchangeDirection.sent),
       withAccount: withProfile['account'],
       imageUrl: withPlace != null ? withPlace['image'] : withProfile['image'],
       name: withPlace != null ? withPlace['name'] : withProfile['name'],
@@ -77,26 +78,48 @@ class Interaction {
     );
   }
 
+  factory Interaction.fromMap(Map<String, dynamic> json) {
+    return Interaction(
+      id: json['id'],
+      exchangeDirection: ExchangeDirection.values.firstWhere(
+          (e) => e.name == json['direction'],
+          orElse: () => ExchangeDirection.sent),
+      withAccount: json['with_account'],
+      imageUrl: json['image_url'],
+      name: json['name'],
+      contract: json['contract'],
+      amount: double.tryParse(json['amount']) ?? 0,
+      description: json['description'],
+      isPlace: json['is_place'] == 1,
+      isTreasury: json['is_treasury'] == 1,
+      placeId: json['place_id'],
+      hasUnreadMessages: json['has_unread_messages'] == 1,
+      lastMessageAt: DateTime.parse(json['last_message_at']),
+      hasMenuItem: json['has_menu_item'] == 1,
+      place: json['place'] != null
+          ? PlaceWithMenu.fromMap(jsonDecode(json['place']))
+          : null,
+      profile: ProfileV1.fromJson(jsonDecode(json['profile'])),
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'direction': exchangeDirection
-          .toString()
-          .split('.')
-          .last, // converts enum to string
-      'withAccount': withAccount,
+      'direction': exchangeDirection.name, // converts enum to string
+      'with_account': withAccount,
       'name': name,
-      'imageUrl': imageUrl,
+      'image_url': imageUrl,
       'contract': contract,
-      'amount': amount,
+      'amount': amount.toStringAsFixed(2),
       'description': description,
-      'isPlace': isPlace,
-      'isTreasury': isTreasury,
-      'placeId': placeId,
-      'hasUnreadMessages': hasUnreadMessages,
-      'lastMessageAt': lastMessageAt.toIso8601String(),
-      'hasMenuItem': hasMenuItem,
-      'place': jsonEncode(place?.toMap()),
+      'is_place': isPlace,
+      'is_treasury': isTreasury,
+      'place_id': placeId,
+      'has_unread_messages': hasUnreadMessages,
+      'last_message_at': lastMessageAt.toIso8601String(),
+      'has_menu_item': hasMenuItem,
+      if (place != null) 'place': jsonEncode(place!.toMap()),
       'profile': jsonEncode(profile.toJson()),
     };
   }
