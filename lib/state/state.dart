@@ -14,6 +14,7 @@ import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/state/places/places.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/scanner.dart';
+import 'package:pay_app/state/sending.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
@@ -143,6 +144,27 @@ Widget provideCardState(
         key: Key('transactions-with-user-$cardId'),
         create: (_) => TransactionsWithUserState(
           withUserAddress: cardAddress,
+          myAddress: myAddress,
+        ),
+      ),
+    ],
+    child: child,
+  );
+}
+
+Widget provideSendingState(
+  BuildContext context,
+  Config config,
+  String myAddress,
+  Widget child,
+) {
+  return MultiProvider(
+    key: Key('sending-$myAddress'),
+    providers: [
+      ChangeNotifierProvider(
+        key: Key('sending-$myAddress'),
+        create: (_) => SendingState(
+          config: config,
           myAddress: myAddress,
         ),
       ),
