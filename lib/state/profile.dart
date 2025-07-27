@@ -126,18 +126,21 @@ class ProfileState with ChangeNotifier {
 
       final existingProfile = await getProfile(_config, _account);
 
-      if (existingProfile != null && cachedProfile == null) {
+      if (existingProfile != null) {
         _contacts.upsert(DBContact.fromProfile(existingProfile));
       }
 
-      if (existingProfile != null) {
+      if (existingProfile != null && !existingProfile.isAnonymous) {
         _profile = existingProfile;
+
+        error = false;
+        loading = false;
         safeNotifyListeners();
         return;
       }
 
       // don't go further if profile has been automatically setup
-      if (cachedProfile != null) {
+      if (cachedProfile != null && !cachedProfile.isAnonymous) {
         return;
       }
 
