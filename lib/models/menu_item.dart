@@ -42,6 +42,21 @@ class MenuItem {
     );
   }
 
+  factory MenuItem.fromMap(Map<String, dynamic> json) {
+    return MenuItem(
+      id: json['id'],
+      placeId: json['placeId'],
+      imageUrl: json['image'],
+      price: json['price'],
+      name: json['name'],
+      description: json['description'],
+      category: json['category'],
+      vat: json['vat'],
+      emoji: json['emoji'],
+      order: (json['order'] as num).toDouble(),
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,

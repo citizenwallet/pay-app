@@ -277,7 +277,7 @@ class _InteractionWithPlaceScreenState
             children: [
               ChatHeader(
                 onTapLeading: goBack,
-                imageUrl: place?.place.imageUrl ?? place?.profile?.imageUrl,
+                imageUrl: place?.place.imageUrl ?? place?.profile?.imageMedium,
                 placeName: place?.place.name ?? place?.profile?.name ?? '',
                 placeDescription: place?.place.description ??
                     place?.profile?.description ??

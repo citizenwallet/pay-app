@@ -27,8 +27,9 @@ class Place {
   });
 
   factory Place.fromJson(Map<String, dynamic> json) {
-    final accounts = json['accounts'] as List<dynamic>;
-    final account = accounts.first;
+    print('Place.fromJson: $json');
+    final accounts = json['accounts'] as List<dynamic>?;
+    final account = accounts?.first ?? json['account'] ?? '';
 
     return Place(
       id: json['id'],
@@ -36,7 +37,9 @@ class Place {
       slug: json['slug'],
       account: account,
       imageUrl: json['image'] == '' ? null : json['image'],
-      description: json['description'] == '' ? null : json['description'],
+      description: json['description'] != null && json['description'] != ''
+          ? json['description']
+          : null,
       display:
           Display.values.firstWhereOrNull((e) => e.name == json['display']) ??
               Display.amount,

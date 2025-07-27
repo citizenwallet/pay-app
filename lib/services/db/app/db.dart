@@ -1,6 +1,7 @@
 import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/db/app/contacts.dart';
 import 'package:pay_app/services/db/app/orders.dart';
+import 'package:pay_app/services/db/app/places_with_menu.dart';
 import 'package:pay_app/services/db/app/transactions.dart';
 import 'package:pay_app/services/db/db.dart';
 import 'package:sqflite/sqflite.dart';
@@ -18,6 +19,7 @@ class AppDBService extends DBService {
   late CardsTable cards;
   late TransactionsTable transactions;
   late OrdersTable orders;
+  late PlacesWithMenuTable placesWithMenu;
 
   @override
   Future<Database> openDB(String path) async {
@@ -27,12 +29,14 @@ class AppDBService extends DBService {
         cards = CardsTable(db);
         transactions = TransactionsTable(db);
         orders = OrdersTable(db);
+        placesWithMenu = PlacesWithMenuTable(db);
       },
       onCreate: (db, version) async {
         await contacts.create(db);
         await cards.create(db);
         await transactions.create(db);
         await orders.create(db);
+        await placesWithMenu.create(db);
         return;
       },
       onUpgrade: (db, oldVersion, newVersion) async {
@@ -40,9 +44,10 @@ class AppDBService extends DBService {
         await cards.migrate(db, oldVersion, newVersion);
         await transactions.migrate(db, oldVersion, newVersion);
         await orders.migrate(db, oldVersion, newVersion);
+        await placesWithMenu.migrate(db, oldVersion, newVersion);
         return;
       },
-      version: 8,
+      version: 10,
     );
 
     final db = await databaseFactory.openDatabase(

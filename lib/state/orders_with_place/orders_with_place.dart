@@ -8,6 +8,7 @@ import 'package:pay_app/models/place_with_menu.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/db/app/orders.dart';
+import 'package:pay_app/services/db/app/places_with_menu.dart';
 import 'package:pay_app/services/engine/utils.dart';
 import 'package:pay_app/services/pay/orders.dart';
 import 'package:pay_app/services/pay/places.dart';
@@ -21,6 +22,8 @@ class OrdersWithPlaceState with ChangeNotifier {
   // instantiate services here
   final Config _config;
 
+  final PlacesWithMenuTable _placesWithMenuTable =
+      AppDBService().placesWithMenu;
   final OrdersTable _ordersTable = AppDBService().orders;
 
   final SecureService _secureService = SecureService();
@@ -115,6 +118,31 @@ class OrdersWithPlaceState with ChangeNotifier {
 
       _fetchOrders();
 
+      final cachedPlaceWithMenu = await _placesWithMenuTable.getBySlug(slug);
+      if (cachedPlaceWithMenu != null) {
+        place = cachedPlaceWithMenu;
+        placeMenu = PlaceMenu(menuItems: cachedPlaceWithMenu.items);
+        categoryKeys =
+            placeMenu!.categories.map((category) => GlobalKey()).toList();
+
+        loading = false;
+        safeNotifyListeners();
+
+        _placesService.getPlaceAndMenu(slug).then((placeWithMenu) {
+          place = placeWithMenu;
+
+          placeMenu = PlaceMenu(menuItems: placeWithMenu.items);
+          categoryKeys =
+              placeMenu!.categories.map((category) => GlobalKey()).toList();
+
+          safeNotifyListeners();
+
+          _placesWithMenuTable.upsert(placeWithMenu);
+        });
+
+        return cachedPlaceWithMenu;
+      }
+
       final placeWithMenu = await _placesService.getPlaceAndMenu(slug);
       place = placeWithMenu;
 
@@ -123,6 +151,8 @@ class OrdersWithPlaceState with ChangeNotifier {
           placeMenu!.categories.map((category) => GlobalKey()).toList();
 
       safeNotifyListeners();
+
+      _placesWithMenuTable.upsert(placeWithMenu);
 
       startPolling();
 
