@@ -15,7 +15,7 @@ import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/button.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
-import 'package:pay_app/widgets/card.dart' show Card;
+import 'package:pay_app/widgets/cards/card.dart' show Card;
 import 'package:provider/provider.dart';
 
 class CardModal extends StatefulWidget {

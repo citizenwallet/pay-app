@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PreferencesService {
@@ -17,19 +16,6 @@ class PreferencesService {
   Future clear() async {
     await _preferences.remove('balance');
     await _preferences.remove('profile');
-  }
-
-  // save profile
-  Future setProfile(ProfileV1 profile) async {
-    await _preferences.setString('profile', jsonEncode(profile.toJson()));
-  }
-
-  ProfileV1? get profile {
-    final json = _preferences.getString('profile');
-    if (json == null) {
-      return null;
-    }
-    return ProfileV1.fromJson(jsonDecode(json));
   }
 
   // save token balances

@@ -15,7 +15,7 @@ import 'package:pay_app/theme/card_colors.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/widgets/button.dart';
-import 'package:pay_app/widgets/card.dart';
+import 'package:pay_app/widgets/cards/card.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
 import 'package:pay_app/widgets/modals/nfc_modal.dart';
 import 'package:pay_app/widgets/toast/toast.dart';

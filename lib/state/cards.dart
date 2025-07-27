@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/cards.dart';
+import 'package:pay_app/services/db/app/contacts.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/pay/cards.dart';
 import 'package:pay_app/services/secure/secure.dart';
@@ -24,6 +25,7 @@ enum AddCardError {
 
 class CardsState with ChangeNotifier {
   // instantiate services here
+  final ContactsTable _contacts = AppDBService().contacts;
   final CardsTable _cards = AppDBService().cards;
   final SecureService _secureService = SecureService();
   final CardsService _cardsService = CardsService();
@@ -81,16 +83,26 @@ class CardsState with ChangeNotifier {
 
       cardBalances[card.account] = formatCurrency(balance, token.decimals);
     }
+
+    safeNotifyListeners();
   }
 
   Future<void> fetchProfile(String address) async {
+    final contact = await _contacts.getByAccount(address);
+    final cachedProfile = contact?.getProfile();
+    if (cachedProfile != null) {
+      profiles[address] = cachedProfile;
+      safeNotifyListeners();
+    }
+
     final profile = await getProfile(_config, address);
 
     if (profile != null) {
       profiles[address] = profile;
-    }
+      safeNotifyListeners();
 
-    safeNotifyListeners();
+      _contacts.upsert(DBContact.fromProfile(profile));
+    }
   }
 
   Future<void> updateCardName(

@@ -6,7 +6,8 @@ import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/blurry_child.dart';
-import 'package:pay_app/widgets/card.dart';
+import 'package:pay_app/widgets/cards/card.dart';
+import 'package:pay_app/widgets/cards/card_skeleton.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:provider/provider.dart';
 
@@ -121,20 +122,26 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Card(
-                  width: (adjustedWidth < 360 ? 360 : adjustedWidth) * 0.8,
-                  uid: profile.account,
-                  color: primaryColor,
-                  profile: profile,
-                  icon: CupertinoIcons.device_phone_portrait,
-                  onTopUpPressed: !widget.loading && topUpPlugin != null
-                      ? () => widget.onTopUpTap(topUpPlugin.url)
-                      : null,
-                  onCardPressed: (_) => handleProfileTap(),
-                  onCardBalanceTapped: handleBalanceTap,
-                  logo: tokenConfig?.logo,
-                  balance: balance,
-                ),
+                if (profile.isAnonymous)
+                  CardSkeleton(
+                    width: (adjustedWidth < 360 ? 360 : adjustedWidth) * 0.8,
+                    color: primaryColor,
+                  ),
+                if (!profile.isAnonymous)
+                  Card(
+                    width: (adjustedWidth < 360 ? 360 : adjustedWidth) * 0.8,
+                    uid: profile.account,
+                    color: primaryColor,
+                    profile: profile,
+                    icon: CupertinoIcons.device_phone_portrait,
+                    onTopUpPressed: !widget.loading && topUpPlugin != null
+                        ? () => widget.onTopUpTap(topUpPlugin.url)
+                        : null,
+                    onCardPressed: (_) => handleProfileTap(),
+                    onCardBalanceTapped: handleBalanceTap,
+                    logo: tokenConfig?.logo,
+                    balance: balance,
+                  ),
               ],
             ),
           ],

@@ -41,6 +41,16 @@ class DBContact {
     );
   }
 
+  factory DBContact.fromProfile(ProfileV1 profile) {
+    return DBContact(
+      account: profile.account,
+      username: profile.username,
+      name: profile.name,
+      type: ContactType.user,
+      profile: jsonEncode(profile.toJson()),
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'account': account,

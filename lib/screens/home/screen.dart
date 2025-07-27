@@ -154,6 +154,8 @@ class _HomeScreenState extends State<HomeScreen>
       return onLoad();
     }
 
+    _profileState.fetchProfile();
+
     await _walletState.updateBalance();
     await _interactionState.getInteractions();
     _interactionState.startPolling(updateBalance: _walletState.updateBalance);

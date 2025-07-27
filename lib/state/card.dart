@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/cards.dart';
+import 'package:pay_app/services/db/app/contacts.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/pay/orders.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
@@ -15,6 +16,7 @@ import 'package:web3dart/web3dart.dart';
 
 class CardState with ChangeNotifier {
   // instantiate services here
+  final ContactsTable _contacts = AppDBService().contacts;
   final CardsTable _cards = AppDBService().cards;
   final PreferencesService _preferences = PreferencesService();
 
@@ -91,8 +93,7 @@ class CardState with ChangeNotifier {
         );
       }
 
-      profile = await getProfile(_config, cardAddress!.hexEip55);
-      safeNotifyListeners();
+      fetchProfile();
 
       final balance = await getBalance(
         _config,
@@ -125,6 +126,18 @@ class CardState with ChangeNotifier {
   void stopPolling() {
     _timer?.cancel();
     _timer = null;
+  }
+
+  Future<void> fetchProfile() async {
+    final contact = await _contacts.getByAccount(cardAddress!.hexEip55);
+    final cachedProfile = contact?.getProfile();
+    if (cachedProfile != null) {
+      profile = cachedProfile;
+      safeNotifyListeners();
+    }
+
+    profile = await getProfile(_config, cardAddress!.hexEip55);
+    safeNotifyListeners();
   }
 
   Future<void> updateBalance(String? tokenAddress) async {
