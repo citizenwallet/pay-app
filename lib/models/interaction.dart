@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:pay_app/models/place.dart';
+import 'package:pay_app/models/place_with_menu.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/models/userop.dart';
 
 enum ExchangeDirection {
@@ -23,7 +27,8 @@ class Interaction {
   final bool isPlace;
   final bool isTreasury;
   final int? placeId; // id from supabase
-  final Place? place;
+  final PlaceWithMenu? place;
+  final ProfileV1 profile;
   final bool hasMenuItem;
   bool hasUnreadMessages;
   final DateTime lastMessageAt;
@@ -44,6 +49,7 @@ class Interaction {
     this.description,
     this.placeId,
     this.place,
+    required this.profile,
   });
 
   factory Interaction.fromJson(Map<String, dynamic> json) {
@@ -66,7 +72,8 @@ class Interaction {
       hasUnreadMessages: json['new_interaction'],
       lastMessageAt: DateTime.parse(transaction['created_at']),
       hasMenuItem: false,
-      place: withPlace != null ? Place.fromJson(withPlace) : null,
+      place: withPlace != null ? PlaceWithMenu.fromJson(withPlace) : null,
+      profile: ProfileV1.fromJson(withProfile),
     );
   }
 
@@ -89,7 +96,8 @@ class Interaction {
       'hasUnreadMessages': hasUnreadMessages,
       'lastMessageAt': lastMessageAt.toIso8601String(),
       'hasMenuItem': hasMenuItem,
-      'place': place?.toMap(),
+      'place': jsonEncode(place?.toMap()),
+      'profile': jsonEncode(profile.toJson()),
     };
   }
 
@@ -104,7 +112,8 @@ class Interaction {
     bool? hasUnreadMessages,
     DateTime? lastMessageAt,
     bool? hasMenuItem,
-    Place? place,
+    PlaceWithMenu? place,
+    ProfileV1? profile,
   }) {
     return Interaction(
       id: id,
@@ -122,6 +131,7 @@ class Interaction {
       lastMessageAt: lastMessageAt ?? this.lastMessageAt,
       hasMenuItem: hasMenuItem ?? this.hasMenuItem,
       place: place ?? this.place,
+      profile: profile ?? this.profile,
     );
   }
 

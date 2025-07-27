@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/models/place.dart';
 import 'package:pay_app/models/menu_item.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
@@ -22,7 +23,7 @@ class PlaceWithMenu {
 
   factory PlaceWithMenu.fromJson(Map<String, dynamic> json) {
     // Parse place data
-    final placeData = json['place'] as Map<String, dynamic>;
+    final placeData = (json['place'] ?? json) as Map<String, dynamic>;
     final place = Place.fromJson(placeData);
 
     // Parse profile data
@@ -47,13 +48,19 @@ class PlaceWithMenu {
     );
   }
 
+  factory PlaceWithMenu.fromInteraction(Interaction interaction) {
+    return interaction.place!;
+  }
+
   factory PlaceWithMenu.fromMap(Map<String, dynamic> json) {
     final items = jsonDecode(json['items'] ?? '[]') as List<dynamic>;
     return PlaceWithMenu(
       placeId: json['place_id'],
       slug: json['slug'],
       place: Place.fromJson(jsonDecode(json['place'])),
-      profile: ProfileV1.fromJson(jsonDecode(json['profile'])),
+      profile: json['profile'] != null
+          ? ProfileV1.fromJson(jsonDecode(json['profile']))
+          : null,
       items: items.map((item) => MenuItem.fromMap(item)).toList(),
     );
   }
@@ -63,7 +70,7 @@ class PlaceWithMenu {
       'place_id': placeId,
       'slug': slug,
       'place': jsonEncode(place.toMap()),
-      'profile': jsonEncode(profile?.toJson()),
+      if (profile != null) 'profile': jsonEncode(profile!.toJson()),
       'items': jsonEncode(items.map((item) => item.toMap()).toList()),
     };
   }

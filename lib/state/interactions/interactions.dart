@@ -3,9 +3,15 @@ import 'dart:async';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
+import 'package:pay_app/models/place_with_menu.dart';
+import 'package:pay_app/services/db/app/db.dart';
+import 'package:pay_app/services/db/app/places_with_menu.dart';
 import 'package:pay_app/services/pay/interactions.dart';
 
 class InteractionState with ChangeNotifier {
+  final PlacesWithMenuTable _placesWithMenuTable =
+      AppDBService().placesWithMenu;
+
   String searchQuery = '';
   List<Interaction> interactions = [];
   InteractionService apiService;
@@ -124,6 +130,10 @@ class InteractionState with ChangeNotifier {
     final existingMap = {for (var i in existingList) i.id: i};
 
     for (final newInteraction in newInteractions) {
+      if (newInteraction.isPlace && newInteraction.place != null) {
+        _placesWithMenuTable.upsert(newInteraction.place!);
+      }
+
       if (existingMap.containsKey(newInteraction.id)) {
         // Update existing interaction
         final existing = existingMap[newInteraction.id]!;
