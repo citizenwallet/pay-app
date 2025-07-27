@@ -189,8 +189,6 @@ class OrdersWithPlaceState with ChangeNotifier {
         offset: ordersOffset,
       );
 
-      print(dbOrders.length);
-
       if (dbOrders.isNotEmpty) {
         _upsertOrders(dbOrders);
         ordersOffset += dbOrders.length;
@@ -200,8 +198,9 @@ class OrdersWithPlaceState with ChangeNotifier {
         hasMoreOrders = false;
         safeNotifyListeners();
       }
-    } catch (e) {
+    } catch (e, s) {
       print('fetchOrders error: $e');
+      print('fetchOrders stack trace: $s');
       error = true;
       safeNotifyListeners();
     }

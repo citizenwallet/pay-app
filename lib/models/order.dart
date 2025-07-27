@@ -47,11 +47,24 @@ class OrderPlace {
     );
   }
 
+  factory OrderPlace.fromMap(Map<String, dynamic> json) {
+    final accounts = jsonDecode(json['accounts'] ?? '[]') as List<dynamic>;
+    final account = accounts.first;
+
+    return OrderPlace(
+      slug: json['slug'],
+      display:
+          Display.values.firstWhereOrNull((e) => e.name == json['display']) ??
+              Display.amount,
+      account: account,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'slug': slug,
       'display': display.name,
-      'accounts': [account],
+      'accounts': jsonEncode([account]),
     };
   }
 }
@@ -119,7 +132,7 @@ class Order {
   }
 
   factory Order.fromMap(Map<String, dynamic> json) {
-    final place = OrderPlace.fromJson(jsonDecode(json['place'] ?? '{}'));
+    final place = OrderPlace.fromMap(jsonDecode(json['place'] ?? '{}'));
     return Order(
       id: json['id'],
       createdAt: DateTime.parse(json['created_at']),

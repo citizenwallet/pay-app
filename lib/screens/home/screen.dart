@@ -672,7 +672,10 @@ class _HomeScreenState extends State<HomeScreen>
     final loading = context.select((WalletState state) => state.loading);
 
     final interactions = context.select(sortByUnreadAndDate);
-    final places = context.select(selectFilteredPlaces);
+
+    final interactionsState = context.select((InteractionState state) => state);
+
+    final places = context.select(selectFilteredPlaces(interactionsState));
     final contacts = context.select(selectFilteredContacts);
     final customContact = context.select(selectCustomContact);
     final customContactProfileByUsername = context

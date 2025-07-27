@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
-import 'package:pay_app/models/place_with_menu.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/db/app/places_with_menu.dart';
 import 'package:pay_app/services/pay/interactions.dart';
@@ -14,6 +13,7 @@ class InteractionState with ChangeNotifier {
 
   String searchQuery = '';
   List<Interaction> interactions = [];
+  Map<String, bool> interactionsMap = {};
   InteractionService apiService;
   Timer? _pollingTimer;
 
@@ -65,9 +65,14 @@ class InteractionState with ChangeNotifier {
     try {
       final interactions = await apiService.getInteractions();
 
+      interactionsMap = {for (var i in interactions) i.withAccount: true};
+
       if (interactions.isNotEmpty) {
         final upsertedInteractions = _upsertInteractions(interactions);
         this.interactions = upsertedInteractions;
+        interactionsMap = {
+          for (var i in upsertedInteractions) i.withAccount: true
+        };
         safeNotifyListeners();
       }
     } catch (e, s) {
@@ -115,6 +120,9 @@ class InteractionState with ChangeNotifier {
       if (newInteractions.isNotEmpty) {
         final upsertedInteractions = _upsertInteractions(newInteractions);
         interactions = upsertedInteractions;
+        interactionsMap = {
+          for (var i in upsertedInteractions) i.withAccount: true
+        };
         interactionsFromDate = DateTime.now();
         safeNotifyListeners();
         updateBalance?.call();
@@ -127,21 +135,21 @@ class InteractionState with ChangeNotifier {
 
   List<Interaction> _upsertInteractions(List<Interaction> newInteractions) {
     final existingList = interactions;
-    final existingMap = {for (var i in existingList) i.id: i};
+    final existingMap = {for (var i in existingList) i.withAccount: i};
 
     for (final newInteraction in newInteractions) {
       if (newInteraction.isPlace && newInteraction.place != null) {
         _placesWithMenuTable.upsert(newInteraction.place!);
       }
 
-      if (existingMap.containsKey(newInteraction.id)) {
+      if (existingMap.containsKey(newInteraction.withAccount)) {
         // Update existing interaction
-        final existing = existingMap[newInteraction.id]!;
-        existingMap[newInteraction.id] =
+        final existing = existingMap[newInteraction.withAccount]!;
+        existingMap[newInteraction.withAccount] =
             Interaction.upsert(existing, newInteraction);
       } else {
         // Add new interaction
-        existingMap[newInteraction.id] = newInteraction;
+        existingMap[newInteraction.withAccount] = newInteraction;
       }
     }
 
@@ -154,7 +162,8 @@ class InteractionState with ChangeNotifier {
     }
 
     try {
-      final index = interactions.indexWhere((i) => i.id == interaction.id);
+      final index = interactions
+          .indexWhere((i) => i.withAccount == interaction.withAccount);
       if (index < 0) {
         return;
       }
