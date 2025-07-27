@@ -23,17 +23,21 @@ class OrderListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => onPressed(order),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         constraints: const BoxConstraints(
           minHeight: 80,
         ),
         decoration: BoxDecoration(
+          color: order.status == OrderStatus.pending ? mutedColor : whiteColor,
           border: Border(
             bottom: BorderSide(
               color: Color(0xFFF0E9F4),
             ),
           ),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           children: [
@@ -51,7 +55,7 @@ class OrderListItem extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          OrderId(orderId: order.id),
+          OrderId(orderId: order.id, status: order.status),
           SizedBox(height: 4),
           Row(
             children: [
@@ -76,10 +80,11 @@ class OrderListItem extends StatelessWidget {
       children: [
         Amount(
           amount: order.total,
-          isPositive: order.place.display == Display.topup,
+          isPositive: order.place.display == Display.topup ||
+              order.status == OrderStatus.refund,
         ),
         SizedBox(height: 4),
-        TimeAgo(createdAt: order.createdAt),
+        TimeAgo(createdAt: order.createdAt, status: order.status),
       ],
     );
   }
@@ -144,26 +149,45 @@ class Items extends StatelessWidget {
 }
 
 class OrderId extends StatelessWidget {
-  final int? orderId;
+  final int orderId;
+  final OrderStatus status;
 
-  const OrderId({super.key, this.orderId});
+  const OrderId({super.key, required this.orderId, required this.status});
 
   @override
   Widget build(BuildContext context) {
-    if (orderId == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Text(
-      'Order #${orderId!}',
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: textColor,
+    return Row(children: [
+      Text(
+        'Order #$orderId',
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: status == OrderStatus.pending ? textMutedColor : textColor,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-    );
+      if (status == OrderStatus.refund) const SizedBox(width: 4),
+      if (status == OrderStatus.refund)
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: warningColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Text(
+                'refund',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        )
+    ]);
   }
 }
 
@@ -310,13 +334,14 @@ class Amount extends StatelessWidget {
 
 class TimeAgo extends StatelessWidget {
   final DateTime createdAt;
+  final OrderStatus status;
 
-  const TimeAgo({super.key, required this.createdAt});
+  const TimeAgo({super.key, required this.createdAt, required this.status});
 
   @override
   Widget build(BuildContext context) {
     return Text(
-      getTimeAgo(createdAt),
+      status == OrderStatus.pending ? 'sending...' : getTimeAgo(createdAt),
       style: const TextStyle(
         fontSize: 10,
         color: Color(0xFF8F8A9D),

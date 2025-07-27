@@ -268,6 +268,9 @@ class _InteractionWithPlaceScreenState
     final hasMoreOrders =
         context.select((OrdersWithPlaceState state) => state.hasMoreOrders);
 
+    final payingOrder =
+        context.select((OrdersWithPlaceState state) => state.payingOrder);
+
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemBackground,
       child: GestureDetector(
@@ -291,20 +294,19 @@ class _InteractionWithPlaceScreenState
                     controller: scrollController,
                     reverse: true,
                     slivers: [
+                      if (payingOrder != null)
+                        SliverToBoxAdapter(
+                          child: OrderListItem(
+                            key: Key('order-${payingOrder.id}'),
+                            order: payingOrder,
+                            mappedItems: place?.mappedItems ?? {},
+                            onPressed: handleOrderPressed,
+                          ),
+                        ),
                       SliverList(
                         delegate: SliverChildBuilderDelegate(
-                          childCount: orders.length + (hasMoreOrders ? 1 : 0),
+                          childCount: orders.length,
                           (context, index) {
-                            if (index == orders.length && hasMoreOrders) {
-                              return Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Center(
-                                  child: loadingMore
-                                      ? const CupertinoActivityIndicator()
-                                      : const SizedBox.shrink(),
-                                ),
-                              );
-                            }
                             return OrderListItem(
                               key: Key('order-${orders[index].id}'),
                               order: orders[index],
@@ -314,6 +316,17 @@ class _InteractionWithPlaceScreenState
                           },
                         ),
                       ),
+                      if (hasMoreOrders)
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Center(
+                              child: loadingMore
+                                  ? const CupertinoActivityIndicator()
+                                  : const SizedBox.shrink(),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),

@@ -448,6 +448,10 @@ class OrdersWithPlaceState with ChangeNotifier {
         throw Exception('Failed to create order');
       }
 
+      await _ordersTable.upsert(newOrder);
+      _upsertOrders([newOrder]);
+
+      payingOrder = null;
       paying = false;
       payError = false;
       safeNotifyListeners();
