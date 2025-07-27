@@ -182,7 +182,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
             children: [
               ChatHeader(
                 onTapLeading: goBack,
-                imageUrl: widget.customImageUrl ?? withUser?.imageUrl,
+                imageUrl: widget.customImageUrl ?? withUser?.imageMedium,
                 photo: widget.customPhoto,
                 name: withUser?.name ?? widget.customName,
                 username: withUser?.username,

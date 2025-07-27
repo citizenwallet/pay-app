@@ -8,6 +8,7 @@ import 'package:pay_app/models/transaction.dart';
 import 'package:pay_app/models/user.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
+import 'package:pay_app/services/db/app/contacts.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/db/app/transactions.dart';
 import 'package:pay_app/services/engine/utils.dart';
@@ -16,6 +17,7 @@ import 'package:pay_app/services/pay/profile.dart';
 import 'package:pay_app/services/pay/transactions_with_user.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/contracts/erc20.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/utils.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/utils/random.dart';
@@ -23,6 +25,7 @@ import 'package:pay_app/utils/random.dart';
 class TransactionsWithUserState with ChangeNotifier {
   late Config _config;
 
+  final ContactsTable _contacts = AppDBService().contacts;
   final TransactionsTable _transactionsTable = AppDBService().transactions;
 
   final ConfigService _configService = ConfigService();
@@ -33,7 +36,7 @@ class TransactionsWithUserState with ChangeNotifier {
   late TransactionsService transactionsWithUserService;
 
   String withUserAddress;
-  User? withUser;
+  ProfileV1? withUser;
   String myAddress;
 
   List<Transaction> transactions = [];
@@ -298,10 +301,20 @@ class TransactionsWithUserState with ChangeNotifier {
     safeNotifyListeners();
 
     try {
-      final profile = await withUserProfileService.getProfile();
-      debugPrint('profile: $profile');
-      withUser = profile;
-      safeNotifyListeners();
+      final contact = await _contacts.getByAccount(withUserAddress);
+      final cachedProfile = contact?.getProfile();
+      if (cachedProfile != null) {
+        withUser = cachedProfile;
+        safeNotifyListeners();
+      }
+
+      final profile = await getProfile(_config, withUserAddress);
+      if (profile != null) {
+        withUser = profile;
+        safeNotifyListeners();
+
+        _contacts.upsert(DBContact.fromProfile(profile));
+      }
     } catch (e, s) {
       debugPrint('Error getting profile of with user: $e');
       debugPrint('Stack trace: $s');
