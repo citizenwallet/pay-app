@@ -125,8 +125,8 @@ class CardsTable extends DBTable {
   }
 
   // Upsert card by account
-  Future<void> upsert(DBCard card) async {
-    await db.insert(
+  Future<void> upsert(DBCard card, {Transaction? txn}) async {
+    await (txn ?? db).insert(
       name,
       card.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
@@ -136,7 +136,7 @@ class CardsTable extends DBTable {
   Future<void> upsertMany(List<DBCard> cards) async {
     await db.transaction((txn) async {
       for (final card in cards) {
-        await upsert(card);
+        await upsert(card, txn: txn);
       }
     });
   }
