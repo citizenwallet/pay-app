@@ -92,6 +92,17 @@ class CardsState with ChangeNotifier {
           .getCards(sigAuthConnection, account.hexEip55)
           .then((cards) async {
         final newCards = await Future.wait(cards.map((e) async {
+          // skip address fetch for existing cards
+          final existingCard = await _cards.getByUid(e.serial);
+          if (existingCard != null) {
+            return DBCard(
+              uid: e.serial,
+              project: e.project ?? '',
+              account: existingCard.account,
+            );
+          }
+
+          // fetch address for new cards
           final cardAddress = await _config.cardManagerContract!.getCardAddress(
             e.serial,
           );
