@@ -67,58 +67,66 @@ class CardsState with ChangeNotifier {
 
   // state methods here
   Future<void> fetchCards({String? tokenAddress}) async {
-    cards = await _cards.getAll();
-    safeNotifyListeners();
-
-    final credentials = _secureService.getCredentials();
-    if (credentials == null) {
-      return;
-    }
-
-    final (account, key) = credentials;
-
-    final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
-
-    final sigAuthService = SigAuthService(
-      credentials: key,
-      address: account,
-      redirect: redirectDomain != null ? 'https://$redirectDomain' : '',
-    );
-
-    final sigAuthConnection = sigAuthService.connect();
-
-    _cardsService
-        .getCards(sigAuthConnection, account.hexEip55)
-        .then((cards) async {
-      final newCards = cards
-          .map((e) => DBCard(
-                uid: e.serial,
-                project: e.project ?? '',
-                account: e.owner,
-              ))
-          .toList();
-      _cards.upsertMany(newCards);
-
-      this.cards = await _cards.getAll();
+    try {
+      cards = await _cards.getAll();
       safeNotifyListeners();
-    });
 
-    final token =
-        _config.getToken(tokenAddress ?? _config.getPrimaryToken().address);
+      final credentials = _secureService.getCredentials();
+      if (credentials == null) {
+        return;
+      }
 
-    for (final card in cards) {
-      await fetchProfile(card.account);
+      final (account, key) = credentials;
 
-      final balance = await getBalance(
-        _config,
-        EthereumAddress.fromHex(card.account),
-        tokenAddress: token.address,
+      final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
+
+      final sigAuthService = SigAuthService(
+        credentials: key,
+        address: account,
+        redirect: redirectDomain != null ? 'https://$redirectDomain' : '',
       );
 
-      cardBalances[card.account] = formatCurrency(balance, token.decimals);
-    }
+      final sigAuthConnection = sigAuthService.connect();
 
-    safeNotifyListeners();
+      _cardsService
+          .getCards(sigAuthConnection, account.hexEip55)
+          .then((cards) async {
+        final newCards = await Future.wait(cards.map((e) async {
+          final cardAddress = await _config.cardManagerContract!.getCardAddress(
+            e.serial,
+          );
+          return DBCard(
+            uid: e.serial,
+            project: e.project ?? '',
+            account: cardAddress.hexEip55,
+          );
+        }).toList());
+        _cards.upsertMany(newCards);
+
+        this.cards = await _cards.getAll();
+        safeNotifyListeners();
+      });
+
+      final token =
+          _config.getToken(tokenAddress ?? _config.getPrimaryToken().address);
+
+      for (final card in cards) {
+        await fetchProfile(card.account);
+
+        final balance = await getBalance(
+          _config,
+          EthereumAddress.fromHex(card.account),
+          tokenAddress: token.address,
+        );
+
+        cardBalances[card.account] = formatCurrency(balance, token.decimals);
+      }
+
+      // safeNotifyListeners();
+    } catch (e, s) {
+      debugPrint(e.toString());
+      debugPrint(s.toString());
+    }
   }
 
   Future<void> fetchProfile(String address) async {
