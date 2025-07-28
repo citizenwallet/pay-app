@@ -600,7 +600,14 @@ class OrdersWithPlaceState with ChangeNotifier {
 
   Future<void> loadExternalOrder(String slug, String orderId) async {
     try {
-      loadingExternalOrder = true;
+      final cachedOrder = await _ordersTable.getById(int.parse(orderId));
+
+      if (cachedOrder != null) {
+        payingExternalOrder = cachedOrder;
+        safeNotifyListeners();
+      }
+
+      loadingExternalOrder = cachedOrder == null;
       safeNotifyListeners();
 
       final order = await _ordersService.getOrder(slug, int.parse(orderId));

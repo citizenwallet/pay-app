@@ -278,7 +278,7 @@ class _CardState extends State<Card> {
                     padding: EdgeInsets.zero,
                     color: whiteColor,
                     borderRadius: BorderRadius.circular(8),
-                    minSize: 0,
+                    minimumSize: Size.zero,
                     onPressed: widget.onTopUpPressed,
                     child: SizedBox(
                       width: 100,

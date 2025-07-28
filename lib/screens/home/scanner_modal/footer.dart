@@ -1,16 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:pay_app/services/config/config.dart';
-import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
+import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/transaction_input_row.dart';
 import 'package:provider/provider.dart';
 
 class Footer extends StatefulWidget {
-  final Function(double, String?) onSend;
+  final void Function(String, String, String?) onSend;
   final Function(String) onTopUpPressed;
   final FocusNode amountFocusNode;
   final FocusNode messageFocusNode;
+  final Function(String) onAmountChange;
+  final double amount;
+  final bool loading;
 
   const Footer({
     super.key,
@@ -18,6 +21,9 @@ class Footer extends StatefulWidget {
     required this.onTopUpPressed,
     required this.amountFocusNode,
     required this.messageFocusNode,
+    required this.onAmountChange,
+    required this.amount,
+    required this.loading,
   });
 
   @override
@@ -30,38 +36,17 @@ class _FooterState extends State<Footer> {
 
   bool _showAmountField = true;
 
-  late TransactionsWithUserState _transactionsWithUserState;
-
-  @override
-  void initState() {
-    super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.amountFocusNode.requestFocus();
-      _transactionsWithUserState = context.read<TransactionsWithUserState>();
-    });
-  }
-
-  Future<void> sendTransaction(String tokenAddress) async {
+  Future<void> sendTransaction(
+      String tokenAddress, String amount, String? message) async {
     HapticFeedback.heavyImpact();
 
     widget.amountFocusNode.unfocus();
     widget.messageFocusNode.unfocus();
 
-    _transactionsWithUserState.sendTransaction(tokenAddress);
+    widget.onSend(tokenAddress, amount.replaceAll(',', '.'), message);
+
     _amountController.clear();
     _messageController.clear();
-    setState(() {
-      _showAmountField = true;
-    });
-  }
-
-  updateAmount(double amount) {
-    _transactionsWithUserState.updateAmount(amount);
-  }
-
-  updateMessage(String message) {
-    _transactionsWithUserState.updateMessage(message);
   }
 
   @override
@@ -69,6 +54,10 @@ class _FooterState extends State<Footer> {
     _amountController.dispose();
     _messageController.dispose();
     super.dispose();
+  }
+
+  void _updateAmount(double amount) {
+    widget.onAmountChange(amount.toString().replaceAll(',', '.'));
   }
 
   void _toggleField() async {
@@ -101,11 +90,12 @@ class _FooterState extends State<Footer> {
       tokenAddress: tokenConfig.address,
     );
 
-    final toSendAmount =
-        context.watch<TransactionsWithUserState>().toSendAmount;
+    final primaryColor = context.select<WalletState, Color>(
+      (state) => state.tokenPrimaryColor,
+    );
 
-    final error = toSendAmount > double.parse(balance);
-    final disabled = toSendAmount == 0.0 || error;
+    final error = widget.amount > double.parse(balance);
+    final disabled = widget.amount == 0.0 || error;
 
     return Container(
       width: width,
@@ -114,6 +104,7 @@ class _FooterState extends State<Footer> {
         vertical: 20,
       ),
       decoration: BoxDecoration(
+        color: whiteColor,
         border: Border(
           top: BorderSide(
             color: Color(0xFFD9D9D9),
@@ -129,15 +120,17 @@ class _FooterState extends State<Footer> {
             messageController: _messageController,
             amountFocusNode: widget.amountFocusNode,
             messageFocusNode: widget.messageFocusNode,
-            onAmountChange: updateAmount,
-            onMessageChange: updateMessage,
+            onAmountChange: _updateAmount,
+            color: primaryColor,
             onToggleField: _toggleField,
-            onSend: () => sendTransaction(tokenConfig.address),
+            onSend: () => widget.onSend(tokenConfig.address,
+                _amountController.text, _messageController.text),
             disabled: disabled,
             error: error,
             onTopUpPressed: topUpPlugin != null
                 ? () => widget.onTopUpPressed(topUpPlugin.url)
                 : null,
+            loading: widget.loading,
           ),
         ],
       ),

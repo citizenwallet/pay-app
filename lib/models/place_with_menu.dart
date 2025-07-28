@@ -9,7 +9,7 @@ class PlaceWithMenu {
   final int placeId;
   final String slug;
   final Place place;
-  final ProfileV1? profile;
+  final ProfileV1 profile;
   final List<MenuItem> items;
   final Map<int, MenuItem> mappedItems;
 
@@ -29,8 +29,17 @@ class PlaceWithMenu {
     // Parse profile data
     final profileData = json['profile'] as Map<String, dynamic>?;
 
-    final profile =
-        profileData != null ? ProfileV1.fromJson(profileData) : null;
+    final profile = profileData != null
+        ? ProfileV1.fromJson(profileData)
+        : ProfileV1(
+            account: place.account,
+            name: place.name,
+            username: place.slug,
+            imageSmall: place.imageUrl ?? '',
+            imageMedium: place.imageUrl ?? '',
+            image: place.imageUrl ?? '',
+            description: place.description ?? '',
+          );
 
     // Parse items data
     final itemsData = json['items'] as List<dynamic>;
@@ -53,14 +62,26 @@ class PlaceWithMenu {
   }
 
   factory PlaceWithMenu.fromMap(Map<String, dynamic> json) {
+    final place = Place.fromJson(jsonDecode(json['place']));
+
+    final profile = json['profile'] != null
+        ? ProfileV1.fromJson(jsonDecode(json['profile']))
+        : ProfileV1(
+            account: place.account,
+            name: place.name,
+            username: place.slug,
+            imageSmall: place.imageUrl ?? '',
+            imageMedium: place.imageUrl ?? '',
+            image: place.imageUrl ?? '',
+            description: place.description ?? '',
+          );
+
     final items = jsonDecode(json['items'] ?? '[]') as List<dynamic>;
     return PlaceWithMenu(
       placeId: json['place_id'],
       slug: json['slug'],
-      place: Place.fromJson(jsonDecode(json['place'])),
-      profile: json['profile'] != null
-          ? ProfileV1.fromJson(jsonDecode(json['profile']))
-          : null,
+      place: place,
+      profile: profile,
       items: items.map((item) => MenuItem.fromMap(item)).toList(),
     );
   }
@@ -70,7 +91,7 @@ class PlaceWithMenu {
       'place_id': placeId,
       'slug': slug,
       'place': jsonEncode(place.toMap()),
-      if (profile != null) 'profile': jsonEncode(profile!.toJson()),
+      'profile': jsonEncode(profile.toJson()),
       'items': jsonEncode(items.map((item) => item.toMap()).toList()),
     };
   }

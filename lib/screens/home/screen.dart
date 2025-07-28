@@ -29,7 +29,7 @@ import 'package:pay_app/utils/qr.dart';
 import 'package:pay_app/utils/ratio.dart';
 import 'package:pay_app/widgets/modals/confirm_modal.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
-import 'package:pay_app/widgets/scanner/scanner_modal.dart';
+import 'package:pay_app/screens/home/scanner_modal/scanner_modal.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
@@ -172,7 +172,12 @@ class _HomeScreenState extends State<HomeScreen>
 
       await delay(const Duration(milliseconds: 100));
 
-      await handleQRScan(accountAddress, () {}, manualResult: deepLink);
+      if (!mounted) {
+        return;
+      }
+
+      await handleQRScan(context, accountAddress, () {},
+          manualResult: deepLink);
 
       _pauseDeepLinkHandling = false;
     }
@@ -542,18 +547,25 @@ class _HomeScreenState extends State<HomeScreen>
     await _walletState.updateBalance();
   }
 
-  Future<void> handleQRScan(String myAddress, Function() callback,
+  Future<void> handleQRScan(
+      BuildContext context, String myAddress, Function() callback,
       {String? manualResult}) async {
     _stopInitRetries = true;
 
     _backgroundColorController.forward();
 
     final result = manualResult ??
-        await showCupertinoModalPopup<String?>(
+        await showCupertinoDialog<String?>(
           context: context,
-          barrierDismissible: true,
-          builder: (_) => const ScannerModal(
-            modalKey: 'home-qr-scanner',
+          useRootNavigator: false,
+          builder: (modalContext) => provideSendingState(
+            context,
+            _walletState.config,
+            myAddress,
+            ScannerModal(
+              modalKey: 'home-qr-sending',
+              // TODO: token address
+            ),
           ),
         );
 
@@ -573,10 +585,10 @@ class _HomeScreenState extends State<HomeScreen>
       return;
     }
 
-    if (alias != null && alias.isNotEmpty && alias != _profileState.alias) {
-      // TODO: toast with invalid alias message
-      return;
-    }
+    // if (alias != null && alias.isNotEmpty && alias != _profileState.alias) {
+    //   // TODO: toast with invalid alias message
+    //   return;
+    // }
 
     final format = parseQRFormat(result);
 
@@ -872,6 +884,7 @@ class _HomeScreenState extends State<HomeScreen>
                         child: Center(
                           child: ScanQrCircle(
                             handleQRScan: (callback) => handleQRScan(
+                              context,
                               myAddress ?? '',
                               callback,
                             ),
