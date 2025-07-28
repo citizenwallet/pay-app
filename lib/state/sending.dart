@@ -4,6 +4,7 @@ import 'package:pay_app/models/checkout_item.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/place_with_menu.dart';
 import 'package:pay_app/services/config/config.dart';
+import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/db/app/contacts.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/db/app/orders.dart';
@@ -24,6 +25,7 @@ class SendingState with ChangeNotifier {
   final OrdersTable _ordersTable = AppDBService().orders;
   final ContactsTable _contacts = AppDBService().contacts;
   final PlacesWithMenuTable _places = AppDBService().placesWithMenu;
+  final CardsTable _cards = AppDBService().cards;
   late OrdersService _ordersService;
   PlacesService apiService = PlacesService();
   final SecureService _secureService = SecureService();
@@ -141,6 +143,52 @@ class SendingState with ChangeNotifier {
       profile = await getProfileByUsername(
         _config,
         potentialUsername,
+      );
+      safeNotifyListeners();
+    } catch (e, s) {
+      print('error: $e');
+      print('stack trace: $s');
+    }
+  }
+
+  Future<void> getContactProfileFromSerial(String serial) async {
+    try {
+      final potentialSerial = serial.trim();
+
+      String? cardAddress;
+
+      final cachedCard = await _cards.getByUid(potentialSerial);
+      if (cachedCard != null) {
+        cardAddress = cachedCard.account;
+      }
+
+      if (cardAddress == null) {
+        final remoteAddress = await _config.cardManagerContract!.getCardAddress(
+          serial,
+        );
+
+        cardAddress = remoteAddress.hexEip55;
+      }
+
+      final contact = await _contacts.getByAccount(cardAddress);
+      profile = contact?.getProfile();
+      safeNotifyListeners();
+
+      if (profile != null) {
+        getProfile(
+          _config,
+          cardAddress,
+        ).then((result) => {
+              if (result != null)
+                {
+                  _contacts.upsert(DBContact.fromProfile(result)),
+                }
+            });
+      }
+
+      profile = await getProfile(
+        _config,
+        cardAddress,
       );
       safeNotifyListeners();
     } catch (e, s) {

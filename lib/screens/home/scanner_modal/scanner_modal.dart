@@ -203,6 +203,7 @@ class ScannerModalState extends State<ScannerModal>
         break;
       case QRFormat.cardUrl:
         _sendingState.getCardProject(qrData.rawValue);
+        _sendingState.getContactProfileFromSerial(qrData.address);
         break;
       case QRFormat.sendtoUrl:
       case QRFormat.sendtoUrlWithEIP681:
@@ -319,6 +320,10 @@ class ScannerModalState extends State<ScannerModal>
     handleDismiss(context);
   }
 
+  void handleInspectCard(String serial) async {
+    hideScanner();
+  }
+
   void handleTopUp(String tokenAddress) {}
 
   @override
@@ -337,6 +342,7 @@ class ScannerModalState extends State<ScannerModal>
     );
 
     final qrData = context.watch<SendingState>().qrData;
+    final isCard = qrData?.format == QRFormat.cardUrl;
 
     final profile = context.watch<SendingState>().profile;
     final place = context.watch<SendingState>().place;
@@ -471,7 +477,8 @@ class ScannerModalState extends State<ScannerModal>
                             ),
                           if ((place != null || profile != null) &&
                               !showTransactionInput &&
-                              tokenConfig != null)
+                              tokenConfig != null &&
+                              !isCard)
                             AnimatedOpacity(
                               opacity: _showControls ? 1 : 0,
                               duration: const Duration(milliseconds: 300),
@@ -491,6 +498,29 @@ class ScannerModalState extends State<ScannerModal>
                                           : () => handleConfirmOrder(
                                                 tokenConfig.address,
                                               ),
+                                ),
+                              ),
+                            ),
+                          if ((place != null || profile != null) &&
+                              !showTransactionInput &&
+                              tokenConfig != null &&
+                              isCard)
+                            AnimatedOpacity(
+                              opacity: _showControls ? 1 : 0,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
+                                child: Button(
+                                  text: 'Inspect Card',
+                                  color: primaryColor,
+                                  labelColor: whiteColor,
+                                  onPressed: qrData?.address != null
+                                      ? () => handleInspectCard(
+                                            qrData!.address,
+                                          )
+                                      : null,
                                 ),
                               ),
                             ),
