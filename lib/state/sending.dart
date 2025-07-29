@@ -127,6 +127,14 @@ class SendingState with ChangeNotifier {
         _contacts.upsert(DBContact.fromProfile(profile!));
       }
 
+      profile ??= ProfileV1(
+        account: address,
+        image: 'assets/icons/profile.png',
+        imageMedium: 'assets/icons/profile.png',
+        imageSmall: 'assets/icons/profile.png',
+      );
+      safeNotifyListeners();
+
       return profile;
     } catch (e, s) {
       print('error: $e');
@@ -219,6 +227,15 @@ class SendingState with ChangeNotifier {
       profile = await getProfile(
         _config,
         cardAddress,
+      );
+      safeNotifyListeners();
+
+      profile ??= ProfileV1(
+        account: cardAddress,
+        name: 'NFC Card',
+        image: 'assets/icons/nfc.png',
+        imageMedium: 'assets/icons/nfc.png',
+        imageSmall: 'assets/icons/nfc.png',
       );
       safeNotifyListeners();
 

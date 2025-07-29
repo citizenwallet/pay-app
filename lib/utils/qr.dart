@@ -139,7 +139,7 @@ QRFormat parseQRFormat(String raw) {
 
   final receiveUrl = Uri.parse(decodedRaw);
 
-  final placeSlug = receiveUrl.pathSegments.last;
+  final placeSlug = receiveUrl.pathSegments.first;
 
   if (placeSlug == '') {
     return ('', null, null, null);

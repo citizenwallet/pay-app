@@ -445,9 +445,15 @@ class ScannerModalState extends State<ScannerModal>
     final place = context.watch<SendingState>().place;
     final placeDisplay = place?.place.display;
     final order = context.watch<SendingState>().order;
-    final cardProject = context.select<SendingState, String>(
-      (state) => state.cardProject ?? 'main',
+    final cardProject = context.select<SendingState, String?>(
+      (state) => state.cardProject,
     );
+
+    final emptyScan = qrData != null &&
+        profile == null &&
+        place == null &&
+        order == null &&
+        cardProject == null;
 
     final primaryColor = context.select<WalletState, Color>(
       (state) => state.tokenPrimaryColor,
@@ -578,7 +584,32 @@ class ScannerModalState extends State<ScannerModal>
                                 ),
                               ],
                             ),
-                          if ((place != null || profile != null) &&
+                          if (emptyScan && _showControls)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth: width * 0.8,
+                                  ),
+                                  child: ProfileCard(
+                                    profile: ProfileV1(
+                                      username: qrData.address,
+                                      account: '',
+                                      name: 'User not found',
+                                      image: 'assets/icons/profile.png',
+                                      imageMedium: 'assets/icons/profile.png',
+                                      imageSmall: 'assets/icons/profile.png',
+                                    ),
+                                    type: ProfileCardType.user,
+                                    onClose: handleClearData,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          if (!emptyScan &&
+                              (place != null || profile != null) &&
                               (placeDisplay == Display.menu ||
                                   placeDisplay == Display.amountAndMenu) &&
                               !showTransactionInput &&
@@ -606,7 +637,8 @@ class ScannerModalState extends State<ScannerModal>
                                 ),
                               ),
                             ),
-                          if ((order != null ||
+                          if (!emptyScan &&
+                              (order != null ||
                                   (place != null &&
                                       (placeDisplay == Display.amount ||
                                           placeDisplay ==
@@ -637,7 +669,8 @@ class ScannerModalState extends State<ScannerModal>
                                 ),
                               ),
                             ),
-                          if (profile != null &&
+                          if (emptyScan &&
+                              profile != null &&
                               !showTransactionInput &&
                               tokenConfig != null &&
                               isCard)
@@ -652,13 +685,13 @@ class ScannerModalState extends State<ScannerModal>
                                   text: 'Inspect Card',
                                   color: primaryColor,
                                   labelColor: whiteColor,
-                                  onPressed: qrData?.address != null
+                                  onPressed: qrData.address.isNotEmpty
                                       ? () => handleInspectCard(
                                             config,
-                                            qrData!.address,
+                                            qrData.address,
                                             profile.account,
                                             myAddress,
-                                            cardProject,
+                                            cardProject ?? 'main',
                                           )
                                       : null,
                                 ),
