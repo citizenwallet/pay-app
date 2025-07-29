@@ -150,7 +150,7 @@ class _WebViewModalState extends State<ConnectedWebViewModal> {
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: CupertinoPageScaffold(
-        backgroundColor: primaryColor,
+        backgroundColor: blackColor,
         child: SafeArea(
           bottom: false,
           child: Flex(

@@ -53,8 +53,13 @@ class SafeCardManagerContract implements AbstractCardManagerContract {
   }
 
   @override
-  Future<EthereumAddress> getCardAddress(String serial) async {
+  Future<EthereumAddress> getCardAddress(String serial,
+      {bool cache = true}) async {
     Uint8List hash = keccak256(utf8.encode(serial));
+
+    if (cache && addressCache[serial] != null) {
+      return addressCache[serial]!;
+    }
 
     final function = rcontract.function('getCardAddress');
 
@@ -65,6 +70,10 @@ class SafeCardManagerContract implements AbstractCardManagerContract {
     );
 
     final address = result[0] as EthereumAddress;
+
+    if (cache) {
+      addressCache[serial] = address;
+    }
 
     return address;
   }

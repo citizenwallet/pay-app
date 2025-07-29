@@ -45,7 +45,7 @@ class CustomSearchBar extends StatelessWidget {
     final BoxDecoration defaultDecoration = BoxDecoration(
       border: Border.all(
         color: isFocused ? primaryColor : iconColor,
-        width: 2,
+        width: isFocused ? 2 : 1,
       ),
       borderRadius: defaultBorderRadius,
       color: const Color(0xFFF7F7F8),

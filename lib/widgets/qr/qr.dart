@@ -28,6 +28,9 @@ class QR extends StatelessWidget {
       embeddedImage = AssetImage(logo!);
     }
 
+    final theme = CupertinoTheme.of(context);
+    final primaryColor = theme.primaryColor;
+
     return Container(
       height: size,
       width: size,

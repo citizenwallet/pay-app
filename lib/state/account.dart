@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/services/config/config.dart';
-import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/photos/photos.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
@@ -9,28 +8,14 @@ import 'package:pay_app/services/wallet/wallet.dart';
 class AccountState with ChangeNotifier {
   // instantiate services here
   final SecureService _secureService = SecureService();
-  final ConfigService _configService = ConfigService();
   final PhotosService _photosService = PhotosService();
 
-  late Config _config;
+  final Config _config;
 
   // private variables here
 
   // constructor here
-  AccountState() {
-    init();
-  }
-
-  Future<void> init() async {
-    final config = await _configService.getLocalConfig();
-    if (config == null) {
-      throw Exception('Community not found in local asset');
-    }
-
-    await config.initContracts();
-
-    _config = config;
-  }
+  AccountState(this._config);
 
   bool _mounted = true;
   void safeNotifyListeners() {

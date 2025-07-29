@@ -5,11 +5,14 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/routes/router.dart';
+import 'package:pay_app/services/config/config.dart';
+import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/state.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -41,11 +44,21 @@ void main() async {
   await PreferencesService().init(await SharedPreferences.getInstance());
   await SecureService().init(await SharedPreferences.getInstance());
 
-  runApp(provideAppState(const MyApp()));
+  final ConfigService configService = ConfigService();
+
+  final config = await configService.getLocalConfig();
+  if (config == null) {
+    throw Exception('Community not found in local asset');
+  }
+
+  await config.initContracts();
+
+  runApp(provideAppState(config, MyApp(config: config)));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final Config config;
+  const MyApp({super.key, required this.config});
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -61,19 +74,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  static const theme = CupertinoThemeData(
-    primaryColor: Color(0xFF3431C4),
-    brightness: Brightness.light,
-    scaffoldBackgroundColor: CupertinoColors.systemBackground,
-    textTheme: CupertinoTextThemeData(
-      textStyle: TextStyle(
-        color: CupertinoColors.label,
-        fontSize: 16,
-      ),
-    ),
-    applyThemeToAll: true,
-  );
-
   final _rootNavigatorKey = GlobalKey<NavigatorState>();
   final _appShellNavigatorKey = GlobalKey<NavigatorState>();
   final _placeShellNavigatorKey = GlobalKey<NavigatorState>();
@@ -95,18 +95,28 @@ class _MyAppState extends State<MyApp> {
       _appShellNavigatorKey,
       _placeShellNavigatorKey,
       observers,
+      config: widget.config,
       accountAddress: accountAddress,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final theme = context.select<WalletState, CupertinoThemeData>(
+      (state) => CupertinoThemeData(
+        primaryColor: state.tokenPrimaryColor,
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: CupertinoColors.systemBackground,
+        textTheme: CupertinoTextThemeData(
+          textStyle: TextStyle(
+            color: CupertinoColors.label,
+            fontSize: 16,
+          ),
+        ),
+        applyThemeToAll: true,
+      ),
+    );
+
     return CupertinoApp.router(
       debugShowCheckedModeBanner: false,
       routerConfig: router,

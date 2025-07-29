@@ -1,29 +1,38 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/services/config/config.dart';
-import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
+import 'package:pay_app/theme/colors.dart';
+import 'package:pay_app/utils/currency.dart';
 import 'package:web3dart/web3dart.dart';
 
 class WalletState with ChangeNotifier {
-  final ConfigService _configService = ConfigService();
   final PreferencesService _preferencesService = PreferencesService();
   final SecureService _secureService = SecureService();
 
-  late Config _config;
+  final Config _config;
+  Config get config => _config;
 
   EthereumAddress? _address;
   EthereumAddress? get address => _address;
 
-  String _balance = '0';
-  int _decimals = 6;
-  double get doubleBalance =>
-      double.tryParse(_preferencesService.balance ?? _balance) ?? 0.0;
-  double get balance => doubleBalance / pow(10, _decimals);
+  // Token balances management
+  Map<String, String> tokenBalances = {};
+
+  Map<String, bool> tokenLoadingStates = {};
+
+  bool _loadingTokenBalances = false;
+  bool get loadingTokenBalances => _loadingTokenBalances;
+
+  String currentTokenAddress;
+  TokenConfig currentTokenConfig;
+
+  Color get tokenPrimaryColor => currentTokenConfig.color != null
+      ? Color(int.parse(currentTokenConfig.color!.replaceAll('#', '0xFF')))
+      : primaryColor;
 
   bool loading = false;
   bool error = false;
@@ -42,20 +51,24 @@ class WalletState with ChangeNotifier {
     super.dispose();
   }
 
+  WalletState(this._config)
+      : currentTokenAddress = _config.getPrimaryToken().address,
+        currentTokenConfig = _config.getPrimaryToken();
+
   Future<bool?> init() async {
     try {
       loading = true;
       safeNotifyListeners();
 
-      final config = await _configService.getLocalConfig();
-      if (config == null) {
-        throw Exception('Community not found in local asset');
-      }
+      final tokenConfig = config.getToken(
+        _preferencesService.tokenAddress ?? config.getPrimaryToken().address,
+      );
 
-      await config.initContracts();
+      currentTokenAddress =
+          _preferencesService.tokenAddress ?? tokenConfig.address;
+      currentTokenConfig = tokenConfig;
 
-      _config = config;
-      _decimals = config.getPrimaryToken().decimals;
+      safeNotifyListeners();
 
       final credentials = _secureService.getCredentials();
 
@@ -66,6 +79,9 @@ class WalletState with ChangeNotifier {
       final (account, key) = credentials;
 
       _address = account;
+
+      tokenBalances = _preferencesService.tokenBalances(_address!.hexEip55);
+      safeNotifyListeners();
 
       final expired = await _config.sessionManagerModuleContract.isExpired(
         account,
@@ -102,6 +118,7 @@ class WalletState with ChangeNotifier {
       Duration(seconds: 1),
       (_) {
         updateBalance();
+        updateTokenBalances();
       },
     );
   }
@@ -112,8 +129,141 @@ class WalletState with ChangeNotifier {
   }
 
   Future<void> updateBalance() async {
-    _balance = await getBalance(_config, _address!);
-    await _preferencesService.setBalance(_balance);
+    tokenBalances = _preferencesService.tokenBalances(_address!.hexEip55);
+    safeNotifyListeners();
+
+    final balance = await getBalance(
+      _config,
+      _address!,
+      tokenAddress: currentTokenAddress,
+    );
+
+    final token = _config.getToken(currentTokenAddress);
+
+    tokenBalances[currentTokenAddress] =
+        formatCurrency(balance, token.decimals);
+    safeNotifyListeners();
+
+    await _preferencesService.setTokenBalances(
+        _address!.hexEip55, tokenBalances);
+  }
+
+  Future<void> loadTokenBalances() async {
+    if (_address == null || _config.tokens.isEmpty) {
+      return;
+    }
+
+    try {
+      tokenBalances = _preferencesService.tokenBalances(_address!.hexEip55);
+      _loadingTokenBalances = true;
+      safeNotifyListeners();
+
+      // Initialize loading states for all tokens
+      for (final tokenEntry in _config.tokens.entries) {
+        tokenLoadingStates[tokenEntry.key] = true;
+      }
+      safeNotifyListeners();
+
+      final balances = <String, String>{};
+
+      for (final tokenEntry in _config.tokens.entries) {
+        final tokenAddress = tokenEntry.value.address;
+        try {
+          final balance = await getBalance(
+            _config,
+            _address!,
+            tokenAddress: tokenAddress,
+          );
+
+          balances[tokenAddress] =
+              formatCurrency(balance, tokenEntry.value.decimals);
+        } catch (e) {
+          debugPrint('Error loading balance for token $tokenAddress: $e');
+          balances[tokenAddress] = '0';
+        } finally {
+          tokenLoadingStates[tokenAddress] = false;
+          safeNotifyListeners();
+        }
+      }
+
+      tokenBalances = balances;
+      safeNotifyListeners();
+
+      await _preferencesService.setTokenBalances(
+        _address!.hexEip55,
+        tokenBalances,
+      );
+    } catch (e) {
+      debugPrint('Error loading token balances: $e');
+    } finally {
+      _loadingTokenBalances = false;
+      safeNotifyListeners();
+    }
+  }
+
+  Future<void> updateTokenBalances() async {
+    if (_address == null || _config.tokens.isEmpty) {
+      return;
+    }
+
+    try {
+      tokenBalances = _preferencesService.tokenBalances(_address!.hexEip55);
+      safeNotifyListeners();
+
+      final balances = <String, String>{};
+
+      for (final tokenEntry in _config.tokens.entries) {
+        final tokenKey = tokenEntry.key;
+        final tokenAddress = tokenEntry.value.address;
+        try {
+          final balance = await getBalance(
+            _config,
+            _address!,
+            tokenAddress: tokenAddress,
+          );
+          balances[tokenAddress] = formatCurrency(
+            balance,
+            tokenEntry.value.decimals,
+          );
+        } catch (e) {
+          debugPrint('Error updating balance for token $tokenKey: $e');
+          balances[tokenKey] = tokenBalances[tokenKey] ?? '0';
+        }
+      }
+
+      tokenBalances = balances;
+      await _preferencesService.setTokenBalances(
+        _address!.hexEip55,
+        tokenBalances,
+      );
+      safeNotifyListeners();
+    } catch (e) {
+      debugPrint('Error updating token balances: $e');
+    }
+  }
+
+  String getTokenBalance(String tokenAddress) {
+    return tokenBalances[tokenAddress] ?? '0';
+  }
+
+  bool isTokenLoading(String tokenAddress) {
+    return tokenLoadingStates[tokenAddress] ?? false;
+  }
+
+  void setCurrentToken(String tokenAddress) {
+    currentTokenAddress = tokenAddress;
+    currentTokenConfig = _config.getToken(tokenAddress);
+
+    _preferencesService.setToken(tokenAddress);
+    safeNotifyListeners();
+
+    updateBalance();
+  }
+
+  void clear() {
+    _address = null;
+    tokenBalances = {};
+    _preferencesService.setToken(null);
     safeNotifyListeners();
   }
 }

@@ -84,8 +84,6 @@ class PlacesService {
     }
     */
 
-    print(response);
-
     final Map<String, dynamic> data = response;
     return PlaceWithMenu.fromJson(data);
   }

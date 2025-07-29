@@ -136,6 +136,9 @@ class ProfileV1 {
     imageSmall = imageSmall.replaceFirst(ipfsPrefix, '$url/');
   }
 
+  bool get isAnonymous =>
+      username == 'anonymous' && name == 'Anonymous' && description == '';
+
   // check equality
   @override
   bool operator ==(Object other) =>

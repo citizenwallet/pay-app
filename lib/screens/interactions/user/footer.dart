@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/widgets/transaction_input_row.dart';
@@ -8,7 +9,7 @@ import 'package:provider/provider.dart';
 
 class Footer extends StatefulWidget {
   final Function(double, String?) onSend;
-  final Function() onTopUpPressed;
+  final Function(String) onTopUpPressed;
   final FocusNode amountFocusNode;
   final FocusNode messageFocusNode;
   final String? phoneNumber;
@@ -44,13 +45,13 @@ class _FooterState extends State<Footer> {
     });
   }
 
-  Future<void> sendTransaction() async {
+  Future<void> sendTransaction(String tokenAddress) async {
     HapticFeedback.heavyImpact();
 
     widget.amountFocusNode.unfocus();
     widget.messageFocusNode.unfocus();
 
-    _transactionsWithUserState.sendTransaction();
+    _transactionsWithUserState.sendTransaction(tokenAddress);
     _amountController.clear();
     _messageController.clear();
     setState(() {
@@ -91,12 +92,29 @@ class _FooterState extends State<Footer> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final balance = context.watch<WalletState>().balance;
+
+    final config = context.select<WalletState, Config?>(
+      (state) => state.config,
+    );
+    final tokenConfig = context.select<WalletState, TokenConfig>(
+      (state) => state.currentTokenConfig,
+    );
+
+    final balance =
+        context.watch<WalletState>().tokenBalances[tokenConfig.address] ??
+            '0.0';
+
+    final tokenPrimaryColor =
+        context.select<WalletState, Color>((state) => state.tokenPrimaryColor);
+
+    final topUpPlugin = config?.getTopUpPlugin(
+      tokenAddress: tokenConfig?.address,
+    );
 
     final toSendAmount =
         context.watch<TransactionsWithUserState>().toSendAmount;
 
-    final error = toSendAmount > balance;
+    final error = toSendAmount > double.parse(balance);
     final disabled = toSendAmount == 0.0 || error;
 
     return Container(
@@ -118,6 +136,8 @@ class _FooterState extends State<Footer> {
           if (widget.phoneNumber == null)
             TransactionInputRow(
               showAmountField: _showAmountField,
+              token: tokenConfig,
+              color: tokenPrimaryColor,
               amountController: _amountController,
               messageController: _messageController,
               amountFocusNode: widget.amountFocusNode,
@@ -125,10 +145,12 @@ class _FooterState extends State<Footer> {
               onAmountChange: updateAmount,
               onMessageChange: updateMessage,
               onToggleField: _toggleField,
-              onSend: sendTransaction,
+              onSend: () => sendTransaction(tokenConfig.address),
               disabled: disabled,
               error: error,
-              onTopUpPressed: widget.onTopUpPressed,
+              onTopUpPressed: topUpPlugin != null
+                  ? () => widget.onTopUpPressed(topUpPlugin.url)
+                  : null,
             ),
           if (widget.phoneNumber != null)
             WideButton(

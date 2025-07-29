@@ -17,6 +17,9 @@ class WideButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+    final primaryColor = theme.primaryColor;
+
     return SizedBox(
       width: double.infinity,
       child: CupertinoButton(

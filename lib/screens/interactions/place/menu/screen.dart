@@ -176,8 +176,8 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
     navigator.pop(checkout);
   }
 
-  void handleTopUp() async {
-    await _topupState.generateTopupUrl();
+  void handleTopUp(String baseUrl) async {
+    await _topupState.generateTopupUrl(baseUrl);
 
     if (!mounted) {
       return;
@@ -225,7 +225,7 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
           children: [
             ChatHeader(
               loading: loading,
-              imageUrl: place?.imageUrl ?? profile?.imageUrl ?? '',
+              imageUrl: place?.imageUrl ?? profile?.imageMedium ?? '',
               placeName: place?.name ?? profile?.name ?? '',
               placeDescription:
                   place?.description ?? profile?.description ?? '',

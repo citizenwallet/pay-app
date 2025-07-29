@@ -39,7 +39,7 @@ class About extends StatelessWidget {
             color: Color(0xFF000000),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 20),
         SettingsRow(
           label: 'Terms and conditions',
           icon: 'assets/icons/docs.svg',

@@ -35,6 +35,9 @@ class ConfirmModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CupertinoTheme.of(context);
+    final primaryColor = theme.primaryColor;
+
     return DismissibleModalPopup(
       modalKey: 'confirm-modal',
       maxHeight: 300,

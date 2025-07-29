@@ -128,6 +128,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
 
+    final theme = CupertinoTheme.of(context);
+    final primaryColor = theme.primaryColor;
+
     final community = context.select((CommunityState state) => state.community);
 
     final sessionRequestStatus =

@@ -1,6 +1,8 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/place.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/utils/formatters.dart';
@@ -14,7 +16,7 @@ class Footer extends StatefulWidget {
   final String myAddress;
   final String slug;
   final Future<Order?> Function(double, String?) onSend;
-  final Function() onTopUpPressed;
+  final Function(String) onTopUpPressed;
   final Function() onMenuPressed;
   final FocusNode amountFocusNode;
   final FocusNode messageFocusNode;
@@ -99,12 +101,25 @@ class _FooterState extends State<Footer> {
 
   @override
   Widget build(BuildContext context) {
-    final balance = context.watch<WalletState>().balance;
-
     final toSendAmount = context.watch<OrdersWithPlaceState>().toSendAmount;
     final placeMenu = context.watch<OrdersWithPlaceState>().placeMenu;
 
-    final error = toSendAmount > balance;
+    final config = context.select<WalletState, Config?>(
+      (state) => state.config,
+    );
+    final tokenConfig = context.select<WalletState, TokenConfig>(
+      (state) => state.currentTokenConfig,
+    );
+
+    final balance =
+        context.watch<WalletState>().tokenBalances[tokenConfig.address] ??
+            '0.0';
+
+    final topUpPlugin = config?.getTopUpPlugin(
+      tokenAddress: tokenConfig?.address,
+    );
+
+    final error = toSendAmount > double.parse(balance);
     final disabled = toSendAmount == 0.0 || error;
 
     final paying = context.watch<OrdersWithPlaceState>().paying;
@@ -169,7 +184,9 @@ class _FooterState extends State<Footer> {
                 double.parse(_amountController.text),
                 _messageController.text,
               ),
-              onTopUpPressed: widget.onTopUpPressed,
+              onTopUpPressed: topUpPlugin != null
+                  ? () => widget.onTopUpPressed(topUpPlugin.url)
+                  : null,
               loading: paying,
               disabled: disabled,
               error: error,

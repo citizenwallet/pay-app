@@ -32,6 +32,9 @@ class ProgressBar extends StatelessWidget {
     final stepSize = height * 1.1;
     final progressWidth = width - stepSize;
 
+    final theme = CupertinoTheme.of(context);
+    final primaryColor = theme.primaryColor;
+
     return SizedBox(
       height: steps != null ? stepSize : height,
       width: width,

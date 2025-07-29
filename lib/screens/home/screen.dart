@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:dart_debouncer/dart_debouncer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
@@ -8,9 +6,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:pay_app/models/interaction.dart';
-import 'package:pay_app/screens/home/card_modal.dart';
+import 'package:pay_app/screens/home/card_modal/card_modal.dart';
 import 'package:pay_app/screens/home/contact_list_item.dart';
 import 'package:pay_app/screens/home/profile_list_item.dart';
+import 'package:pay_app/screens/home/profile_modal.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/state/contacts/contacts.dart';
@@ -27,6 +26,7 @@ import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/utils/qr.dart';
+import 'package:pay_app/utils/ratio.dart';
 import 'package:pay_app/widgets/modals/confirm_modal.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:pay_app/widgets/scanner/scanner_modal.dart';
@@ -55,7 +55,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+class _HomeScreenState extends State<HomeScreen>
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
@@ -80,11 +81,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _stopInitRetries = false;
   bool _pauseDeepLinkHandling = false;
 
+  late AnimationController _backgroundColorController;
+  late Animation<Color?> _backgroundColorAnimation;
+
   @override
   void initState() {
     super.initState();
 
     _initState();
+
+    _backgroundColorController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _backgroundColorAnimation = ColorTween(
+      begin: whiteColor,
+      end: blackColor,
+    ).animate(CurvedAnimation(
+      parent: _backgroundColorController,
+      curve: Curves.easeInOut,
+    ));
 
     _searchFocusNode.addListener(_searchListener);
     _scrollController.addListener(_scrollListener);
@@ -137,6 +154,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return onLoad();
     }
 
+    _profileState.fetchProfile();
+
     await _walletState.updateBalance();
     await _interactionState.getInteractions();
     _interactionState.startPolling(updateBalance: _walletState.updateBalance);
@@ -150,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
       await delay(const Duration(milliseconds: 100));
 
-      await handleQRScan(accountAddress, manualResult: deepLink);
+      await handleQRScan(accountAddress, () {}, manualResult: deepLink);
 
       _pauseDeepLinkHandling = false;
     }
@@ -208,6 +227,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
+
+    _backgroundColorController.dispose();
 
     super.dispose();
   }
@@ -322,20 +343,44 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void handleInteractionWithCard(
-      String? myAddress, String cardId, String? project) async {
+    String? myAddress,
+    String cardId,
+    String? project,
+  ) async {
     if (myAddress == null) {
       return;
     }
 
+    final config = context.read<WalletState>().config;
+
+    final cardAddress = await config.cardManagerContract!.getCardAddress(
+      cardId,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    _backgroundColorController.forward();
+
+    HapticFeedback.heavyImpact();
+
     await showCupertinoModalPopup(
       useRootNavigator: false,
       context: context,
-      builder: (modalContext) => provideCardState(
-        context,
-        cardId,
-        CardModal(project: project),
-      ),
+      builder: (modalContext) {
+        return provideCardState(
+          context,
+          config,
+          cardId,
+          cardAddress.hexEip55,
+          myAddress,
+          CardModal(uid: cardId, project: project),
+        );
+      },
     );
+
+    _backgroundColorController.reverse();
   }
 
   Future<void> handleInteractionWithContact(
@@ -398,29 +443,46 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     clearSearch();
   }
 
-  void handleProfileTap(String myAddress) async {
+  Future<void> handleProfileTap(String myAddress,
+      {String? tokenAddress}) async {
     _searchFocusNode.unfocus();
-
-    final navigator = GoRouter.of(context);
 
     _stopInitRetries = true;
 
-    await navigator.push('/$myAddress/my-account');
+    _backgroundColorController.forward();
+
+    HapticFeedback.heavyImpact();
+
+    await showCupertinoDialog<String?>(
+      context: context,
+      barrierDismissible: true,
+      useRootNavigator: false,
+      builder: (modalContext) => ProfileModal(
+        accountAddress: myAddress,
+        tokenAddress: tokenAddress,
+      ),
+    );
+
+    _backgroundColorController.reverse();
 
     _stopInitRetries = false;
 
     clearSearch();
   }
 
-  void handleTopUp() async {
+  void handleTopUp(String baseUrl) async {
     _stopInitRetries = true;
 
-    await _topupState.generateTopupUrl();
+    await _topupState.generateTopupUrl(baseUrl);
 
     if (!mounted) {
       _stopInitRetries = false;
       return;
     }
+
+    _backgroundColorController.forward();
+
+    HapticFeedback.heavyImpact();
 
     final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
 
@@ -447,6 +509,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
 
     _stopInitRetries = false;
+
+    _backgroundColorController.reverse();
 
     if (result == null) {
       return;
@@ -475,23 +539,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     await _walletState.updateBalance();
   }
 
-  void handleSettingsTap(String myAddress) async {
-    _searchFocusNode.unfocus();
-
-    final navigator = GoRouter.of(context);
-
+  Future<void> handleQRScan(String myAddress, Function() callback,
+      {String? manualResult}) async {
     _stopInitRetries = true;
 
-    await navigator.push('/$myAddress/my-account/settings');
-
-    _stopInitRetries = false;
-
-    clearSearch();
-    onLoad();
-  }
-
-  Future<void> handleQRScan(String myAddress, {String? manualResult}) async {
-    _stopInitRetries = true;
+    _backgroundColorController.forward();
 
     final result = manualResult ??
         await showCupertinoModalPopup<String?>(
@@ -501,6 +553,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             modalKey: 'home-qr-scanner',
           ),
         );
+
+    _backgroundColorController.reverse();
+
+    callback();
 
     _stopInitRetries = false;
 
@@ -610,6 +666,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final safeTopPadding = MediaQuery.of(context).padding.top;
     final double heightFactor = 1 - (_scrollOffset / _maxScrollOffset);
 
     final loading = context.select((WalletState state) => state.loading);
@@ -629,207 +686,238 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     final safeBottomPadding = MediaQuery.of(context).padding.bottom;
 
+    final tokenAddress =
+        context.select((WalletState state) => state.currentTokenAddress);
+
     final nothingFound = _searchController.text.isNotEmpty &&
         interactions.isEmpty &&
         places.isEmpty &&
         contacts.isEmpty;
 
-    return CupertinoPageScaffold(
-      backgroundColor: whiteColor,
-      child: GestureDetector(
-        onTap: _dismissKeyboard,
-        behavior: HitTestBehavior.opaque,
-        child: SafeArea(
-          bottom: false,
-          child: Stack(
-            alignment: Alignment.topCenter,
-            children: [
-              Container(
-                color: whiteColor,
-                child: CustomScrollView(
-                  controller: _scrollController,
-                  scrollBehavior: const CupertinoScrollBehavior(),
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    SliverPersistentHeader(
-                      floating: true,
-                      pinned: true,
-                      delegate: ProfileBarDelegate(
-                        loading: loading,
-                        accountAddress: myAddress ?? '',
-                        onProfileTap: () => handleProfileTap(myAddress ?? ''),
-                        onTopUpTap: handleTopUp,
-                        onSettingsTap: () => handleSettingsTap(myAddress ?? ''),
-                      ),
-                    ),
-                    SliverPersistentHeader(
-                      floating: true,
-                      delegate: SearchBarDelegate(
-                        controller: _searchController,
-                        focusNode: _searchFocusNode,
-                        onSearch: handleSearch,
-                        onCancel: clearSearch,
-                        isSearching: isSearching,
-                        searching: searching,
-                      ),
-                    ),
-                    CupertinoSliverRefreshControl(
-                      onRefresh: onLoad,
-                    ),
-                    if (customContact != null)
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          childCount: 1,
-                          (context, index) => ContactListItem(
-                            contact: customContact,
-                            onTap: (contact) => handleInteractionWithContact(
-                              myAddress,
-                              contact,
+    return AnimatedBuilder(
+      animation: _backgroundColorAnimation,
+      builder: (context, child) {
+        return CupertinoPageScaffold(
+          backgroundColor: _backgroundColorAnimation.value,
+          child: GestureDetector(
+            onTap: _dismissKeyboard,
+            behavior: HitTestBehavior.opaque,
+            child: SafeArea(
+              top: false,
+              bottom: false,
+              child: Stack(
+                alignment: Alignment.topCenter,
+                children: [
+                  Container(
+                    color: _backgroundColorAnimation.value,
+                    child: CustomScrollView(
+                      controller: _scrollController,
+                      scrollBehavior: const CupertinoScrollBehavior(),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverPersistentHeader(
+                          floating: true,
+                          pinned: true,
+                          delegate: ProfileBarDelegate(
+                            safeTopPadding: safeTopPadding,
+                            loading: loading,
+                            accountAddress: myAddress ?? '',
+                            backgroundColor:
+                                _backgroundColorAnimation.value ?? whiteColor,
+                            onProfileTap: () => handleProfileTap(
+                                myAddress ?? '',
+                                tokenAddress: tokenAddress),
+                            onTopUpTap: handleTopUp,
+                          ),
+                        ),
+                        SliverPersistentHeader(
+                          floating: true,
+                          delegate: SearchBarDelegate(
+                            controller: _searchController,
+                            focusNode: _searchFocusNode,
+                            onSearch: handleSearch,
+                            onCancel: clearSearch,
+                            isSearching: isSearching,
+                            searching: searching,
+                            backgroundColor: _backgroundColorAnimation.value,
+                          ),
+                        ),
+                        CupertinoSliverRefreshControl(
+                          onRefresh: onLoad,
+                        ),
+                        if (customContact != null)
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              childCount: 1,
+                              (context, index) => ContactListItem(
+                                contact: customContact,
+                                onTap: (contact) =>
+                                    handleInteractionWithContact(
+                                  myAddress,
+                                  contact,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (customContactProfileByUsername != null)
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              childCount: 1,
+                              (context, index) => ProfileListItem(
+                                profile: customContactProfileByUsername,
+                                onTap: (profile) => handleInteractionWithUser(
+                                  myAddress,
+                                  profile.account,
+                                ),
+                              ),
+                            ),
+                          ),
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            childCount: interactions.length,
+                            (context, index) => InteractionListItem(
+                              interaction: interactions[index],
+                              onTap: (interaction) =>
+                                  handleInteractionTap(myAddress, interaction),
                             ),
                           ),
                         ),
-                      ),
-                    if (customContactProfileByUsername != null)
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          childCount: 1,
-                          (context, index) => ProfileListItem(
-                            profile: customContactProfileByUsername,
-                            onTap: (profile) => handleInteractionWithUser(
-                              myAddress,
-                              profile.account,
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            childCount: places.length,
+                            (context, index) => PlaceListItem(
+                              place: places[index],
+                              onTap: (place) => handleInteractionWithPlace(
+                                myAddress,
+                                place.slug,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        childCount: interactions.length,
-                        (context, index) => InteractionListItem(
-                          interaction: interactions[index],
-                          onTap: (interaction) =>
-                              handleInteractionTap(myAddress, interaction),
-                        ),
-                      ),
-                    ),
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        childCount: places.length,
-                        (context, index) => PlaceListItem(
-                          place: places[index],
-                          onTap: (place) => handleInteractionWithPlace(
-                            myAddress,
-                            place.slug,
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (contacts.isNotEmpty && isSearching)
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          childCount: contacts.length,
-                          (context, index) => ContactListItem(
-                            contact: contacts[index],
-                            onTap: (contact) => handleInteractionWithContact(
-                              myAddress,
-                              contact,
+                        if (contacts.isNotEmpty && isSearching)
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              childCount: contacts.length,
+                              (context, index) => ContactListItem(
+                                contact: contacts[index],
+                                onTap: (contact) =>
+                                    handleInteractionWithContact(
+                                  myAddress,
+                                  contact,
+                                ),
+                              ),
                             ),
                           ),
+                        if (loading &&
+                            places.isEmpty &&
+                            interactions.isEmpty &&
+                            contacts.isEmpty)
+                          SliverFillRemaining(
+                            child: Center(child: CupertinoActivityIndicator()),
+                          ),
+                        if (nothingFound)
+                          SliverToBoxAdapter(
+                            child: Center(
+                              child: Text('No results found'),
+                            ),
+                          ),
+                        SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: 10,
+                          ),
                         ),
-                      ),
-                    if (loading &&
-                        places.isEmpty &&
-                        interactions.isEmpty &&
-                        contacts.isEmpty)
-                      SliverFillRemaining(
-                        child: Center(child: CupertinoActivityIndicator()),
-                      ),
-                    if (nothingFound)
-                      SliverToBoxAdapter(
-                        child: Center(
-                          child: Text('No results found'),
-                        ),
-                      ),
-                    SliverToBoxAdapter(
-                      child: SizedBox(
-                        height: 10,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        whiteColor.withValues(alpha: 0.0),
-                        whiteColor,
                       ],
                     ),
                   ),
-                ),
-              ),
-              if (!loading)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 10 + safeBottomPadding,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 100),
-                    height: isKeyboardVisible ? 0 : (100 * heightFactor),
-                    child: ScanQrCircle(
-                      handleQRScan: () => handleQRScan(myAddress ?? ''),
-                      heightFactor: heightFactor,
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            _backgroundColorAnimation.value
+                                    ?.withValues(alpha: 0.0) ??
+                                whiteColor.withValues(alpha: 0.0),
+                            _backgroundColorAnimation.value ?? whiteColor,
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-            ],
+                  if (!loading && !isSearching)
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 100),
+                      left: 0,
+                      right: 0,
+                      bottom: -1 *
+                          progressiveClamp(
+                            -10 - safeBottomPadding,
+                            120,
+                            heightFactor,
+                          ),
+                      child: SizedBox(
+                        height: 120,
+                        width: 120,
+                        child: Center(
+                          child: ScanQrCircle(
+                            handleQRScan: (callback) => handleQRScan(
+                              myAddress ?? '',
+                              callback,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
 class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
+  final double safeTopPadding;
   final bool loading;
   final String accountAddress;
-  final Function() onProfileTap;
-  final Function() onTopUpTap;
-  final Function() onSettingsTap;
+  final Color backgroundColor;
+  final Future<void> Function() onProfileTap;
+  final Function(String) onTopUpTap;
 
   ProfileBarDelegate({
+    required this.safeTopPadding,
     required this.loading,
     required this.accountAddress,
+    required this.backgroundColor,
     required this.onProfileTap,
     required this.onTopUpTap,
-    required this.onSettingsTap,
   });
 
   @override
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
     return ProfileBar(
+      shrink: 1 - (shrinkOffset / 240),
       loading: loading,
       accountAddress: accountAddress,
+      backgroundColor: backgroundColor,
       onProfileTap: onProfileTap,
       onTopUpTap: onTopUpTap,
-      onSettingsTap: onSettingsTap,
     );
   }
 
   @override
-  double get maxExtent => 95.0; // Maximum height of header
+  double get maxExtent => 240.0 + safeTopPadding; // Maximum height of header
 
   @override
-  double get minExtent => 95.0; // Minimum height of header
+  double get minExtent => 200.0 + safeTopPadding; // Minimum height of header
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
@@ -843,6 +931,7 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
   final Function() onCancel;
   final bool isSearching;
   final bool searching;
+  final Color? backgroundColor;
 
   SearchBarDelegate({
     required this.controller,
@@ -851,6 +940,7 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
     required this.onCancel,
     this.isSearching = false,
     this.searching = false,
+    this.backgroundColor,
   });
 
   @override
@@ -865,13 +955,14 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
           child: Container(
             height: 77,
             width: MediaQuery.of(context).size.width,
-            color: whiteColor,
+            color: backgroundColor,
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: SearchBar(
               controller: controller,
               focusNode: focusNode,
               onSearch: onSearch,
               isFocused: isSearching,
+              backgroundColor: backgroundColor,
             ),
           ),
         ),

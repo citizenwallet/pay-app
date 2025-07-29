@@ -1,14 +1,12 @@
-import 'dart:typed_data';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/transactions_with_user/selector.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
-import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
 
@@ -45,6 +43,8 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
   late WalletState _walletState;
   late TopupState _topupState;
 
+  bool _isLoadingMore = false;
+
   @override
   void initState() {
     super.initState();
@@ -60,8 +60,8 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
   }
 
   void onLoad() async {
+    _transactionsWithUserState.getTransactionsWithUser();
     await _transactionsWithUserState.getProfileOfWithUser();
-    await _transactionsWithUserState.getTransactionsWithUser();
     _transactionsWithUserState.startPolling(
         updateBalance: _walletState.updateBalance);
   }
@@ -73,6 +73,17 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
 
     if (messageFocusNode.hasFocus) {
       messageFocusNode.unfocus();
+    }
+
+    // Check if user has scrolled to the bottom to load more transactions
+    if (scrollController.position.pixels >=
+        scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoadingMore && !_transactionsWithUserState.loadingMore) {
+        _isLoadingMore = true;
+        _transactionsWithUserState.loadMoreTransactions().then((_) {
+          _isLoadingMore = false;
+        });
+      }
     }
   }
 
@@ -108,8 +119,8 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
     );
   }
 
-  void handleTopUp() async {
-    await _topupState.generateTopupUrl();
+  void handleTopUp(String baseUrl) async {
+    await _topupState.generateTopupUrl(baseUrl);
 
     if (!mounted) {
       return;
@@ -138,9 +149,9 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
     );
   }
 
-  void retryTransaction(String id) {
+  void retryTransaction(String tokenAddress, String id) {
     HapticFeedback.heavyImpact();
-    _transactionsWithUserState.sendTransaction(retryId: id);
+    _transactionsWithUserState.sendTransaction(tokenAddress, retryId: id);
   }
 
   void _dismissKeyboard() {
@@ -153,6 +164,10 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
     final withUser = transactionState.withUser;
 
     final transactions = context.select(selectUserTransactions);
+
+    final config = context.select<WalletState, Config?>(
+      (state) => state.config,
+    );
 
     final noUserAccount = withUser == null &&
         widget.customName.isNotEmpty &&
@@ -167,7 +182,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
             children: [
               ChatHeader(
                 onTapLeading: goBack,
-                imageUrl: widget.customImageUrl ?? withUser?.imageUrl,
+                imageUrl: widget.customImageUrl ?? withUser?.imageMedium,
                 photo: widget.customPhoto,
                 name: withUser?.name ?? widget.customName,
                 username: withUser?.username,
@@ -207,21 +222,44 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
                             ),
                           ),
                         ),
-                      if (!noUserAccount)
+                      if (!noUserAccount) ...[
                         SliverList(
                           delegate: SliverChildBuilderDelegate(
                             childCount: transactions.length,
                             (context, index) {
                               final transaction = transactions[index];
 
+                              if (config == null) {
+                                return const SizedBox.shrink();
+                              }
+
                               return TransactionListItem(
                                 key: Key(transaction.id),
+                                account: _walletState.address!.hexEip55,
+                                config: config,
                                 transaction: transaction,
                                 onRetry: retryTransaction,
                               );
                             },
                           ),
                         ),
+                        // Loading indicator for pagination
+                        SliverToBoxAdapter(
+                          child: Consumer<TransactionsWithUserState>(
+                            builder: (context, state, child) {
+                              if (state.loadingMore) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Center(
+                                    child: CupertinoActivityIndicator(),
+                                  ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

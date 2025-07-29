@@ -5,6 +5,7 @@ class SearchBar extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final Function(String) onSearch;
+  final Color? backgroundColor;
 
   final bool isFocused;
   const SearchBar({
@@ -13,6 +14,7 @@ class SearchBar extends StatelessWidget {
     required this.focusNode,
     required this.onSearch,
     this.isFocused = false,
+    this.backgroundColor,
   });
 
   @override
@@ -20,7 +22,7 @@ class SearchBar extends StatelessWidget {
     return Container(
       height: 57,
       decoration: BoxDecoration(
-        color: CupertinoColors.systemBackground,
+        color: backgroundColor ?? CupertinoColors.systemBackground,
       ),
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: CustomSearchBar(

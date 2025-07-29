@@ -6,7 +6,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:pay_app/services/config/config.dart';
-import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/session/session.dart';
@@ -25,11 +24,10 @@ enum SessionRequestStatus {
 
 class OnboardingState with ChangeNotifier {
   // instantiate services here
-  final ConfigService _configService = ConfigService();
   final PreferencesService _preferencesService = PreferencesService();
   final SecureService _secureService = SecureService();
   late SessionService _sessionService;
-  late Config _config;
+  final Config _config;
 
   // private variables here
   final TextEditingController _phoneNumberController = TextEditingController(
@@ -44,21 +42,12 @@ class OnboardingState with ChangeNotifier {
   Uint8List? _sessionRequestHash;
 
   // constructor here
-  OnboardingState() {
+  OnboardingState(this._config) {
     connectedAccountAddress = getAccountAddress();
     init();
   }
 
   Future<void> init() async {
-    final config = await _configService.getLocalConfig();
-    if (config == null) {
-      throw Exception('Community not found in local asset');
-    }
-
-    await config.initContracts();
-
-    _config = config;
-
     _sessionService = SessionService(_config);
   }
 

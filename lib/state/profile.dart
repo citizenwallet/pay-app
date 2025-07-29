@@ -3,7 +3,8 @@ import 'dart:typed_data';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/services/config/config.dart';
-import 'package:pay_app/services/config/service.dart';
+import 'package:pay_app/services/db/app/contacts.dart';
+import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/photos/photos.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
@@ -35,8 +36,7 @@ enum ProfileUpdateState {
 
 class ProfileState with ChangeNotifier {
   // instantiate services here
-  final ConfigService _configService = ConfigService();
-  final PreferencesService _preferencesService = PreferencesService();
+  final ContactsTable _contacts = AppDBService().contacts;
   final SecureService _secureService = SecureService();
   final PhotosService _photosService = PhotosService();
 
@@ -44,23 +44,10 @@ class ProfileState with ChangeNotifier {
   bool _pauseProfileCreation = false;
   final String _account;
 
-  late Config _config;
+  final Config _config;
 
   // constructor here
-  ProfileState(this._account) {
-    init();
-  }
-
-  Future<void> init() async {
-    final config = await _configService.getLocalConfig();
-    if (config == null) {
-      throw Exception('Community not found in local asset');
-    }
-
-    await config.initContracts();
-
-    _config = config;
-  }
+  ProfileState(this._account, this._config);
 
   bool _mounted = true;
   void safeNotifyListeners() {
@@ -76,11 +63,10 @@ class ProfileState with ChangeNotifier {
   }
 
   // state variables here
-  bool loading = false;
+  bool loading = true;
   bool error = false;
   ProfileV1? _profile;
-  ProfileV1 get profile =>
-      _profile ?? _preferencesService.profile ?? ProfileV1();
+  ProfileV1 get profile => _profile ?? ProfileV1();
   String get alias => _config.community.alias;
 
   bool hasChanges = false;
@@ -92,6 +78,17 @@ class ProfileState with ChangeNotifier {
   ProfileUpdateState profileUpdateState = ProfileUpdateState.idle;
   Uint8List? editingImage;
   String? editingImageExt;
+
+  Future<void> fetchProfile() async {
+    final contact = await _contacts.getByAccount(_account);
+    final cachedProfile = contact?.getProfile();
+    if (cachedProfile != null) {
+      _profile = cachedProfile;
+
+      loading = false;
+      safeNotifyListeners();
+    }
+  }
 
   // state methods here
   Future<String?> _generateProfileUsername() async {
@@ -120,32 +117,36 @@ class ProfileState with ChangeNotifier {
     debugPrint('handleNewProfile');
 
     try {
-      final cachedProfile = _preferencesService.profile;
+      final contact = await _contacts.getByAccount(_account);
+      final cachedProfile = contact?.getProfile();
       if (cachedProfile != null) {
         _profile = cachedProfile;
         safeNotifyListeners();
       }
 
-      loading = true;
-      error = false;
-      safeNotifyListeners();
-
       final existingProfile = await getProfile(_config, _account);
 
-      if (existingProfile != null && cachedProfile == null) {
-        await _preferencesService.setProfile(existingProfile);
+      if (existingProfile != null) {
+        _contacts.upsert(DBContact.fromProfile(existingProfile));
       }
 
-      if (existingProfile != null) {
+      if (existingProfile != null && !existingProfile.isAnonymous) {
         _profile = existingProfile;
+
+        error = false;
+        loading = false;
         safeNotifyListeners();
         return;
       }
 
       // don't go further if profile has been automatically setup
-      if (cachedProfile != null) {
+      if (cachedProfile != null && !cachedProfile.isAnonymous) {
         return;
       }
+
+      loading = true;
+      error = false;
+      safeNotifyListeners();
 
       final username = await _generateProfileUsername();
       if (username == null) {
@@ -205,7 +206,7 @@ class ProfileState with ChangeNotifier {
       _profile = newProfile;
       safeNotifyListeners();
 
-      await _preferencesService.setProfile(newProfile);
+      _contacts.upsert(DBContact.fromProfile(newProfile));
 
       if (_pauseProfileCreation) {
         return;
@@ -404,7 +405,7 @@ class ProfileState with ChangeNotifier {
       }
 
       _profile = newProfile;
-      await _preferencesService.setProfile(newProfile);
+      _contacts.upsert(DBContact.fromProfile(newProfile));
 
       checkForChanges();
       safeNotifyListeners();

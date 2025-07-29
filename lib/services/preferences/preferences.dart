@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PreferencesService {
@@ -19,26 +18,28 @@ class PreferencesService {
     await _preferences.remove('profile');
   }
 
-  // save profile
-  Future setProfile(ProfileV1 profile) async {
-    await _preferences.setString('profile', jsonEncode(profile.toJson()));
+  Future setTwoFAAddress(String salt, String address) async {
+    await _preferences.setString('twofa_address_$salt', address);
   }
 
-  ProfileV1? get profile {
-    final json = _preferences.getString('profile');
+  String? getTwoFAAddress(String salt) {
+    return _preferences.getString('twofa_address_$salt');
+  }
+
+  // save token balances
+  Future setTokenBalances(String account, Map<String, String> balances) async {
+    await _preferences.setString(
+      'token_balances_$account',
+      jsonEncode(balances),
+    );
+  }
+
+  Map<String, String> tokenBalances(String account) {
+    final json = _preferences.getString('token_balances_$account');
     if (json == null) {
-      return null;
+      return {};
     }
-    return ProfileV1.fromJson(jsonDecode(json));
-  }
-
-  // save balance
-  Future setBalance(String balance) async {
-    await _preferences.setString('balance', balance);
-  }
-
-  String? get balance {
-    return _preferences.getString('balance');
+    return Map<String, String>.from(jsonDecode(json));
   }
 
   // save contact permission
@@ -48,5 +49,17 @@ class PreferencesService {
 
   bool? get contactPermission {
     return _preferences.getBool('contact_permission');
+  }
+
+  String? get tokenAddress {
+    return _preferences.getString('token_address');
+  }
+
+  Future setToken(String? tokenAddress) async {
+    if (tokenAddress == null) {
+      await _preferences.remove('token_address');
+    } else {
+      await _preferences.setString('token_address', tokenAddress);
+    }
   }
 }

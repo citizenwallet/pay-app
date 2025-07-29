@@ -9,11 +9,17 @@ class AccountCard extends StatelessWidget {
   final ProfileV1 profile;
   final String alias;
   final String appRedirectDomain;
+  final double? size;
+  final double? shrink;
+  final Function()? onEditProfile;
 
   AccountCard({
     super.key,
     required this.profile,
     required this.alias,
+    this.size,
+    this.shrink,
+    this.onEditProfile,
   }) : appRedirectDomain = dotenv.get('APP_REDIRECT_DOMAIN');
 
   @override
@@ -21,49 +27,78 @@ class AccountCard extends StatelessWidget {
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
 
-    final size = (width > height ? height : width) * 0.8;
+    final double scale = shrink != null ? 1 - shrink! : 1;
+    final size = (this.size ?? (width > height ? height : width)) * 0.8;
 
     return Stack(
       alignment: Alignment.center,
       children: [
-        Container(
-          width: size,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          padding: EdgeInsets.all(8),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              QR(
-                data:
-                    'https://$appRedirectDomain/?sendto=${profile.username}@$alias',
-                size: size - 20,
-                padding: EdgeInsets.all(20),
-                logo: 'assets/logo.png',
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ProfileCircle(
-                    size: 20,
-                    imageUrl: profile.imageSmall,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    '@${profile.username}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 17,
-                      color: textMutedColor,
+        Transform.scale(
+          scale: scale,
+          alignment: Alignment.topCenter,
+          child: Container(
+            width: size,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            padding: EdgeInsets.all(8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                QR(
+                  data:
+                      'https://$appRedirectDomain/?sendto=${profile.username}@$alias',
+                  size: size - 20,
+                  padding: EdgeInsets.all(20),
+                  logo: 'assets/logo.png',
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: onEditProfile,
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: primaryColor,
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        padding: EdgeInsets.fromLTRB(6, 0, 10, 0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ProfileCircle(
+                              size: 34,
+                              imageUrl: profile.imageSmall,
+                              borderColor: whiteColor,
+                              borderWidth: 2,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '@${profile.username}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 17,
+                                color: whiteColor,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Icon(
+                              CupertinoIcons.pencil,
+                              color: whiteColor,
+                              size: 18,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ],

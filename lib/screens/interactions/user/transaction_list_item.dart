@@ -2,30 +2,35 @@ import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
 
 import 'package:pay_app/models/transaction.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/date.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 
 class TransactionListItem extends StatelessWidget {
+  final String account;
+  final Config config;
   final Transaction transaction;
   final bool isSending;
-  final Function(String) onRetry;
+  final Function(String, String) onRetry;
 
   const TransactionListItem({
     super.key,
+    required this.account,
+    required this.config,
     required this.transaction,
     this.isSending = false,
     required this.onRetry,
   });
 
   void handleRetry() {
-    onRetry(transaction.id);
+    onRetry(transaction.contract, transaction.id);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isReceived =
-        transaction.exchangeDirection == ExchangeDirection.received;
+    final exchangeDirection = transaction.exchangeDirection(account);
+    final isReceived = exchangeDirection == ExchangeDirection.received;
 
     const bubbleBorderRadius = 20.0;
     const bubbleCornerBorderRadius = 2.0;
@@ -33,6 +38,8 @@ class TransactionListItem extends StatelessWidget {
     final failed = transaction.status == TransactionStatus.fail;
 
     final iconColor = isReceived ? textMutedColor : textSurfaceMutedColor;
+
+    final logo = config.getToken(transaction.contract).logo;
 
     final rowChildren = [
       Expanded(
@@ -87,7 +94,8 @@ class TransactionListItem extends StatelessWidget {
                         children: [
                           Amount(
                             amount: transaction.amount,
-                            exchangeDirection: transaction.exchangeDirection,
+                            logo: logo,
+                            exchangeDirection: exchangeDirection,
                           ),
                         ],
                       ),
@@ -95,7 +103,7 @@ class TransactionListItem extends StatelessWidget {
                           transaction.description!.isNotEmpty) ...[
                         SizedBox(height: 4),
                         Description(
-                          exchangeDirection: transaction.exchangeDirection,
+                          exchangeDirection: exchangeDirection,
                           description: transaction.description,
                         ),
                       ],
@@ -105,7 +113,7 @@ class TransactionListItem extends StatelessWidget {
                         children: [
                           TimeAgo(
                             createdAt: transaction.createdAt,
-                            exchangeDirection: transaction.exchangeDirection,
+                            exchangeDirection: exchangeDirection,
                           ),
                           const SizedBox(width: 4),
                           if (transaction.status == TransactionStatus.sending)
@@ -190,12 +198,14 @@ class Description extends StatelessWidget {
 }
 
 class Amount extends StatelessWidget {
-  final double amount;
+  final String amount;
+  final String? logo;
   final ExchangeDirection exchangeDirection;
 
   const Amount({
     super.key,
     required this.amount,
+    this.logo,
     required this.exchangeDirection,
   });
 
@@ -207,10 +217,11 @@ class Amount extends StatelessWidget {
       children: [
         CoinLogo(
           size: 22,
+          logo: logo,
         ),
         const SizedBox(width: 4),
         Text(
-          amount.toStringAsFixed(2),
+          amount,
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w600,

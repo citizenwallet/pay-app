@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
@@ -9,18 +8,25 @@ import 'package:pay_app/models/transaction.dart';
 import 'package:pay_app/models/user.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
+import 'package:pay_app/services/db/app/contacts.dart';
+import 'package:pay_app/services/db/app/db.dart';
+import 'package:pay_app/services/db/app/transactions.dart';
 import 'package:pay_app/services/engine/utils.dart';
 import 'package:pay_app/services/invite/invite.dart';
 import 'package:pay_app/services/pay/profile.dart';
 import 'package:pay_app/services/pay/transactions_with_user.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/contracts/erc20.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/utils.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/utils/random.dart';
 
 class TransactionsWithUserState with ChangeNotifier {
   late Config _config;
+
+  final ContactsTable _contacts = AppDBService().contacts;
+  final TransactionsTable _transactionsTable = AppDBService().transactions;
 
   final ConfigService _configService = ConfigService();
   final SecureService _secureService = SecureService();
@@ -30,7 +36,7 @@ class TransactionsWithUserState with ChangeNotifier {
   late TransactionsService transactionsWithUserService;
 
   String withUserAddress;
-  User? withUser;
+  ProfileV1? withUser;
   String myAddress;
 
   List<Transaction> transactions = [];
@@ -42,8 +48,13 @@ class TransactionsWithUserState with ChangeNotifier {
   double toSendAmount = 0.0;
   String toSendMessage = '';
 
+  int transactionsLimit = 10;
+  int transactionsOffset = 0;
+
   bool loading = false;
   bool error = false;
+  bool loadingMore = false;
+  bool hasMoreTransactions = true;
 
   TransactionsWithUserState({
     required this.withUserAddress,
@@ -66,6 +77,9 @@ class TransactionsWithUserState with ChangeNotifier {
     await config.initContracts();
 
     _config = config;
+
+    // Initial sync with API to populate database
+    await _syncTransactionsFromAPI();
   }
 
   bool _mounted = true;
@@ -92,7 +106,11 @@ class TransactionsWithUserState with ChangeNotifier {
     safeNotifyListeners();
   }
 
-  Future<String?> sendTransaction({String? retryId}) async {
+  Future<String?> sendTransaction(
+    String tokenAddress, {
+    int? chainId,
+    String? retryId,
+  }) async {
     final tempId = retryId ?? '${pendingTransactionId}_${generateRandomId()}';
     final toRetry = sendingQueue.firstWhereOrNull((tx) => tx.id == retryId);
     if (retryId != null && toRetry == null) {
@@ -100,7 +118,10 @@ class TransactionsWithUserState with ChangeNotifier {
     }
 
     try {
-      final token = _config.getPrimaryToken();
+      final token = _config.getToken(
+        tokenAddress,
+        chainId: chainId,
+      );
 
       final doubleAmount = toRetry != null
           ? toRetry.amount.toString().replaceAll(',', '.')
@@ -143,8 +164,8 @@ class TransactionsWithUserState with ChangeNotifier {
           createdAt: DateTime.now(),
           fromAccount: account.hexEip55,
           toAccount: toAddress,
-          amount: parsedAmount / BigInt.from(pow(10, token.decimals)),
-          exchangeDirection: ExchangeDirection.sent,
+          contract: token.address,
+          amount: double.parse(doubleAmount).toStringAsFixed(2),
           status: TransactionStatus.sending,
           description: message,
         );
@@ -163,7 +184,7 @@ class TransactionsWithUserState with ChangeNotifier {
         _config,
         account,
         key,
-        [_config.getPrimaryToken().address],
+        [token.address],
         [calldata],
       );
 
@@ -172,7 +193,7 @@ class TransactionsWithUserState with ChangeNotifier {
         'to': toAddress,
       };
 
-      if (_config.getPrimaryToken().standard == 'erc1155') {
+      if (token.standard == 'erc1155') {
         args['operator'] = account.hexEip55;
         args['id'] = '0';
         args['amount'] = parsedAmount.toString();
@@ -260,6 +281,9 @@ class TransactionsWithUserState with ChangeNotifier {
           .getNewTransactionsWithUser(transactionsFromDate);
 
       if (newTransactions.isNotEmpty) {
+        // Store new transactions in database
+        await _transactionsTable.upsertMany(newTransactions);
+
         _upsertNewTransactions(newTransactions);
 
         safeNotifyListeners();
@@ -277,10 +301,20 @@ class TransactionsWithUserState with ChangeNotifier {
     safeNotifyListeners();
 
     try {
-      final profile = await withUserProfileService.getProfile();
-      debugPrint('profile: $profile');
-      withUser = profile;
-      safeNotifyListeners();
+      final contact = await _contacts.getByAccount(withUserAddress);
+      final cachedProfile = contact?.getProfile();
+      if (cachedProfile != null) {
+        withUser = cachedProfile;
+        safeNotifyListeners();
+      }
+
+      final profile = await getProfile(_config, withUserAddress);
+      if (profile != null) {
+        withUser = profile;
+        safeNotifyListeners();
+
+        _contacts.upsert(DBContact.fromProfile(profile));
+      }
     } catch (e, s) {
       debugPrint('Error getting profile of with user: $e');
       debugPrint('Stack trace: $s');
@@ -299,13 +333,24 @@ class TransactionsWithUserState with ChangeNotifier {
     safeNotifyListeners();
 
     try {
-      final transactions =
-          await transactionsWithUserService.getTransactionsWithUser();
+      // First, try to load from database
+      final dbTransactions =
+          await _transactionsTable.getTransactionsBetweenUsers(
+        myAddress,
+        withUserAddress,
+        limit: transactionsLimit,
+        offset: transactionsOffset,
+      );
 
-      if (transactions.isNotEmpty) {
-        _upsertTransactions(transactions);
+      if (dbTransactions.isNotEmpty) {
+        _upsertTransactions(dbTransactions);
+        transactionsOffset += dbTransactions.length;
+        hasMoreTransactions = dbTransactions.length == transactionsLimit;
         safeNotifyListeners();
       }
+
+      // Then sync with API to get latest transactions
+      await _syncTransactionsFromAPI();
     } catch (e, s) {
       debugPrint('Error fetching transactions with user: $e');
       debugPrint('Stack trace: $s');
@@ -314,6 +359,74 @@ class TransactionsWithUserState with ChangeNotifier {
     } finally {
       loading = false;
       safeNotifyListeners();
+    }
+  }
+
+  Future<void> loadMoreTransactions() async {
+    if (loadingMore || !hasMoreTransactions) return;
+
+    debugPrint('load more transactions');
+    loadingMore = true;
+    safeNotifyListeners();
+
+    try {
+      final dbTransactions =
+          await _transactionsTable.getTransactionsBetweenUsers(
+        myAddress,
+        withUserAddress,
+        limit: transactionsLimit,
+        offset: transactionsOffset,
+      );
+
+      if (dbTransactions.isNotEmpty) {
+        _upsertTransactions(dbTransactions);
+        transactionsOffset += dbTransactions.length;
+        hasMoreTransactions = dbTransactions.length == transactionsLimit;
+        safeNotifyListeners();
+      } else {
+        hasMoreTransactions = false;
+        safeNotifyListeners();
+      }
+    } catch (e, s) {
+      debugPrint('Error loading more transactions: $e');
+      debugPrint('Stack trace: $s');
+    } finally {
+      loadingMore = false;
+      safeNotifyListeners();
+    }
+  }
+
+  Future<void> _syncTransactionsFromAPI() async {
+    try {
+      // Get transactions from API with a larger limit to ensure we have recent data
+      final (apiTransactions, _) =
+          await transactionsWithUserService.getTransactionsWithUser(
+        limit: 50, // Get more transactions to ensure we have recent data
+        offset: 0,
+      );
+
+      if (apiTransactions.isNotEmpty) {
+        // Store transactions in database
+        await _transactionsTable.upsertMany(apiTransactions);
+
+        // Refresh the current view if we have new transactions
+        final currentTransactions =
+            await _transactionsTable.getTransactionsBetweenUsers(
+          myAddress,
+          withUserAddress,
+          limit: transactions.length + 10, // Get a bit more than current
+          offset: 0,
+        );
+
+        if (currentTransactions.isNotEmpty) {
+          _upsertTransactions(currentTransactions);
+          safeNotifyListeners();
+        }
+      }
+    } catch (e, s) {
+      debugPrint('Error syncing transactions from API: $e');
+      debugPrint('Stack trace: $s');
+      // Don't throw here as we want to show cached data even if sync fails
     }
   }
 
@@ -335,6 +448,8 @@ class TransactionsWithUserState with ChangeNotifier {
       }
     }
 
+    // Sort by creation date (newest first) to maintain proper order
+    existingList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     transactions = [...existingList];
   }
 
@@ -356,7 +471,7 @@ class TransactionsWithUserState with ChangeNotifier {
       }
 
       existingList.removeWhere((element) =>
-          element.exchangeDirection == ExchangeDirection.received &&
+          element.exchangeDirection(myAddress) == ExchangeDirection.received &&
           element.status == TransactionStatus.pending &&
           element.createdAt
               .isBefore(DateTime.now().subtract(Duration(seconds: 20))));
@@ -367,5 +482,18 @@ class TransactionsWithUserState with ChangeNotifier {
 
   void shareInviteLink(String phoneNumber) {
     _inviteService.shareInviteLink(phoneNumber);
+  }
+
+  Future<void> refreshTransactions() async {
+    // Reset pagination state
+    transactionsOffset = 0;
+    hasMoreTransactions = true;
+
+    // Clear current transactions
+    transactions = [];
+    safeNotifyListeners();
+
+    // Reload from database and sync with API
+    await getTransactionsWithUser();
   }
 }
