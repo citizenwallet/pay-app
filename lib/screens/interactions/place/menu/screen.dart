@@ -169,8 +169,6 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
   }
 
   void handlePay(Checkout checkout) {
-    print('handlePay: ${checkout.total}');
-
     final navigator = GoRouter.of(context);
 
     navigator.pop(checkout);

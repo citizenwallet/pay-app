@@ -38,7 +38,7 @@ class SendingState with ChangeNotifier {
 
   SendingState({
     required config,
-    required String myAddress,
+    required this.myAddress,
   }) : _config = config {
     _ordersService = OrdersService(account: myAddress);
   }
@@ -57,6 +57,8 @@ class SendingState with ChangeNotifier {
   }
 
   // state variables here
+  String myAddress;
+
   QRData? qrData;
   ProfileV1? profile;
   PlaceWithMenu? place;
@@ -86,12 +88,14 @@ class SendingState with ChangeNotifier {
     return qrData;
   }
 
-  void getCardProject(String rawValue) {
+  String? getCardProject(String rawValue) {
     cardProject = parseCardProject(rawValue);
     safeNotifyListeners();
+
+    return cardProject;
   }
 
-  Future<void> getContactProfileFromAddress(String address) async {
+  Future<ProfileV1?> getContactProfileFromAddress(String address) async {
     try {
       final contact = await _contacts.getByAccount(address);
       profile = contact?.getProfile();
@@ -101,12 +105,16 @@ class SendingState with ChangeNotifier {
         getProfile(
           _config,
           address,
-        ).then((result) => {
-              if (result != null)
-                {
-                  _contacts.upsert(DBContact.fromProfile(result)),
-                }
-            });
+        ).then((result) {
+          if (result != null) {
+            profile = result;
+            safeNotifyListeners();
+
+            _contacts.upsert(DBContact.fromProfile(result));
+          }
+        });
+
+        return profile;
       }
 
       profile = await getProfile(
@@ -114,13 +122,21 @@ class SendingState with ChangeNotifier {
         address,
       );
       safeNotifyListeners();
+
+      if (profile != null) {
+        _contacts.upsert(DBContact.fromProfile(profile!));
+      }
+
+      return profile;
     } catch (e, s) {
       print('error: $e');
       print('stack trace: $s');
     }
+
+    return null;
   }
 
-  Future<void> getContactProfileFromUsername(String query) async {
+  Future<ProfileV1?> getContactProfileFromUsername(String query) async {
     try {
       final potentialUsername = query.trim().replaceFirst('@', '');
 
@@ -132,12 +148,16 @@ class SendingState with ChangeNotifier {
         getProfileByUsername(
           _config,
           potentialUsername,
-        ).then((result) => {
-              if (result != null)
-                {
-                  _contacts.upsert(DBContact.fromProfile(result)),
-                }
-            });
+        ).then((result) {
+          if (result != null) {
+            profile = result;
+            safeNotifyListeners();
+
+            _contacts.upsert(DBContact.fromProfile(result));
+          }
+        });
+
+        return profile;
       }
 
       profile = await getProfileByUsername(
@@ -145,13 +165,21 @@ class SendingState with ChangeNotifier {
         potentialUsername,
       );
       safeNotifyListeners();
+
+      if (profile != null) {
+        _contacts.upsert(DBContact.fromProfile(profile!));
+      }
+
+      return profile;
     } catch (e, s) {
       print('error: $e');
       print('stack trace: $s');
     }
+
+    return null;
   }
 
-  Future<void> getContactProfileFromSerial(String serial) async {
+  Future<ProfileV1?> getContactProfileFromSerial(String serial) async {
     try {
       final potentialSerial = serial.trim();
 
@@ -184,6 +212,8 @@ class SendingState with ChangeNotifier {
                   _contacts.upsert(DBContact.fromProfile(result)),
                 }
             });
+
+        return profile;
       }
 
       profile = await getProfile(
@@ -191,19 +221,30 @@ class SendingState with ChangeNotifier {
         cardAddress,
       );
       safeNotifyListeners();
+
+      return profile;
     } catch (e, s) {
       print('error: $e');
       print('stack trace: $s');
     }
+
+    return null;
   }
 
-  Future<void> loadExternalOrder(String slug, String orderId) async {
+  Future<Order?> loadExternalOrder(String slug, String orderId) async {
     try {
       final cachedOrder = await _ordersTable.getById(int.parse(orderId));
 
       if (cachedOrder != null) {
         order = cachedOrder;
         safeNotifyListeners();
+
+        _ordersService.getOrder(slug, int.parse(orderId)).then((result) {
+          order = result;
+          safeNotifyListeners();
+        });
+
+        return order;
       }
 
       final remoteOrder =
@@ -211,41 +252,73 @@ class SendingState with ChangeNotifier {
 
       order = remoteOrder;
       safeNotifyListeners();
+
+      return order;
     } catch (e, s) {
       print('loadExternalOrder error: $e');
       print('loadExternalOrder stack trace: $s');
     }
+
+    return null;
   }
 
-  Future<void> getPlaceWithMenu(String slug) async {
+  Future<PlaceWithMenu?> getPlaceWithMenu(String slug) async {
     try {
       final place = await _places.getBySlug(slug);
       this.place = place;
-      safeNotifyListeners();
 
-      final remotePlace = await apiService.getPlaceAndMenu(slug);
-      this.place = remotePlace;
-      safeNotifyListeners();
+      if (place != null) {
+        apiService.getPlaceAndMenu(slug).then((result) {
+          this.place = result;
+          safeNotifyListeners();
 
-      _places.upsert(remotePlace);
+          _places.upsert(result);
+        });
+      }
+
+      if (place == null) {
+        final remotePlace = await apiService.getPlaceAndMenu(slug);
+        this.place = remotePlace;
+        safeNotifyListeners();
+
+        _places.upsert(remotePlace);
+      }
+
+      return place;
     } catch (e, s) {
       print('getPlaceWithMenu error: $e');
       print('getPlaceWithMenu stack trace: $s');
     }
+
+    return null;
   }
 
-  // Future<void> getAccountProfile() async {
-  //   accountProfile = await getProfile(
-  //     _config,
-  //     myAddress,
-  //   );
-  //   safeNotifyListeners();
-  // }
+  Future<void> getAccountProfile() async {
+    try {
+      final contact = await _contacts.getByAccount(myAddress);
+      final cachedProfile = contact?.getProfile();
+      if (cachedProfile != null) {
+        accountProfile = cachedProfile;
+
+        safeNotifyListeners();
+      }
+
+      accountProfile = await getProfile(
+        _config,
+        myAddress,
+      );
+      safeNotifyListeners();
+    } catch (e, s) {
+      debugPrint('getAccountProfile error: $e');
+      debugPrint('getAccountProfile stack trace: $s');
+    }
+  }
 
   Future<bool> sendTransaction(
     String tokenAddress, {
     String? amount,
     String? message,
+    Checkout? manualCheckout,
   }) async {
     try {
       transactionSending = true;
@@ -271,6 +344,9 @@ class SendingState with ChangeNotifier {
           order?.total != null ? order!.total.toString() : amount,
         _ => amount,
       };
+      if (manualCheckout != null) {
+        sendAmount = manualCheckout.total.toString();
+      }
       if (sendAmount == null) {
         throw Exception('Amount is required');
       }
@@ -280,6 +356,9 @@ class SendingState with ChangeNotifier {
           order?.description != null ? order!.description : message,
         _ => message,
       };
+      if (manualCheckout != null) {
+        sendMessage = manualCheckout.message;
+      }
 
       final parsedAmount = toUnit(
         sendAmount,
@@ -352,7 +431,7 @@ class SendingState with ChangeNotifier {
         throw Exception('Transaction failed');
       }
 
-      Checkout? checkout;
+      Checkout? checkout = manualCheckout;
       switch (data.format) {
         case QRFormat.checkoutUrl:
           List<CheckoutItem> items = [];

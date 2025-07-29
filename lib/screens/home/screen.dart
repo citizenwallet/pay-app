@@ -548,102 +548,37 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> handleQRScan(
-      BuildContext context, String myAddress, Function() callback,
-      {String? manualResult}) async {
+    BuildContext context,
+    String myAddress,
+    Function() callback, {
+    String? manualResult,
+  }) async {
     _stopInitRetries = true;
 
     _backgroundColorController.forward();
 
-    final result = manualResult ??
-        await showCupertinoDialog<String?>(
-          context: context,
-          useRootNavigator: false,
-          builder: (modalContext) => provideSendingState(
-            context,
-            _walletState.config,
-            myAddress,
-            ScannerModal(
-              modalKey: 'home-qr-sending',
-              // TODO: token address
-            ),
-          ),
-        );
+    final tokenAddress = context.read<WalletState>().currentTokenAddress;
+
+    await showCupertinoDialog<void>(
+      context: context,
+      useRootNavigator: false,
+      builder: (modalContext) => provideSendingState(
+        context,
+        _walletState.config,
+        myAddress,
+        ScannerModal(
+          modalKey: 'home-qr-sending',
+          tokenAddress: tokenAddress,
+          manualScanResult: manualResult,
+        ),
+      ),
+    );
 
     _backgroundColorController.reverse();
 
     callback();
 
     _stopInitRetries = false;
-
-    if (result == null) {
-      return;
-    }
-
-    final (address, _, _, alias) = parseQRCode(result);
-    if (address.isEmpty) {
-      // invalid QR code
-      return;
-    }
-
-    // if (alias != null && alias.isNotEmpty && alias != _profileState.alias) {
-    //   // TODO: toast with invalid alias message
-    //   return;
-    // }
-
-    final format = parseQRFormat(result);
-
-    switch (format) {
-      case QRFormat.checkoutUrl:
-        final checkoutUrl = Uri.parse(result);
-        final orderId = checkoutUrl.queryParameters['orderId'];
-        handleInteractionWithPlace(myAddress, address,
-            openMenu: true, orderId: orderId);
-        break;
-      case QRFormat.cardUrl:
-        final project = parseCardProject(result);
-
-        handleInteractionWithCard(myAddress, address, project);
-        break;
-      case QRFormat.sendtoUrl:
-      case QRFormat.sendtoUrlWithEIP681:
-      case QRFormat.accountUrl:
-        final profile = address.startsWith('0x')
-            ? await _contactsState.getContactProfileFromAddress(address)
-            : await _contactsState.getContactProfileFromUsername(address);
-
-        if (profile != null) {
-          handleInteractionWithUser(
-            myAddress,
-            profile.account,
-            name: profile.name,
-            imageUrl: profile.image,
-          );
-        } else {
-          _searchController.text = address;
-          _searchFocusNode.requestFocus();
-          handleSearch(address);
-        }
-        break;
-      case QRFormat.voucher:
-        // TODO: vouchers need to be handled by the voucher screen
-        break;
-      case QRFormat.url:
-        // TODO: urls need to be handled by the webview
-        break;
-      default:
-        final profile =
-            await _contactsState.getContactProfileFromAddress(address);
-
-        if (profile != null) {
-          handleInteractionWithUser(
-            myAddress,
-            profile.account,
-            name: profile.name,
-            imageUrl: profile.image,
-          );
-        }
-        break;
-    }
   }
 
   void clearSearch() async {

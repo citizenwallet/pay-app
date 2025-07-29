@@ -116,11 +116,11 @@ class _CardModalState extends State<CardModal> {
     navigator.pop();
   }
 
-  void handleOrderPressed(String address, String slug, Order order) {
+  void handleOrderPressed(Order order) {
     final navigator = GoRouter.of(context);
 
     navigator.push(
-      '/$address/place/$slug/order/${order.id}',
+      '/order/${order.id}',
       extra: order,
     );
   }
@@ -411,8 +411,7 @@ class _CardModalState extends State<CardModal> {
                 order: orders[index],
                 // mappedItems: place?.mappedItems ?? {},
                 mappedItems: {},
-                onPressed: (order) =>
-                    handleOrderPressed(card.account, card.project, order),
+                onPressed: handleOrderPressed,
               ),
             ),
           ),

@@ -82,6 +82,7 @@ class OrderListItem extends StatelessWidget {
           amount: order.total,
           isPositive: order.place.display == Display.topup ||
               order.status == OrderStatus.refund,
+          status: order.status,
         ),
         SizedBox(height: 4),
         TimeAgo(createdAt: order.createdAt, status: order.status),
@@ -167,18 +168,19 @@ class OrderId extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      if (status == OrderStatus.refund) const SizedBox(width: 4),
-      if (status == OrderStatus.refund)
+      if (status == OrderStatus.refund || status == OrderStatus.refunded)
+        const SizedBox(width: 4),
+      if (status == OrderStatus.refund || status == OrderStatus.refunded)
         Container(
           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: warningColor,
+            color: status == OrderStatus.refund ? warningColor : mutedColor,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             children: [
               Text(
-                'refund',
+                status.name,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
@@ -303,11 +305,13 @@ class PaymentMethodBadge extends StatelessWidget {
 class Amount extends StatelessWidget {
   final double amount;
   final bool isPositive;
+  final OrderStatus status;
 
   const Amount({
     super.key,
     required this.amount,
     this.isPositive = true,
+    required this.status,
   });
 
   @override
@@ -324,7 +328,12 @@ class Amount extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: theme.primaryColor,
+            color: status == OrderStatus.refunded
+                ? textMutedColor
+                : theme.primaryColor,
+            decoration: status == OrderStatus.refunded
+                ? TextDecoration.lineThrough
+                : null,
           ),
         ),
       ],
