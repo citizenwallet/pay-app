@@ -148,4 +148,9 @@ class CardsTable extends DBTable {
       whereArgs: [uid],
     );
   }
+
+  Future<void> replaceAll(List<DBCard> cards) async {
+    await db.delete(name);
+    await upsertMany(cards);
+  }
 }

@@ -63,7 +63,7 @@ class CardsState with ChangeNotifier {
   bool updatingCardName = false;
   String? updatingCardNameUid;
   bool claimingCard = false;
-  bool unclaimingCard = false;
+  bool releasingCard = false;
 
   // state methods here
   Future<void> fetchCards({String? tokenAddress}) async {
@@ -112,7 +112,8 @@ class CardsState with ChangeNotifier {
             account: cardAddress.hexEip55,
           );
         }).toList());
-        _cards.upsertMany(newCards);
+
+        await _cards.replaceAll(newCards);
 
         this.cards = await _cards.getAll();
         safeNotifyListeners();
@@ -133,7 +134,7 @@ class CardsState with ChangeNotifier {
         cardBalances[card.account] = formatCurrency(balance, token.decimals);
       }
 
-      // safeNotifyListeners();
+      safeNotifyListeners();
     } catch (e, s) {
       debugPrint(e.toString());
       debugPrint(s.toString());
@@ -203,19 +204,19 @@ class CardsState with ChangeNotifier {
     }
   }
 
-  Future<void> unclaim(String uid) async {
+  Future<void> release(String uid) async {
     try {
       final card = await _cards.getByUid(uid);
       if (card == null) {
         return;
       }
 
-      unclaimingCard = true;
+      releasingCard = true;
       safeNotifyListeners();
 
       final credentials = _secureService.getCredentials();
       if (credentials == null) {
-        unclaimingCard = false;
+        releasingCard = false;
         safeNotifyListeners();
 
         return;
@@ -235,7 +236,7 @@ class CardsState with ChangeNotifier {
 
       _cardsService.deleteProfile(sigAuthConnection, uid);
 
-      await _cardsService.unclaim(sigAuthConnection, uid);
+      await _cardsService.release(sigAuthConnection, uid);
 
       await _cards.delete(uid);
 
@@ -246,12 +247,17 @@ class CardsState with ChangeNotifier {
     } catch (e) {
       debugPrint(e.toString());
     } finally {
-      unclaimingCard = false;
+      releasingCard = false;
       safeNotifyListeners();
     }
   }
 
-  Future<AddCardError?> claim(String uid, String? uri, String? name) async {
+  Future<AddCardError?> claim(
+    String uid,
+    String? uri,
+    String? name, {
+    String? project,
+  }) async {
     try {
       updatingCardNameUid = uid;
       claimingCard = true;
@@ -277,24 +283,24 @@ class CardsState with ChangeNotifier {
 
       final sigAuthConnection = sigAuthService.connect();
 
-      String? project;
+      String? parsedProject = project;
       if (uri != null) {
         final parsedUri = Uri.parse(uri);
 
         if (parsedUri.queryParameters.containsKey('project')) {
-          project = parsedUri.queryParameters['project']!;
+          parsedProject = parsedUri.queryParameters['project']!;
         }
 
         // error when ordering cards, it should be project
         if (parsedUri.queryParameters.containsKey('community')) {
-          project = parsedUri.queryParameters['community']!;
+          parsedProject = parsedUri.queryParameters['community']!;
         }
       }
 
       await _cardsService.claim(
         sigAuthConnection,
         uid,
-        project: project,
+        project: parsedProject,
       );
 
       final cardAddress = await _config.cardManagerContract!.getCardAddress(

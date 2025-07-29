@@ -6,6 +6,7 @@ import 'package:pay_app/models/order.dart';
 import 'package:pay_app/screens/home/card_modal/footer.dart';
 import 'package:pay_app/state/cards.dart';
 import 'package:pay_app/state/topup.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/widgets/orders/order_list_item.dart';
 import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
@@ -17,6 +18,7 @@ import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:pay_app/widgets/cards/card.dart' show Card;
 import 'package:provider/provider.dart';
+import 'package:web3dart/web3dart.dart';
 
 class CardModal extends StatefulWidget {
   final String? uid;
@@ -24,8 +26,13 @@ class CardModal extends StatefulWidget {
   final String? project;
   final String? tokenAddress;
 
-  const CardModal(
-      {super.key, this.uid, this.address, this.project, this.tokenAddress});
+  const CardModal({
+    super.key,
+    this.uid,
+    this.address,
+    this.project,
+    this.tokenAddress,
+  });
 
   @override
   State<CardModal> createState() => _CardModalState();
@@ -107,8 +114,14 @@ class _CardModalState extends State<CardModal> {
     });
   }
 
-  void handleSaveCard() async {
-    await _cardState.saveCard(widget.project);
+  void handleClaimCard(String uid, String? project) async {
+    await _cardsState.claim(uid, null, null, project: project);
+
+    if (!mounted) {
+      return;
+    }
+
+    handleClose(context);
   }
 
   void handleClose(BuildContext context) {
@@ -172,7 +185,7 @@ class _CardModalState extends State<CardModal> {
     );
   }
 
-  void handleUnclaimCard() async {
+  void handleRelease() async {
     final uid = widget.uid;
 
     if (uid == null) {
@@ -185,8 +198,9 @@ class _CardModalState extends State<CardModal> {
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: Text('Remove Card'),
-        content: Text('Are you sure you want to remove this card?'),
+        title: Text('Release Card'),
+        content: Text(
+            'Are you sure you want to release this card? This will allow others to claim it.'),
         actions: [
           CupertinoDialogAction(
             child: Text('Cancel'),
@@ -195,7 +209,7 @@ class _CardModalState extends State<CardModal> {
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text('Remove'),
+            child: Text('Release'),
           ),
         ],
       ),
@@ -205,7 +219,7 @@ class _CardModalState extends State<CardModal> {
       return;
     }
 
-    await _cardsState.unclaim(uid);
+    await _cardsState.release(uid);
 
     if (!mounted) {
       return;
@@ -240,7 +254,14 @@ class _CardModalState extends State<CardModal> {
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
 
+    final address =
+        context.select<WalletState, EthereumAddress?>((state) => state.address);
+
     final card = context.select<CardState, DBCard?>((state) => state.card);
+    final cardOwner =
+        context.select<CardState, String?>((state) => state.cardOwner);
+    final cardOwnerLoading =
+        context.select<CardState, bool>((state) => state.cardOwnerLoading);
 
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -256,6 +277,9 @@ class _CardModalState extends State<CardModal> {
         child: _buildContent(
           context,
           card,
+          cardOwner,
+          cardOwnerLoading,
+          address,
         ),
       ),
     );
@@ -264,6 +288,9 @@ class _CardModalState extends State<CardModal> {
   Widget _buildContent(
     BuildContext context,
     DBCard? card,
+    String? cardOwner,
+    bool cardOwnerLoading,
+    EthereumAddress? myAddress,
   ) {
     final cardColor = projectCardColor(widget.project);
 
@@ -303,18 +330,37 @@ class _CardModalState extends State<CardModal> {
               ),
             ],
           ),
-          _buildCard(context),
-          if (card == null) const SizedBox(height: 24),
-          if (card == null)
+          _buildCard(context, cardOwner, myAddress),
+          if (!cardOwnerLoading && card == null && cardOwner == null)
+            const SizedBox(height: 24),
+          if (!cardOwnerLoading && card == null && cardOwner == null)
             Button(
-              onPressed:
-                  claimingCard || updatingCardName ? null : handleSaveCard,
-              text: 'Save Card',
+              onPressed: claimingCard || updatingCardName || widget.uid == null
+                  ? null
+                  : () => handleClaimCard(widget.uid!, widget.project),
+              text: 'Claim Card',
               labelColor: whiteColor,
               color: cardColor,
               suffix: claimingCard || updatingCardName
                   ? const CupertinoActivityIndicator()
                   : null,
+            ),
+          if (!cardOwnerLoading && cardOwner == myAddress?.hexEip55)
+            const SizedBox(height: 24),
+          if (!cardOwnerLoading && cardOwner == myAddress?.hexEip55)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'Already claimed',
+                  style: TextStyle(
+                    color: textMutedColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           if (card == null) const SizedBox(height: 24),
           if (card != null)
@@ -335,7 +381,11 @@ class _CardModalState extends State<CardModal> {
     );
   }
 
-  Widget _buildCard(BuildContext context) {
+  Widget _buildCard(
+    BuildContext context,
+    String? cardOwner,
+    EthereumAddress? myAddress,
+  ) {
     final width = MediaQuery.of(context).size.width;
 
     final balance = context.select<CardState, String>((state) => state.balance);
@@ -358,11 +408,18 @@ class _CardModalState extends State<CardModal> {
       profile: profile,
       balance: balance,
       icon: uid == null ? CupertinoIcons.device_phone_portrait : null,
-      onTopUpPressed: uid == null ? null : handleTopUpCard,
-      onCardNameTapped: uid == null ? handleEditProfile : null,
-      onCardNameUpdated: uid == null
-          ? null
-          : (name) => handleUpdateCardName(name, profile?.name ?? ''),
+      onTopUpPressed:
+          uid == null && cardOwner != null && cardOwner == myAddress?.hexEip55
+              ? handleTopUpCard
+              : null,
+      onCardNameTapped:
+          uid == null && cardOwner != null && cardOwner == myAddress?.hexEip55
+              ? handleEditProfile
+              : null,
+      onCardNameUpdated:
+          uid == null && cardOwner != null && cardOwner == myAddress?.hexEip55
+              ? (name) => handleUpdateCardName(name, profile?.name ?? '')
+              : null,
     );
   }
 
@@ -442,19 +499,18 @@ class _CardModalState extends State<CardModal> {
   }
 
   Widget _buildCardActions(BuildContext context) {
-    final unclaimingCard = context.watch<CardsState>().unclaimingCard;
+    final releasingCard = context.watch<CardsState>().releasingCard;
     final updatingCardName = context.watch<CardsState>().updatingCardName;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Button(
-          onPressed:
-              unclaimingCard || updatingCardName ? null : handleUnclaimCard,
-          text: 'Remove Card',
+          onPressed: releasingCard || updatingCardName ? null : handleRelease,
+          text: 'Release Card',
           labelColor: whiteColor,
           color: dangerColor,
-          suffix: unclaimingCard || updatingCardName
+          suffix: releasingCard || updatingCardName
               ? const CupertinoActivityIndicator()
               : null,
         ),

@@ -31,6 +31,26 @@ class CardsService {
     }
   }
 
+  Future<Card?> getCard(
+    SigAuthConnection connection,
+    String serial,
+  ) async {
+    try {
+      final response = await apiService.get(
+        url: '/app/cards/$serial',
+        headers: connection.toMap(),
+      );
+
+      final card = Card.fromJson(response['card']);
+
+      return card;
+    } catch (e, s) {
+      debugPrint('Failed to fetch card: $e');
+      debugPrint('Stack trace: $s');
+      throw Exception('Failed to fetch card');
+    }
+  }
+
   Future<Card> claim(
     SigAuthConnection connection,
     String serial, {
@@ -58,7 +78,7 @@ class CardsService {
     }
   }
 
-  Future<void> unclaim(
+  Future<void> release(
     SigAuthConnection connection,
     String serial,
   ) async {
@@ -69,9 +89,9 @@ class CardsService {
         headers: connection.toMap(),
       );
     } catch (e, s) {
-      debugPrint('Failed to unclaim card: $e');
+      debugPrint('Failed to release card: $e');
       debugPrint('Stack trace: $s');
-      throw Exception('Failed to unclaim card');
+      throw Exception('Failed to release card');
     }
   }
 
