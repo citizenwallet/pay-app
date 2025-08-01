@@ -63,29 +63,82 @@ class CardsState with ChangeNotifier {
   bool updatingCardName = false;
   String? updatingCardNameUid;
   bool claimingCard = false;
-  bool unclaimingCard = false;
+  bool releasingCard = false;
 
   // state methods here
   Future<void> fetchCards({String? tokenAddress}) async {
-    cards = await _cards.getAll();
-    safeNotifyListeners();
+    try {
+      cards = await _cards.getAll();
+      safeNotifyListeners();
 
-    final token =
-        _config.getToken(tokenAddress ?? _config.getPrimaryToken().address);
+      final credentials = _secureService.getCredentials();
+      if (credentials == null) {
+        return;
+      }
 
-    for (final card in cards) {
-      await fetchProfile(card.account);
+      final (account, key) = credentials;
 
-      final balance = await getBalance(
-        _config,
-        EthereumAddress.fromHex(card.account),
-        tokenAddress: token.address,
+      final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
+
+      final sigAuthService = SigAuthService(
+        credentials: key,
+        address: account,
+        redirect: redirectDomain != null ? 'https://$redirectDomain' : '',
       );
 
-      cardBalances[card.account] = formatCurrency(balance, token.decimals);
-    }
+      final sigAuthConnection = sigAuthService.connect();
 
-    safeNotifyListeners();
+      _cardsService
+          .getCards(sigAuthConnection, account.hexEip55)
+          .then((cards) async {
+        final newCards = await Future.wait(cards.map((e) async {
+          // skip address fetch for existing cards
+          final existingCard = await _cards.getByUid(e.serial);
+          if (existingCard != null) {
+            return DBCard(
+              uid: e.serial,
+              project: e.project ?? '',
+              account: existingCard.account,
+            );
+          }
+
+          // fetch address for new cards
+          final cardAddress = await _config.cardManagerContract!.getCardAddress(
+            e.serial,
+          );
+          return DBCard(
+            uid: e.serial,
+            project: e.project ?? '',
+            account: cardAddress.hexEip55,
+          );
+        }).toList());
+
+        await _cards.replaceAll(newCards);
+
+        this.cards = await _cards.getAll();
+        safeNotifyListeners();
+      });
+
+      final token =
+          _config.getToken(tokenAddress ?? _config.getPrimaryToken().address);
+
+      for (final card in cards) {
+        await fetchProfile(card.account);
+
+        final balance = await getBalance(
+          _config,
+          EthereumAddress.fromHex(card.account),
+          tokenAddress: token.address,
+        );
+
+        cardBalances[card.account] = formatCurrency(balance, token.decimals);
+      }
+
+      safeNotifyListeners();
+    } catch (e, s) {
+      debugPrint(e.toString());
+      debugPrint(s.toString());
+    }
   }
 
   Future<void> fetchProfile(String address) async {
@@ -151,19 +204,19 @@ class CardsState with ChangeNotifier {
     }
   }
 
-  Future<void> unclaim(String uid) async {
+  Future<void> release(String uid) async {
     try {
       final card = await _cards.getByUid(uid);
       if (card == null) {
         return;
       }
 
-      unclaimingCard = true;
+      releasingCard = true;
       safeNotifyListeners();
 
       final credentials = _secureService.getCredentials();
       if (credentials == null) {
-        unclaimingCard = false;
+        releasingCard = false;
         safeNotifyListeners();
 
         return;
@@ -183,7 +236,7 @@ class CardsState with ChangeNotifier {
 
       _cardsService.deleteProfile(sigAuthConnection, uid);
 
-      await _cardsService.unclaim(sigAuthConnection, uid);
+      await _cardsService.release(sigAuthConnection, uid);
 
       await _cards.delete(uid);
 
@@ -194,12 +247,17 @@ class CardsState with ChangeNotifier {
     } catch (e) {
       debugPrint(e.toString());
     } finally {
-      unclaimingCard = false;
+      releasingCard = false;
       safeNotifyListeners();
     }
   }
 
-  Future<AddCardError?> claim(String uid, String? uri, String? name) async {
+  Future<AddCardError?> claim(
+    String uid,
+    String? uri,
+    String? name, {
+    String? project,
+  }) async {
     try {
       updatingCardNameUid = uid;
       claimingCard = true;
@@ -225,24 +283,24 @@ class CardsState with ChangeNotifier {
 
       final sigAuthConnection = sigAuthService.connect();
 
-      String? project;
+      String? parsedProject = project;
       if (uri != null) {
         final parsedUri = Uri.parse(uri);
 
         if (parsedUri.queryParameters.containsKey('project')) {
-          project = parsedUri.queryParameters['project']!;
+          parsedProject = parsedUri.queryParameters['project']!;
         }
 
         // error when ordering cards, it should be project
         if (parsedUri.queryParameters.containsKey('community')) {
-          project = parsedUri.queryParameters['community']!;
+          parsedProject = parsedUri.queryParameters['community']!;
         }
       }
 
       await _cardsService.claim(
         sigAuthConnection,
         uid,
-        project: project,
+        project: parsedProject,
       );
 
       final cardAddress = await _config.cardManagerContract!.getCardAddress(

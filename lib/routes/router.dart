@@ -78,6 +78,15 @@ GoRouter createRouter(
             return const OnboardingScreen();
           },
         ),
+        GoRoute(
+          name: 'CardOrder',
+          path: '/order/:orderId',
+          builder: (context, state) {
+            final order = state.extra! as Order;
+
+            return OrderScreen(order: order);
+          },
+        ),
         ShellRoute(
           navigatorKey: appShellNavigatorKey,
           builder: (context, state, child) =>

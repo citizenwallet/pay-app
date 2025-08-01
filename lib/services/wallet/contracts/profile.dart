@@ -81,12 +81,15 @@ class ProfileV1 {
   // from json
   ProfileV1.fromJson(Map<String, dynamic> json)
       : account = json['account'] ?? '',
-        username = json['username'] ?? 'anonymous',
+        username =
+            (json['username'] as String? ?? 'anonymous').replaceAll('@', ''),
         name = json['name'] ?? 'Anonymous',
         description = json['description'] ?? '',
         image = json['image'] ?? 'assets/icons/profile.png',
-        imageMedium = json['image_medium'] ?? 'assets/icons/profile.png',
-        imageSmall = json['image_small'] ?? 'assets/icons/profile.png';
+        imageMedium =
+            json['image_medium'] ?? json['image'] ?? 'assets/icons/profile.png',
+        imageSmall =
+            json['image_small'] ?? json['image'] ?? 'assets/icons/profile.png';
 
   // from map
   ProfileV1.fromMap(Map<String, dynamic> json)

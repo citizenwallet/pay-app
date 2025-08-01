@@ -189,8 +189,6 @@ class OrdersWithPlaceState with ChangeNotifier {
         offset: ordersOffset,
       );
 
-      print(dbOrders.length);
-
       if (dbOrders.isNotEmpty) {
         _upsertOrders(dbOrders);
         ordersOffset += dbOrders.length;
@@ -200,8 +198,9 @@ class OrdersWithPlaceState with ChangeNotifier {
         hasMoreOrders = false;
         safeNotifyListeners();
       }
-    } catch (e) {
+    } catch (e, s) {
       print('fetchOrders error: $e');
+      print('fetchOrders stack trace: $s');
       error = true;
       safeNotifyListeners();
     }
@@ -449,6 +448,10 @@ class OrdersWithPlaceState with ChangeNotifier {
         throw Exception('Failed to create order');
       }
 
+      await _ordersTable.upsert(newOrder);
+      _upsertOrders([newOrder]);
+
+      payingOrder = null;
       paying = false;
       payError = false;
       safeNotifyListeners();
@@ -597,7 +600,14 @@ class OrdersWithPlaceState with ChangeNotifier {
 
   Future<void> loadExternalOrder(String slug, String orderId) async {
     try {
-      loadingExternalOrder = true;
+      final cachedOrder = await _ordersTable.getById(int.parse(orderId));
+
+      if (cachedOrder != null) {
+        payingExternalOrder = cachedOrder;
+        safeNotifyListeners();
+      }
+
+      loadingExternalOrder = cachedOrder == null;
       safeNotifyListeners();
 
       final order = await _ordersService.getOrder(slug, int.parse(orderId));

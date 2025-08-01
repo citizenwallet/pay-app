@@ -9,6 +9,7 @@ class Button extends StatelessWidget {
   final Color? labelColor;
   final Widget? prefix;
   final Widget? suffix;
+  final EdgeInsets? padding;
 
   const Button({
     super.key,
@@ -20,6 +21,7 @@ class Button extends StatelessWidget {
     this.labelColor,
     this.prefix,
     this.suffix,
+    this.padding,
   });
 
   @override
@@ -31,7 +33,7 @@ class Button extends StatelessWidget {
       color: color ?? primaryColor,
       borderRadius: BorderRadius.circular(minWidth / 2),
       onPressed: onPressed,
-      padding: const EdgeInsets.all(8),
+      padding: padding ?? const EdgeInsets.all(8),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           minWidth: minWidth,

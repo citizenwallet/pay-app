@@ -90,6 +90,7 @@ class TransactionInputRow extends StatelessWidget {
                   focusNode: amountFocusNode,
                   onChange: onAmountChange ?? (_) {},
                   onTopUpPressed: onTopUpPressed,
+                  primaryColor: primaryColor,
                 )
               : MessageFieldWithAmountToggle(
                   messageController: messageController,
@@ -105,6 +106,7 @@ class TransactionInputRow extends StatelessWidget {
           showingAmountField: showAmountField,
           onToggle: onToggleField,
           onTap: onSend,
+          primaryColor: primaryColor,
         ),
       ],
     );
@@ -117,6 +119,7 @@ class SendButton extends StatelessWidget {
   final bool showingAmountField;
   final bool loading;
   final bool disabled;
+  final Color primaryColor;
 
   const SendButton({
     super.key,
@@ -125,13 +128,11 @@ class SendButton extends StatelessWidget {
     this.disabled = false,
     this.showingAmountField = true,
     this.loading = false,
+    required this.primaryColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = CupertinoTheme.of(context);
-    final primaryColor = theme.primaryColor;
-
     if (disabled) {
       return SizedBox.shrink();
     }
@@ -205,6 +206,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
   final bool disabled;
   final bool error;
   final String? logo;
+  final Color primaryColor;
 
   AmountFieldWithMessageToggle({
     super.key,
@@ -216,13 +218,11 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
     this.error = false,
     this.logo,
     this.onTopUpPressed,
+    required this.primaryColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = CupertinoTheme.of(context);
-    final primaryColor = theme.primaryColor;
-
     return Row(
       children: [
         Expanded(

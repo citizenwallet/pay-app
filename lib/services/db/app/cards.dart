@@ -125,12 +125,20 @@ class CardsTable extends DBTable {
   }
 
   // Upsert card by account
-  Future<void> upsert(DBCard card) async {
-    await db.insert(
+  Future<void> upsert(DBCard card, {Transaction? txn}) async {
+    await (txn ?? db).insert(
       name,
       card.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  Future<void> upsertMany(List<DBCard> cards) async {
+    await db.transaction((txn) async {
+      for (final card in cards) {
+        await upsert(card, txn: txn);
+      }
+    });
   }
 
   Future<void> delete(String uid) async {
@@ -139,5 +147,10 @@ class CardsTable extends DBTable {
       where: 'uid = ?',
       whereArgs: [uid],
     );
+  }
+
+  Future<void> replaceAll(List<DBCard> cards) async {
+    await db.delete(name);
+    await upsertMany(cards);
   }
 }

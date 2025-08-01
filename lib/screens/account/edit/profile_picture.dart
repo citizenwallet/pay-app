@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/theme/colors.dart';
 
@@ -32,6 +31,8 @@ class _ProfilePictureState extends State<ProfilePicture> {
   }
 
   void _handleSelectPhoto() {
+    FocusScope.of(context).unfocus();
+
     _profileState.selectPhoto();
   }
 

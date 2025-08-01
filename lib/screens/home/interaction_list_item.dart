@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
-import 'package:pay_app/services/wallet/models/userop.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/profile_circle.dart';

@@ -1,4 +1,7 @@
-import 'package:pay_app/models/place.dart';
+import 'dart:convert';
+
+import 'package:pay_app/models/place_with_menu.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/models/userop.dart';
 
 enum ExchangeDirection {
@@ -23,7 +26,8 @@ class Interaction {
   final bool isPlace;
   final bool isTreasury;
   final int? placeId; // id from supabase
-  final Place? place;
+  final PlaceWithMenu? place;
+  final ProfileV1 profile;
   final bool hasMenuItem;
   bool hasUnreadMessages;
   final DateTime lastMessageAt;
@@ -44,6 +48,7 @@ class Interaction {
     this.description,
     this.placeId,
     this.place,
+    required this.profile,
   });
 
   factory Interaction.fromJson(Map<String, dynamic> json) {
@@ -53,7 +58,9 @@ class Interaction {
 
     return Interaction(
       id: json['id'],
-      exchangeDirection: parseExchangeDirection(json['exchange_direction']),
+      exchangeDirection: ExchangeDirection.values.firstWhere(
+          (e) => e.name == json['exchange_direction'],
+          orElse: () => ExchangeDirection.sent),
       withAccount: withProfile['account'],
       imageUrl: withPlace != null ? withPlace['image'] : withProfile['image'],
       name: withPlace != null ? withPlace['name'] : withProfile['name'],
@@ -66,30 +73,54 @@ class Interaction {
       hasUnreadMessages: json['new_interaction'],
       lastMessageAt: DateTime.parse(transaction['created_at']),
       hasMenuItem: false,
-      place: withPlace != null ? Place.fromJson(withPlace) : null,
+      place: withPlace != null ? PlaceWithMenu.fromJson(withPlace) : null,
+      profile: ProfileV1.fromJson(withProfile),
+    );
+  }
+
+  factory Interaction.fromMap(Map<String, dynamic> json) {
+    return Interaction(
+      id: json['id'],
+      exchangeDirection: ExchangeDirection.values.firstWhere(
+          (e) => e.name == json['direction'],
+          orElse: () => ExchangeDirection.sent),
+      withAccount: json['with_account'],
+      imageUrl: json['image_url'],
+      name: json['name'],
+      contract: json['contract'],
+      amount: double.tryParse(json['amount']) ?? 0,
+      description: json['description'],
+      isPlace: json['is_place'] == 1,
+      isTreasury: json['is_treasury'] == 1,
+      placeId: json['place_id'],
+      hasUnreadMessages: json['has_unread_messages'] == 1,
+      lastMessageAt: DateTime.parse(json['last_message_at']),
+      hasMenuItem: json['has_menu_item'] == 1,
+      place: json['place'] != null
+          ? PlaceWithMenu.fromMap(jsonDecode(json['place']))
+          : null,
+      profile: ProfileV1.fromJson(jsonDecode(json['profile'])),
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'direction': exchangeDirection
-          .toString()
-          .split('.')
-          .last, // converts enum to string
-      'withAccount': withAccount,
+      'direction': exchangeDirection.name, // converts enum to string
+      'with_account': withAccount,
       'name': name,
-      'imageUrl': imageUrl,
+      'image_url': imageUrl,
       'contract': contract,
-      'amount': amount,
+      'amount': amount.toStringAsFixed(2),
       'description': description,
-      'isPlace': isPlace,
-      'isTreasury': isTreasury,
-      'placeId': placeId,
-      'hasUnreadMessages': hasUnreadMessages,
-      'lastMessageAt': lastMessageAt.toIso8601String(),
-      'hasMenuItem': hasMenuItem,
-      'place': place?.toMap(),
+      'is_place': isPlace ? 1 : 0,
+      'is_treasury': isTreasury ? 1 : 0,
+      'place_id': placeId,
+      'has_unread_messages': hasUnreadMessages ? 1 : 0,
+      'last_message_at': lastMessageAt.toIso8601String(),
+      'has_menu_item': hasMenuItem ? 1 : 0,
+      if (place != null) 'place': jsonEncode(place!.toMap()),
+      'profile': jsonEncode(profile.toJson()),
     };
   }
 
@@ -104,7 +135,8 @@ class Interaction {
     bool? hasUnreadMessages,
     DateTime? lastMessageAt,
     bool? hasMenuItem,
-    Place? place,
+    PlaceWithMenu? place,
+    ProfileV1? profile,
   }) {
     return Interaction(
       id: id,
@@ -122,6 +154,7 @@ class Interaction {
       lastMessageAt: lastMessageAt ?? this.lastMessageAt,
       hasMenuItem: hasMenuItem ?? this.hasMenuItem,
       place: place ?? this.place,
+      profile: profile ?? this.profile,
     );
   }
 

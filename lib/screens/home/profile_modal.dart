@@ -51,9 +51,9 @@ class _ProfileModalState extends State<ProfileModal> {
   void initState() {
     super.initState();
 
-    _cardsState = context.read<CardsState>();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _cardsState = context.read<CardsState>();
+
       onLoad();
     });
   }

@@ -14,6 +14,10 @@ enum OrderStatus {
   pending,
   paid,
   cancelled,
+  refunded,
+  refund_pending,
+  refund,
+  correction
 }
 
 enum OrderType {
@@ -36,6 +40,19 @@ class OrderPlace {
 
   factory OrderPlace.fromJson(Map<String, dynamic> json) {
     final accounts = json['accounts'] as List<dynamic>;
+    final account = accounts.first;
+
+    return OrderPlace(
+      slug: json['slug'],
+      display:
+          Display.values.firstWhereOrNull((e) => e.name == json['display']) ??
+              Display.amount,
+      account: account,
+    );
+  }
+
+  factory OrderPlace.fromMap(Map<String, dynamic> json) {
+    final accounts = (json['accounts'] ?? []) as List<dynamic>;
     final account = accounts.first;
 
     return OrderPlace(
@@ -119,7 +136,7 @@ class Order {
   }
 
   factory Order.fromMap(Map<String, dynamic> json) {
-    final place = OrderPlace.fromJson(jsonDecode(json['place'] ?? '{}'));
+    final place = OrderPlace.fromMap(jsonDecode(json['place'] ?? '{}'));
     return Order(
       id: json['id'],
       createdAt: DateTime.parse(json['created_at']),

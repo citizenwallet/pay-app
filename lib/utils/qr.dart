@@ -1,6 +1,28 @@
 import 'package:pay_app/services/wallet/utils.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+class QRData {
+  final String rawValue;
+  final QRFormat format;
+  final String address;
+
+  QRData({
+    required this.rawValue,
+    required this.format,
+    required this.address,
+  });
+
+  factory QRData.fromRawValue(String rawValue) {
+    final format = parseQRFormat(rawValue);
+    final (address, _, _, _) = parseQRCode(rawValue);
+    return QRData(
+      rawValue: rawValue,
+      format: format,
+      address: address,
+    );
+  }
+}
+
 // enum that represents the different qr code formats
 enum QRFormat {
   address,
@@ -117,7 +139,7 @@ QRFormat parseQRFormat(String raw) {
 
   final receiveUrl = Uri.parse(decodedRaw);
 
-  final placeSlug = receiveUrl.pathSegments.last;
+  final placeSlug = receiveUrl.pathSegments.first;
 
   if (placeSlug == '') {
     return ('', null, null, null);

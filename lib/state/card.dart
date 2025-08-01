@@ -2,13 +2,17 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/db/app/contacts.dart';
 import 'package:pay_app/services/db/app/db.dart';
+import 'package:pay_app/services/pay/cards.dart';
 import 'package:pay_app/services/pay/orders.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
+import 'package:pay_app/services/secure/secure.dart';
+import 'package:pay_app/services/sigauth/sigauth.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/utils/currency.dart';
@@ -19,6 +23,8 @@ class CardState with ChangeNotifier {
   final ContactsTable _contacts = AppDBService().contacts;
   final CardsTable _cards = AppDBService().cards;
   final PreferencesService _preferences = PreferencesService();
+  final CardsService _cardsService = CardsService();
+  final SecureService _secureService = SecureService();
 
   final Config _config;
 
@@ -53,20 +59,57 @@ class CardState with ChangeNotifier {
   String balance = '0';
 
   DBCard? card;
+  String? cardOwner;
+  bool cardOwnerLoading = false;
   bool ordersLoading = false;
   List<Order> orders = [];
 
   bool toppingUp = false;
 
   // state methods here
-  Future<void> fetchCardDetails(String? address, String? tokenAddress) async {
+  Future<void> fetchCardDetails(
+    String? address,
+    String? tokenAddress,
+  ) async {
     try {
       final token =
           _config.getToken(tokenAddress ?? _config.getPrimaryToken().address);
 
+      final credentials = _secureService.getCredentials();
+      if (credentials == null) {
+        return;
+      }
+
+      final (account, key) = credentials;
+
+      final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
+
+      final sigAuthService = SigAuthService(
+        credentials: key,
+        address: account,
+        redirect: redirectDomain != null ? 'https://$redirectDomain' : '',
+      );
+
+      final connection = sigAuthService.connect();
+
+      cardOwnerLoading = true;
+      safeNotifyListeners();
+
+      _cardsService.getCard(connection, cardId).then((card) {
+        if (card != null) {
+          cardOwner = card.owner;
+        }
+        cardOwnerLoading = false;
+        safeNotifyListeners();
+      }).catchError((_) {
+        cardOwnerLoading = false;
+        safeNotifyListeners();
+      });
+
       card = address != null
           ? DBCard(
-              uid: address,
+              uid:
+                  address, // this exists to allow me to pretend like this is a card
               project: 'main',
               account: address,
             )
@@ -87,7 +130,7 @@ class CardState with ChangeNotifier {
 
       if (card != null) {
         fetchOrders(
-          address: address,
+          address: cardAddress!.hexEip55,
           tokenAddress: tokenAddress,
           refresh: true,
         );
@@ -209,28 +252,6 @@ class CardState with ChangeNotifier {
     } finally {
       ordersLoading = false;
       safeNotifyListeners();
-    }
-  }
-
-  Future<void> saveCard(String? project) async {
-    try {
-      if (cardAddress == null) {
-        throw Exception('Card address not found');
-      }
-
-      await _cards.upsert(DBCard(
-        uid: cardId,
-        project: project ?? '',
-        account: cardAddress!.hexEip55,
-      ));
-
-      card = await _cards.getByUid(cardId);
-      safeNotifyListeners();
-
-      fetchOrders(refresh: true);
-    } catch (e) {
-      //
-      debugPrint(e.toString());
     }
   }
 

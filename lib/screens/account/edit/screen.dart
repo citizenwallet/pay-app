@@ -59,9 +59,13 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
     );
   }
 
-  void handleSave() {
+  void handleSave() async {
     _dismissKeyboard();
-    _profileState.saveProfile();
+
+    await _profileState.saveProfile();
+
+    _dismissKeyboard();
+    goBack();
   }
 
   @override
