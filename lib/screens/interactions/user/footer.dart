@@ -5,6 +5,7 @@ import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/widgets/transaction_input_row.dart';
 import 'package:pay_app/widgets/wide_button.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class Footer extends StatefulWidget {
@@ -155,7 +156,7 @@ class _FooterState extends State<Footer> {
           if (widget.phoneNumber != null)
             WideButton(
               child: Text(
-                'Share invite link',
+                AppLocalizations.of(context)!.shareInviteLink,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,

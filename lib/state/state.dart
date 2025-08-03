@@ -18,6 +18,7 @@ import 'package:pay_app/state/sending.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
+import 'package:pay_app/state/locale_state.dart';
 import 'package:provider/provider.dart';
 
 Widget provideAppState(
@@ -41,6 +42,9 @@ Widget provideAppState(
         ),
         ChangeNotifierProvider(
           create: (_) => ScanState(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => LocaleState(),
         ),
       ],
       builder: builder,

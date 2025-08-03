@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/order.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 
 class OrderScreen extends StatefulWidget {
@@ -18,7 +19,8 @@ class _OrderScreenState extends State<OrderScreen> {
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        middle: Text('Order #${order.id}'),
+        middle:
+            Text('${AppLocalizations.of(context)!.orderDetails} #${order.id}'),
       ),
       child: SafeArea(
         child: SingleChildScrollView(

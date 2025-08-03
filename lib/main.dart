@@ -10,12 +10,15 @@ import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
+import 'package:pay_app/services/localization/localization_service.dart';
 import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/state.dart';
 import 'package:pay_app/state/wallet.dart';
+import 'package:pay_app/state/locale_state.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -121,8 +124,12 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       routerConfig: router,
       theme: theme,
-      title: 'Brussels Pay',
-      locale: const Locale('en'),
+      title: AppLocalizations.of(context)?.appTitle ?? 'Brussels Pay',
+      locale: context
+              .select<LocaleState, Locale?>((state) => state.currentLocale) ??
+          LocalizationService.defaultLocale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context)
             .copyWith(textScaler: const TextScaler.linear(1.0)),

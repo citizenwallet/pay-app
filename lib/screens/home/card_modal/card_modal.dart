@@ -17,6 +17,7 @@ import 'package:pay_app/widgets/button.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:pay_app/widgets/cards/card.dart' show Card;
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -198,18 +199,18 @@ class _CardModalState extends State<CardModal> {
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: Text('Release Card'),
+        title: Text(AppLocalizations.of(context)!.releaseCard),
         content: Text(
             'Are you sure you want to release this card? This will allow others to claim it.'),
         actions: [
           CupertinoDialogAction(
-            child: Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
             onPressed: () => Navigator.of(context).pop(false),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text('Release'),
+            child: Text(AppLocalizations.of(context)!.release),
           ),
         ],
       ),
@@ -310,7 +311,9 @@ class _CardModalState extends State<CardModal> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                card == null ? 'New Card' : 'My Card',
+                card == null
+                    ? AppLocalizations.of(context)!.newCard
+                    : AppLocalizations.of(context)!.myCard,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -338,7 +341,7 @@ class _CardModalState extends State<CardModal> {
               onPressed: claimingCard || updatingCardName || widget.uid == null
                   ? null
                   : () => handleClaimCard(widget.uid!, widget.project),
-              text: 'Claim Card',
+              text: AppLocalizations.of(context)!.claimCard,
               labelColor: whiteColor,
               color: cardColor,
               suffix: claimingCard || updatingCardName
@@ -353,7 +356,7 @@ class _CardModalState extends State<CardModal> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  'Already claimed',
+                  AppLocalizations.of(context)!.alreadyClaimed,
                   style: TextStyle(
                     color: textMutedColor,
                     fontSize: 16,
@@ -475,7 +478,7 @@ class _CardModalState extends State<CardModal> {
           if (orders.isEmpty)
             SliverFillRemaining(
               child: Center(
-                child: Text('No orders found'),
+                child: Text(AppLocalizations.of(context)!.noOrdersFound),
               ),
             ),
           SliverToBoxAdapter(
@@ -507,7 +510,7 @@ class _CardModalState extends State<CardModal> {
       children: [
         Button(
           onPressed: releasingCard || updatingCardName ? null : handleRelease,
-          text: 'Release Card',
+          text: AppLocalizations.of(context)!.releaseCard,
           labelColor: whiteColor,
           color: dangerColor,
           suffix: releasingCard || updatingCardName

@@ -7,6 +7,7 @@ import 'package:pay_app/theme/colors.dart';
 
 import 'package:pay_app/widgets/wide_button.dart';
 import 'package:provider/provider.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 
 import 'about.dart';
 
@@ -45,6 +46,11 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
     GoRouter.of(context).pop();
   }
 
+  void handleLanguageSelection() {
+    final accountAddress = widget.accountAddress;
+    GoRouter.of(context).push('/$accountAddress/my-account/settings/language');
+  }
+
   void handleLogout() async {
     final navigator = GoRouter.of(context);
 
@@ -53,16 +59,16 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
       context: context,
       barrierDismissible: false,
       builder: (context) => CupertinoAlertDialog(
-        title: Text('Log out'),
-        content: Text('Are you sure you want to log out?'),
+        title: Text(AppLocalizations.of(context)!.logOut),
+        content: Text(AppLocalizations.of(context)!.logOutConfirm),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           CupertinoDialogAction(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text('Log out'),
+            child: Text(AppLocalizations.of(context)!.logOut),
           ),
         ],
       ),
@@ -89,18 +95,17 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
       context: context,
       barrierDismissible: false,
       builder: (context) => CupertinoAlertDialog(
-        title: Text('Delete data & log out'),
-        content:
-            Text('Your profile will be cleared and you will be logged out.'),
+        title: Text(AppLocalizations.of(context)!.deleteData),
+        content: Text(AppLocalizations.of(context)!.deleteDataConfirm),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text('Delete'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -132,7 +137,7 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         middle: Text(
-          'Settings',
+          AppLocalizations.of(context)!.settings,
           style: TextStyle(
             fontSize: 27,
             fontWeight: FontWeight.w600,
@@ -164,7 +169,36 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
                 About(),
                 const SizedBox(height: 40),
                 Text(
-                  'Account',
+                  AppLocalizations.of(context)?.language ?? 'Language',
+                  style: TextStyle(
+                    fontSize: 27,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF000000),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                WideButton(
+                  color: const Color(0xFF4D4D4D),
+                  onPressed: handleLanguageSelection,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context)?.selectLanguage ??
+                            'Select Language',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: CupertinoColors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
+                Text(
+                  AppLocalizations.of(context)!.account,
                   style: TextStyle(
                     fontSize: 27,
                     fontWeight: FontWeight.w600,
@@ -181,7 +215,7 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        'Log out',
+                        AppLocalizations.of(context)!.logOut,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -213,7 +247,7 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        'Delete data & log out',
+                        AppLocalizations.of(context)!.deleteData,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,

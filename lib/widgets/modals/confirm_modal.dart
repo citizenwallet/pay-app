@@ -4,6 +4,7 @@ import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/button.dart';
 import 'package:pay_app/widgets/header.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 
 const List<String> emptyDetails = [];
 
@@ -87,7 +88,8 @@ class ConfirmModal extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Button(
-                            text: cancelText ?? 'Cancel',
+                            text: cancelText ??
+                                AppLocalizations.of(context)!.cancel,
                             minWidth: 140,
                             maxWidth: 140,
                             color: neutralColor,
@@ -97,7 +99,8 @@ class ConfirmModal extends StatelessWidget {
                             width: 10,
                           ),
                           Button(
-                            text: confirmText ?? 'Confirm',
+                            text: confirmText ??
+                                AppLocalizations.of(context)!.confirm,
                             minWidth: 140,
                             maxWidth: 140,
                             color: confirmColor ?? primaryColor,

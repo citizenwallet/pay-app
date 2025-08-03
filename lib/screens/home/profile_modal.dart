@@ -20,6 +20,7 @@ import 'package:pay_app/widgets/cards/card_skeleton.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
 import 'package:pay_app/widgets/modals/nfc_modal.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
 import 'package:web3dart/web3dart.dart';
@@ -183,7 +184,7 @@ class _ProfileModalState extends State<ProfileModal> {
         alignment: Alignment.bottomCenter,
         builder: (context, toast) => Toast(
           icon: const Text('✅'),
-          title: const Text('Card added'),
+          title: Text(AppLocalizations.of(context)!.cardAdded),
         ),
       );
 
@@ -207,7 +208,7 @@ class _ProfileModalState extends State<ProfileModal> {
         alignment: Alignment.bottomCenter,
         builder: (context, toast) => Toast(
           icon: const Text('✅'),
-          title: const Text('Card already added'),
+          title: Text(AppLocalizations.of(context)!.cardAlreadyAdded),
         ),
       );
     }
@@ -223,18 +224,18 @@ class _ProfileModalState extends State<ProfileModal> {
         context: context,
         barrierDismissible: false,
         builder: (context) => CupertinoAlertDialog(
-          title: Text('Card not configured'),
+          title: Text(AppLocalizations.of(context)!.cardNotConfigured),
           content: Text(
               'This card is not configured. Would you like to configure it?'),
           actions: [
             CupertinoDialogAction(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             CupertinoDialogAction(
               isDefaultAction: true,
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text('Configure'),
+              child: Text(AppLocalizations.of(context)!.configure),
             ),
           ],
         ),
@@ -281,7 +282,7 @@ class _ProfileModalState extends State<ProfileModal> {
         alignment: Alignment.bottomCenter,
         builder: (context, toast) => Toast(
           icon: const Text('✅'),
-          title: const Text('Card configured'),
+          title: Text(AppLocalizations.of(context)!.cardConfigured),
         ),
       );
 
@@ -300,7 +301,7 @@ class _ProfileModalState extends State<ProfileModal> {
         alignment: Alignment.bottomCenter,
         builder: (context, toast) => Toast(
           icon: const Text('❌'),
-          title: const Text('NFC is not available on this device'),
+          title: Text(AppLocalizations.of(context)!.nfcNotAvailable),
         ),
       );
     }
@@ -483,9 +484,10 @@ class _ProfileModalState extends State<ProfileModal> {
       children: [
         Button(
           onPressed: claimingCard ? null : () => handleAddCard(profile),
-          text: 'Add Card',
+          text: AppLocalizations.of(context)!.addCard,
           labelColor: whiteColor,
           color: primaryColor,
+          maxWidth: 300,
           suffix: claimingCard
               ? const CupertinoActivityIndicator()
               : Padding(
@@ -500,9 +502,10 @@ class _ProfileModalState extends State<ProfileModal> {
         const SizedBox(height: 12),
         Button(
           onPressed: handleAppSettings,
-          text: 'App Settings',
+          text: AppLocalizations.of(context)!.appSettings,
           labelColor: textColor,
           color: surfaceColor,
+          maxWidth: 300,
           prefix: Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Icon(

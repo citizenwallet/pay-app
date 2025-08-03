@@ -32,6 +32,7 @@ import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:pay_app/screens/home/scanner_modal/scanner_modal.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
 import 'package:universal_io/io.dart';
@@ -249,14 +250,14 @@ class _HomeScreenState extends State<HomeScreen>
             context: context,
             barrierDismissible: true,
             builder: (modalContext) => ConfirmModal(
-              title: 'Display contacts',
+              title: AppLocalizations.of(context)!.displayContacts,
               details: [
                 'This app uses your contact list to help you search for the right person.',
                 'No contact data is sent to our servers.',
                 'We generate the account number on device.',
               ],
-              cancelText: 'Skip',
-              confirmText: 'Allow',
+              cancelText: AppLocalizations.of(context)!.skip,
+              confirmText: AppLocalizations.of(context)!.allow,
             ),
           );
 
@@ -540,7 +541,7 @@ class _HomeScreenState extends State<HomeScreen>
       alignment: Alignment.bottomCenter,
       builder: (context, toast) => Toast(
         icon: const Text('🚀'),
-        title: const Text('Your topup is on the way'),
+        title: Text(AppLocalizations.of(context)!.topupOnWay),
       ),
     );
 
@@ -771,7 +772,8 @@ class _HomeScreenState extends State<HomeScreen>
                         if (nothingFound)
                           SliverToBoxAdapter(
                             child: Center(
-                              child: Text('No results found'),
+                              child: Text(
+                                  AppLocalizations.of(context)!.noResultsFound),
                             ),
                           ),
                         SliverToBoxAdapter(
@@ -929,7 +931,7 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
               : CupertinoButton(
                   padding: const EdgeInsets.fromLTRB(5, 0, 24, 0),
                   onPressed: onCancel,
-                  child: const Text('Cancel'),
+                  child: Text(AppLocalizations.of(context)!.cancel),
                 )
       ],
     );

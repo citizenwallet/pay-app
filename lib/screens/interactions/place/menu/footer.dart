@@ -5,6 +5,7 @@ import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/wide_button.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class Footer extends StatelessWidget {
@@ -65,7 +66,7 @@ class Footer extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Pay',
+                  AppLocalizations.of(context)!.pay,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -97,7 +98,7 @@ class Footer extends StatelessWidget {
             WideButton(
               onPressed: () => onTopUp(topUpPlugin.url),
               child: Text(
-                'Top up',
+                AppLocalizations.of(context)!.topUp,
                 style: TextStyle(
                   color: CupertinoColors.white,
                   fontSize: 16,

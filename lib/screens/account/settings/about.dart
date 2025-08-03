@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:pay_app/widgets/settings_row.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -32,7 +33,7 @@ class About extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'About',
+          AppLocalizations.of(context)!.about,
           style: TextStyle(
             fontSize: 27,
             fontWeight: FontWeight.w600,
@@ -41,17 +42,17 @@ class About extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         SettingsRow(
-          label: 'Terms and conditions',
+          label: AppLocalizations.of(context)!.termsAndConditions,
           icon: 'assets/icons/docs.svg',
           onTap: handleTermsAndConditions,
         ),
         SettingsRow(
-          label: 'Privacy policy',
+          label: AppLocalizations.of(context)!.privacyPolicy,
           icon: 'assets/icons/docs.svg',
           onTap: handlePrivacyPolicy,
         ),
         SettingsRow(
-          label: 'Brussels Pay',
+          label: AppLocalizations.of(context)!.brusselsPay,
           icon: 'assets/logo.svg',
           onTap: handleBrusselsPay,
         ),

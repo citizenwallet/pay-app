@@ -10,6 +10,7 @@ import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/text_field.dart';
 import 'package:pay_app/widgets/transaction_input_row.dart';
 import 'package:pay_app/widgets/wide_button.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class Footer extends StatefulWidget {
@@ -162,7 +163,7 @@ class _FooterState extends State<Footer> {
               onPressed: widget.onMenuPressed,
               disabled: paying,
               child: Text(
-                'Menu',
+                AppLocalizations.of(context)!.menu,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -262,7 +263,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
           child: CustomTextField(
             controller: amountController,
             enabled: !isSending,
-            placeholder: 'Enter amount',
+            placeholder: AppLocalizations.of(context)!.enterAmount,
             placeholderStyle: TextStyle(
               color: Color(0xFFB7ADC4),
               fontSize: 20,
@@ -334,7 +335,7 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
           child: CustomTextField(
             controller: messageController,
             enabled: !isSending,
-            placeholder: 'Add a message',
+            placeholder: AppLocalizations.of(context)!.addMessage,
             placeholderStyle: TextStyle(
               color: Color(0xFFB7ADC4),
               fontSize: 20,

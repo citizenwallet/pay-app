@@ -5,6 +5,7 @@ import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:pay_app/widgets/text_input_modal.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 
 enum TapDepth {
   none,
@@ -104,8 +105,8 @@ class _CardState extends State<Card> {
       context: context,
       barrierDismissible: true,
       builder: (modalContext) => TextInputModal(
-        title: 'Edit card name',
-        placeholder: 'Enter account name',
+        title: AppLocalizations.of(context)!.edit,
+        placeholder: AppLocalizations.of(context)!.enterText,
         initialValue: widget.profile?.name ?? '',
       ),
     );
@@ -281,7 +282,7 @@ class _CardState extends State<Card> {
                     minimumSize: Size.zero,
                     onPressed: widget.onTopUpPressed,
                     child: SizedBox(
-                      width: 100,
+                      width: 80,
                       height: 28,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -294,7 +295,7 @@ class _CardState extends State<Card> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'add funds',
+                            AppLocalizations.of(context)!.addFunds,
                             style: TextStyle(
                               color: widget.color,
                               fontSize: 14,

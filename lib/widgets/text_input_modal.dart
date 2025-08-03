@@ -16,8 +16,8 @@ class TextInputModal extends StatefulWidget {
 
   const TextInputModal({
     super.key,
-    this.title = 'Submit',
-    this.placeholder = 'Enter text',
+    required this.title,
+    required this.placeholder,
     this.initialValue = '',
     this.secure = false,
     this.confirm = false,

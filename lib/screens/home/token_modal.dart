@@ -6,6 +6,7 @@ import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class TokenModal extends StatefulWidget {
@@ -89,7 +90,7 @@ class _TokenModalState extends State<TokenModal> {
       return Container(
         padding: const EdgeInsets.all(16),
         child: Text(
-          'No tokens available',
+          AppLocalizations.of(context)!.noResultsFound,
           style: TextStyle(
             color: textMutedColor,
             fontSize: 16,
@@ -106,7 +107,7 @@ class _TokenModalState extends State<TokenModal> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Text(
-              'Tokens',
+              AppLocalizations.of(context)!.items,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,

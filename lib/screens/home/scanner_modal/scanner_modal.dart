@@ -23,6 +23,7 @@ import 'package:pay_app/widgets/button.dart';
 import 'package:pay_app/widgets/cards/card.dart';
 import 'package:pay_app/widgets/profile_card.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
 
@@ -359,7 +360,7 @@ class ScannerModalState extends State<ScannerModal>
         alignment: Alignment.bottomCenter,
         builder: (context, toast) => Toast(
           icon: const Text('❌'),
-          title: const Text('Transaction failed'),
+          title: Text(AppLocalizations.of(context)!.transactionFailed),
         ),
       );
       return;
@@ -597,7 +598,8 @@ class ScannerModalState extends State<ScannerModal>
                                     profile: ProfileV1(
                                       username: qrData.address,
                                       account: '',
-                                      name: 'User not found',
+                                      name: AppLocalizations.of(context)!
+                                          .noResultsFound,
                                       image: 'assets/icons/profile.png',
                                       imageMedium: 'assets/icons/profile.png',
                                       imageSmall: 'assets/icons/profile.png',
@@ -624,7 +626,7 @@ class ScannerModalState extends State<ScannerModal>
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 10),
                                 child: Button(
-                                  text: 'View Menu',
+                                  text: AppLocalizations.of(context)!.viewMenu,
                                   color: blackColor,
                                   labelColor: whiteColor,
                                   onPressed: place == null || transactionSending
@@ -656,7 +658,7 @@ class ScannerModalState extends State<ScannerModal>
                                     const EdgeInsets.symmetric(vertical: 10),
                                 child: Button(
                                   text:
-                                      '${order == null ? 'Pay' : 'Confirm Order'}${transactionSending ? '...' : ''}',
+                                      '${order == null ? AppLocalizations.of(context)!.pay : AppLocalizations.of(context)!.confirmOrder}${transactionSending ? '...' : ''}',
                                   color: primaryColor,
                                   labelColor: whiteColor,
                                   onPressed: transactionSending
@@ -682,7 +684,8 @@ class ScannerModalState extends State<ScannerModal>
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 10),
                                 child: Button(
-                                  text: 'Inspect Card',
+                                  text:
+                                      AppLocalizations.of(context)!.inspectCard,
                                   color: primaryColor,
                                   labelColor: whiteColor,
                                   onPressed: qrData.address.isNotEmpty
@@ -746,7 +749,7 @@ class ScannerModalState extends State<ScannerModal>
                       child: Row(
                         children: [
                           Button(
-                            text: 'Close',
+                            text: AppLocalizations.of(context)!.close,
                             color: blackColor,
                             labelColor: whiteColor,
                             onPressed: () => handleDismiss(context),
