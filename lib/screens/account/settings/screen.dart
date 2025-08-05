@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/state/account.dart';
 import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
+import 'package:pay_app/widgets/settings_row.dart';
 
 import 'package:pay_app/widgets/wide_button.dart';
 import 'package:provider/provider.dart';
@@ -34,7 +36,13 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
       _walletState = context.read<WalletState>();
       _accountState = context.read<AccountState>();
       _onboardingState = context.read<OnboardingState>();
+
+      onLoad();
     });
+  }
+
+  void onLoad() {
+    _accountState.checkAudioMuted();
   }
 
   @override
@@ -124,12 +132,20 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
     }
   }
 
+  void handleAudioMuted(bool muted) {
+    HapticFeedback.lightImpact();
+
+    _accountState.setAudioMuted(!muted);
+  }
+
   @override
   Widget build(BuildContext context) {
     final safeAreaBottom = MediaQuery.of(context).padding.bottom;
 
     final isLoggingOut = context.select((AccountState a) => a.loggingOut);
     final isDeletingData = context.select((AccountState a) => a.deletingData);
+
+    final audioMuted = context.select((AccountState a) => a.audioMuted);
 
     final theme = CupertinoTheme.of(context);
     final primaryColor = theme.primaryColor;
@@ -166,7 +182,23 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
               children: [
                 // Notifications(),
                 const SizedBox(height: 20),
-                About(),
+                Text(
+                  AppLocalizations.of(context)?.general ?? 'General',
+                  style: TextStyle(
+                    fontSize: 27,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF000000),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SettingsRow(
+                  label: AppLocalizations.of(context)!.audio,
+                  icon: 'assets/icons/sound.svg',
+                  trailing: CupertinoSwitch(
+                    value: !audioMuted,
+                    onChanged: handleAudioMuted,
+                  ),
+                ),
                 const SizedBox(height: 40),
                 Text(
                   AppLocalizations.of(context)?.language ?? 'Language',
@@ -196,6 +228,8 @@ class _MyAccountSettingsState extends State<MyAccountSettings> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 40),
+                About(),
                 const SizedBox(height: 40),
                 Text(
                   AppLocalizations.of(context)!.account,

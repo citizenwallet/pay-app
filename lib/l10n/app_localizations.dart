@@ -384,7 +384,7 @@ abstract class AppLocalizations {
   /// Terms and conditions text
   ///
   /// In en, this message translates to:
-  /// **'Terms and conditions'**
+  /// **'terms and conditions'**
   String get termsAndConditions;
 
   /// Phone number placeholder
@@ -693,6 +693,18 @@ abstract class AppLocalizations {
   /// **'About'**
   String get about;
 
+  /// No description provided for @general.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get general;
+
+  /// Audio text
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get audio;
+
   /// Privacy policy text
   ///
   /// In en, this message translates to:
@@ -708,7 +720,7 @@ abstract class AppLocalizations {
   /// Add funds button text
   ///
   /// In en, this message translates to:
-  /// **'Add funds'**
+  /// **'top up'**
   String get addFunds;
 }
 

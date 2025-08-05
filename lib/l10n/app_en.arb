@@ -99,7 +99,8 @@
     "pushNotifications": "Push notifications",
     "searchForPeopleOrPlaces": "Search for people or places",
     "about": "About",
-    "termsAndConditions": "Terms and conditions",
+    "general": "General",
+    "audio": "Audio",
     "privacyPolicy": "Privacy policy",
     "brusselsPay": "Brussels Pay",
     "addFunds": "top up",
@@ -416,5 +417,8 @@
     },
     "@addFunds": {
         "description": "Add funds button text"
+    },
+    "@audio": {
+        "description": "Audio text"
     }
 }

@@ -81,8 +81,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteData => 'Delete data & log out';
 
   @override
-  String get deleteDataConfirm =>
-      'Your profile will be cleared and you will be logged out.';
+  String get deleteDataConfirm => 'Your profile will be cleared and you will be logged out.';
 
   @override
   String get cardAdded => 'Card added';
@@ -153,7 +152,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bySigningIn => 'By signing in, you agree to the ';
 
   @override
-  String get termsAndConditions => 'Terms and conditions';
+  String get termsAndConditions => 'terms and conditions';
 
   @override
   String get phoneNumberPlaceholder => '+32475123456';
@@ -307,6 +306,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get about => 'About';
+
+  @override
+  String get general => 'General';
+
+  @override
+  String get audio => 'Audio';
 
   @override
   String get privacyPolicy => 'Privacy policy';

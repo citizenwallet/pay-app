@@ -84,6 +84,7 @@ dependencies:
   toastification: ^3.0.2
   nfc_manager: ^4.0.2
   nfc_manager_ndef: ^1.0.1
+  audio_in_app: ^2.1.1
 
 dev_dependencies:
   flutter_test:
@@ -112,6 +113,8 @@ flutter:
     - assets/logo.svg
     - assets/logo.png
     - assets/logo.jpg
+    - assets/audio/tx_notification.wav
+    - assets/icons/sound.svg
     - assets/icons/profile.svg
     - assets/icons/profile.png
     - assets/icons/profile.jpg

@@ -62,4 +62,12 @@ class PreferencesService {
       await _preferences.setString('token_address', tokenAddress);
     }
   }
+
+  Future setAudioMuted(bool muted) async {
+    await _preferences.setBool('audio_muted', muted);
+  }
+
+  bool get audioMuted {
+    return _preferences.getBool('audio_muted') ?? false;
+  }
 }

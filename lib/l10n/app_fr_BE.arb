@@ -99,7 +99,8 @@
     "pushNotifications": "Notifications push",
     "searchForPeopleOrPlaces": "Rechercher des personnes ou des lieux",
     "about": "À propos",
-    "termsAndConditions": "Conditions d'utilisation",
+    "general": "Général",
+    "audio": "Audio",
     "privacyPolicy": "Politique de confidentialité",
     "brusselsPay": "Brussels Pay",
     "addFunds": "top up"

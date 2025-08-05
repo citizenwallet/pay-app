@@ -81,8 +81,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get deleteData => 'Gegevens verwijderen en uitloggen';
 
   @override
-  String get deleteDataConfirm =>
-      'Je profiel wordt gewist en je wordt uitgelogd.';
+  String get deleteDataConfirm => 'Je profiel wordt gewist en je wordt uitgelogd.';
 
   @override
   String get cardAdded => 'Kaart toegevoegd';
@@ -153,7 +152,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get bySigningIn => 'Door in te loggen ga je akkoord met de ';
 
   @override
-  String get termsAndConditions => 'Algemene voorwaarden';
+  String get termsAndConditions => 'algemene voorwaarden';
 
   @override
   String get phoneNumberPlaceholder => '+32475123456';
@@ -309,6 +308,12 @@ class AppLocalizationsNl extends AppLocalizations {
   String get about => 'Over';
 
   @override
+  String get general => 'Algemeen';
+
+  @override
+  String get audio => 'Audio';
+
+  @override
   String get privacyPolicy => 'Privacybeleid';
 
   @override
@@ -320,7 +325,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
 /// The translations for Dutch Flemish, as used in Belgium (`nl_BE`).
 class AppLocalizationsNlBe extends AppLocalizationsNl {
-  AppLocalizationsNlBe() : super('nl_BE');
+  AppLocalizationsNlBe(): super('nl_BE');
 
   @override
   String get appTitle => 'Brussels Pay';
@@ -395,8 +400,7 @@ class AppLocalizationsNlBe extends AppLocalizationsNl {
   String get deleteData => 'Gegevens verwijderen en uitloggen';
 
   @override
-  String get deleteDataConfirm =>
-      'Je profiel wordt gewist en je wordt uitgelogd.';
+  String get deleteDataConfirm => 'Je profiel wordt gewist en je wordt uitgelogd.';
 
   @override
   String get cardAdded => 'Kaart toegevoegd';
@@ -467,7 +471,7 @@ class AppLocalizationsNlBe extends AppLocalizationsNl {
   String get bySigningIn => 'Door in te loggen ga je akkoord met de ';
 
   @override
-  String get termsAndConditions => 'Algemene voorwaarden';
+  String get termsAndConditions => 'algemene voorwaarden';
 
   @override
   String get phoneNumberPlaceholder => '+32475123456';
@@ -621,6 +625,12 @@ class AppLocalizationsNlBe extends AppLocalizationsNl {
 
   @override
   String get about => 'Over';
+
+  @override
+  String get general => 'Algemeen';
+
+  @override
+  String get audio => 'Audio';
 
   @override
   String get privacyPolicy => 'Privacybeleid';

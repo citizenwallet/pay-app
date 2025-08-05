@@ -81,8 +81,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get deleteData => 'Supprimer les données et se déconnecter';
 
   @override
-  String get deleteDataConfirm =>
-      'Votre profil sera effacé et vous serez déconnecté.';
+  String get deleteDataConfirm => 'Votre profil sera effacé et vous serez déconnecté.';
 
   @override
   String get cardAdded => 'Carte ajoutée';
@@ -153,7 +152,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get bySigningIn => 'En vous connectant, vous acceptez les ';
 
   @override
-  String get termsAndConditions => 'Conditions d\'utilisation';
+  String get termsAndConditions => 'conditions d\'utilisation';
 
   @override
   String get phoneNumberPlaceholder => '+32475123456';
@@ -309,6 +308,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get about => 'À propos';
 
   @override
+  String get general => 'Général';
+
+  @override
+  String get audio => 'Audio';
+
+  @override
   String get privacyPolicy => 'Politique de confidentialité';
 
   @override
@@ -320,7 +325,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
 /// The translations for French, as used in Belgium (`fr_BE`).
 class AppLocalizationsFrBe extends AppLocalizationsFr {
-  AppLocalizationsFrBe() : super('fr_BE');
+  AppLocalizationsFrBe(): super('fr_BE');
 
   @override
   String get appTitle => 'Brussels Pay';
@@ -395,8 +400,7 @@ class AppLocalizationsFrBe extends AppLocalizationsFr {
   String get deleteData => 'Supprimer les données et se déconnecter';
 
   @override
-  String get deleteDataConfirm =>
-      'Votre profil sera effacé et vous serez déconnecté.';
+  String get deleteDataConfirm => 'Votre profil sera effacé et vous serez déconnecté.';
 
   @override
   String get cardAdded => 'Carte ajoutée';
@@ -467,7 +471,7 @@ class AppLocalizationsFrBe extends AppLocalizationsFr {
   String get bySigningIn => 'En vous connectant, vous acceptez les ';
 
   @override
-  String get termsAndConditions => 'Conditions d\'utilisation';
+  String get termsAndConditions => 'conditions d\'utilisation';
 
   @override
   String get phoneNumberPlaceholder => '+32475123456';
@@ -621,6 +625,12 @@ class AppLocalizationsFrBe extends AppLocalizationsFr {
 
   @override
   String get about => 'À propos';
+
+  @override
+  String get general => 'Général';
+
+  @override
+  String get audio => 'Audio';
 
   @override
   String get privacyPolicy => 'Politique de confidentialité';
