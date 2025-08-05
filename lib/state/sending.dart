@@ -3,6 +3,7 @@ import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/models/checkout_item.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/place_with_menu.dart';
+import 'package:pay_app/services/audio/audio.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/db/app/contacts.dart';
@@ -29,6 +30,7 @@ class SendingState with ChangeNotifier {
   late OrdersService _ordersService;
   PlacesService apiService = PlacesService();
   final SecureService _secureService = SecureService();
+  final AudioService _audioService = AudioService();
 
   // private variables here
   final Config _config;
@@ -447,6 +449,8 @@ class SendingState with ChangeNotifier {
       if (txHash == null) {
         throw Exception('Transaction failed');
       }
+
+      _audioService.txNotification();
 
       Checkout? checkout = manualCheckout;
       switch (data.format) {

@@ -5,6 +5,7 @@ import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/place_menu.dart';
 import 'package:pay_app/models/place_with_menu.dart';
+import 'package:pay_app/services/audio/audio.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/db/app/orders.dart';
@@ -25,6 +26,8 @@ class OrdersWithPlaceState with ChangeNotifier {
   final PlacesWithMenuTable _placesWithMenuTable =
       AppDBService().placesWithMenu;
   final OrdersTable _ordersTable = AppDBService().orders;
+
+  final AudioService _audioService = AudioService();
 
   final SecureService _secureService = SecureService();
   final PlacesService _placesService = PlacesService();
@@ -433,6 +436,8 @@ class OrdersWithPlaceState with ChangeNotifier {
         throw Exception('Failed to pay order');
       }
 
+      _audioService.txNotification();
+
       final sigAuthService = SigAuthService(credentials: key, address: account);
 
       final sigAuthConnection = sigAuthService.connect();
@@ -561,6 +566,8 @@ class OrdersWithPlaceState with ChangeNotifier {
       if (txHash == null) {
         throw Exception('Failed to pay order');
       }
+
+      _audioService.txNotification();
 
       final sigAuthService = SigAuthService(credentials: key, address: account);
 
