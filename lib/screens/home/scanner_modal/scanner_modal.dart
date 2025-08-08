@@ -28,6 +28,7 @@ import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
+import 'package:web3dart/web3dart.dart';
 
 class CardInfo {
   final String uid;
@@ -129,9 +130,10 @@ class ScannerModalState extends State<ScannerModal>
   }
 
   void onLoad() async {
-    await delay(const Duration(milliseconds: 100));
-
     _sendingState.getAccountProfile();
+    _cardsState.fetchCards(tokenAddress: widget.tokenAddress);
+
+    await delay(const Duration(milliseconds: 100));
 
     setState(() {
       _showCards = true;
@@ -151,8 +153,6 @@ class ScannerModalState extends State<ScannerModal>
     if (widget.manualScanResult == null) {
       showScanner();
     }
-
-    _cardsState.fetchCards(tokenAddress: widget.tokenAddress);
 
     if (widget.manualScanResult != null) {
       await handleScanData(widget.manualScanResult!);
@@ -188,8 +188,26 @@ class ScannerModalState extends State<ScannerModal>
     });
   }
 
-  void handleDismiss(BuildContext context) {
-    GoRouter.of(context).pop();
+  void handleDismiss(BuildContext context, {bool reverse = false}) async {
+    final lastAccount = context.read<SendingState>().lastAccount;
+
+    if (reverse) {
+      hideScanner();
+
+      await delay(const Duration(milliseconds: 100));
+
+      setState(() {
+        _showCards = false;
+      });
+
+      await delay(const Duration(milliseconds: 600));
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+
+    GoRouter.of(context).pop(lastAccount);
   }
 
   void handleDetection(BarcodeCapture capture) async {
@@ -239,18 +257,19 @@ class ScannerModalState extends State<ScannerModal>
             (place.place.display == Display.menu ||
                 place.place.display == Display.amountAndMenu) &&
             place.items.isNotEmpty) {
-          final myAddress = context.read<SendingState>().myAddress;
+          final initialAddress = context.read<SendingState>().initialAddress;
 
           final cards = context.read<CardsState>().cards;
 
-          final lastCard = context.read<SendingState>().lastCard;
+          final lastAccount = context.read<SendingState>().lastAccount;
 
-          final currentCardSerial =
-              cards.firstWhereOrNull((card) => card.account == lastCard)?.uid;
+          final currentCardSerial = cards
+              .firstWhereOrNull((card) => card.account == lastAccount)
+              ?.uid;
 
           handleViewMenu(
             widget.tokenAddress,
-            myAddress,
+            initialAddress,
             place,
             serial: currentCardSerial,
           );
@@ -273,13 +292,13 @@ class ScannerModalState extends State<ScannerModal>
         }
 
         final config = context.read<WalletState>().config;
-        final myAddress = context.read<SendingState>().myAddress;
+        final appAccount = context.read<SendingState>().appAccount;
 
         handleInspectCard(
           config,
           qrData.address,
           profile?.account ?? '',
-          myAddress,
+          appAccount,
           project ?? 'main',
         );
         break;
@@ -305,15 +324,7 @@ class ScannerModalState extends State<ScannerModal>
   void handleCardChanged(CardInfo card) {
     HapticFeedback.heavyImpact();
 
-    _sendingState.setLastCard(card.profile.account);
-  }
-
-  void handleSubmit(BuildContext context) async {
-    final navigator = GoRouter.of(context);
-
-    if (_textController.value.text.isNotEmpty) {
-      navigator.pop(_textController.value.text);
-    }
+    _sendingState.setLastAccount(card.profile.account);
   }
 
   void handlePay({bool showTransactionInput = true}) async {
@@ -393,7 +404,7 @@ class ScannerModalState extends State<ScannerModal>
     Config config,
     String serial,
     String cardAddress,
-    String myAddress,
+    EthereumAddress appAccount,
     String project,
   ) async {
     hideScanner();
@@ -409,7 +420,7 @@ class ScannerModalState extends State<ScannerModal>
           config,
           serial,
           cardAddress,
-          myAddress,
+          appAccount.hexEip55,
           CardModal(uid: serial, project: project),
         );
       },
@@ -460,8 +471,8 @@ class ScannerModalState extends State<ScannerModal>
       (state) => state.currentTokenConfig,
     );
 
-    final myAddress = context.select<SendingState, String>(
-      (state) => state.myAddress,
+    final appAccount = context.select<SendingState, EthereumAddress>(
+      (state) => state.appAccount,
     );
 
     final qrData = context.watch<SendingState>().qrData;
@@ -496,16 +507,16 @@ class ScannerModalState extends State<ScannerModal>
 
     final cards = context.watch<CardsState>().cards;
 
-    final initialCard = context.select<SendingState, String?>(
-      (state) => state.initialCard,
+    final initialAddress = context.select<SendingState, String>(
+      (state) => state.initialAddress,
     );
 
-    final lastCard = context.select<SendingState, String?>(
-      (state) => state.lastCard,
+    final lastAccount = context.select<SendingState, String?>(
+      (state) => state.lastAccount,
     );
 
     final currentCardSerial =
-        cards.firstWhereOrNull((card) => card.account == lastCard)?.uid;
+        cards.firstWhereOrNull((card) => card.account == lastAccount)?.uid;
 
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -671,7 +682,7 @@ class ScannerModalState extends State<ScannerModal>
                                       ? null
                                       : () => handleViewMenu(
                                             widget.tokenAddress,
-                                            myAddress,
+                                            lastAccount!,
                                             place,
                                             serial: currentCardSerial,
                                           ),
@@ -734,7 +745,7 @@ class ScannerModalState extends State<ScannerModal>
                                             config,
                                             qrData.address,
                                             profile.account,
-                                            myAddress,
+                                            appAccount,
                                             cardProject ?? 'main',
                                           )
                                       : null,
@@ -780,8 +791,8 @@ class ScannerModalState extends State<ScannerModal>
                             qrData != null || _manualScan,
                             primaryColor,
                             cards,
-                            initialCard,
-                            lastCard,
+                            initialAddress,
+                            lastAccount,
                             _pageController,
                           ),
                         ),
@@ -797,7 +808,8 @@ class ScannerModalState extends State<ScannerModal>
                             text: AppLocalizations.of(context)!.close,
                             color: blackColor,
                             labelColor: whiteColor,
-                            onPressed: () => handleDismiss(context),
+                            onPressed: () =>
+                                handleDismiss(context, reverse: true),
                           ),
                         ],
                       ),
@@ -816,8 +828,8 @@ class ScannerModalState extends State<ScannerModal>
     bool payReady,
     Color primaryColor,
     List<DBCard> cards,
-    String? initialCard,
-    String? lastCard,
+    String? initialAccount,
+    String? lastAccount,
     PageController controller,
   ) {
     final width = MediaQuery.of(context).size.width;
@@ -852,11 +864,11 @@ class ScannerModalState extends State<ScannerModal>
             ),
           ),
     ];
-    if (initialCard != null) {
+    if (initialAccount != null) {
       // Sort cards by initial card first
       cardInfoList.sort((a, b) {
-        if (a.profile.account == initialCard) return -1;
-        if (b.profile.account == initialCard) return 1;
+        if (a.profile.account == initialAccount) return -1;
+        if (b.profile.account == initialAccount) return 1;
         return a.profile.account.compareTo(b.profile.account);
       });
     }
@@ -876,7 +888,7 @@ class ScannerModalState extends State<ScannerModal>
           itemBuilder: (context, index) {
             final card = cardInfoList[index];
 
-            final isSelected = card.profile.account == lastCard;
+            final isSelected = card.profile.account == lastAccount;
 
             if (payReady && !isSelected) {
               return const SizedBox.shrink();

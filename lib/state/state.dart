@@ -159,17 +159,17 @@ Widget provideCardState(
 Widget provideSendingState(
   BuildContext context,
   Config config,
-  String myAddress,
+  String initialAddress,
   Widget child,
 ) {
   return MultiProvider(
-    key: Key('sending-$myAddress'),
+    key: Key('sending-$initialAddress'),
     providers: [
       ChangeNotifierProvider(
-        key: Key('sending-$myAddress'),
+        key: Key('sending-$initialAddress'),
         create: (_) => SendingState(
           config: config,
-          myAddress: myAddress,
+          initialAddress: initialAddress,
         ),
       ),
     ],

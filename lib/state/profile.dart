@@ -37,17 +37,20 @@ enum ProfileUpdateState {
 class ProfileState with ChangeNotifier {
   // instantiate services here
   final ContactsTable _contacts = AppDBService().contacts;
+  final PreferencesService _preferencesService = PreferencesService();
   final SecureService _secureService = SecureService();
   final PhotosService _photosService = PhotosService();
 
   // private variables here
   bool _pauseProfileCreation = false;
-  final String _account;
+  String _account;
 
   final Config _config;
 
   // constructor here
-  ProfileState(this._account, this._config);
+  ProfileState(this._account, this._config) {
+    _account = _preferencesService.lastAccount ?? _account;
+  }
 
   bool _mounted = true;
   void safeNotifyListeners() {
@@ -78,6 +81,13 @@ class ProfileState with ChangeNotifier {
   ProfileUpdateState profileUpdateState = ProfileUpdateState.idle;
   Uint8List? editingImage;
   String? editingImageExt;
+
+  void switchAccount(String account) {
+    _account = account;
+    safeNotifyListeners();
+
+    fetchProfile();
+  }
 
   Future<void> fetchProfile() async {
     final contact = await _contacts.getByAccount(_account);

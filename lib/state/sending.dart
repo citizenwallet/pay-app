@@ -21,6 +21,7 @@ import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/utils.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/utils/qr.dart';
+import 'package:web3dart/web3dart.dart';
 
 class SendingState with ChangeNotifier {
   // instantiate services here
@@ -42,11 +43,12 @@ class SendingState with ChangeNotifier {
 
   SendingState({
     required config,
-    required this.myAddress,
+    required this.initialAddress,
   }) : _config = config {
-    _ordersService = OrdersService(account: myAddress);
-    initialCard = _preferencesService.lastCard;
-    lastCard = _preferencesService.lastCard;
+    _ordersService = OrdersService(account: initialAddress);
+    lastAccount = _preferencesService.lastAccount ?? initialAddress;
+
+    init();
   }
 
   bool _mounted = true;
@@ -62,8 +64,20 @@ class SendingState with ChangeNotifier {
     super.dispose();
   }
 
+  void init() {
+    final credentials = _secureService.getCredentials();
+    if (credentials == null) {
+      return;
+    }
+
+    final (account, key) = credentials;
+
+    appAccount = account;
+  }
+
   // state variables here
-  String myAddress;
+  late EthereumAddress appAccount;
+  String initialAddress;
 
   QRData? qrData;
   ProfileV1? profile;
@@ -78,13 +92,12 @@ class SendingState with ChangeNotifier {
   bool transactionSending = false;
   double amount = 0.0;
 
-  String? initialCard;
-  String? lastCard;
+  late String lastAccount;
 
   // state methods here
-  void setLastCard(String cardAddress) {
-    _preferencesService.setLastCard(cardAddress);
-    lastCard = cardAddress;
+  void setLastAccount(String account) {
+    _preferencesService.setLastAccount(account);
+    lastAccount = account;
     safeNotifyListeners();
   }
 
@@ -327,7 +340,7 @@ class SendingState with ChangeNotifier {
 
   Future<void> getAccountProfile() async {
     try {
-      final contact = await _contacts.getByAccount(myAddress);
+      final contact = await _contacts.getByAccount(appAccount.hexEip55);
       final cachedProfile = contact?.getProfile();
       if (cachedProfile != null) {
         accountProfile = cachedProfile;
@@ -337,7 +350,7 @@ class SendingState with ChangeNotifier {
 
       accountProfile = await getProfile(
         _config,
-        myAddress,
+        appAccount.hexEip55,
       );
       safeNotifyListeners();
     } catch (e, s) {

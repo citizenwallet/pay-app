@@ -560,7 +560,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     final tokenAddress = context.read<WalletState>().currentTokenAddress;
 
-    await showCupertinoDialog<void>(
+    final selectedAccount = await showCupertinoDialog<String?>(
       context: context,
       useRootNavigator: false,
       builder: (modalContext) => provideSendingState(
@@ -574,6 +574,11 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
     );
+
+    if (selectedAccount != null) {
+      _walletState.switchAccount(selectedAccount);
+      _profileState.switchAccount(selectedAccount);
+    }
 
     _backgroundColorController.reverse();
 

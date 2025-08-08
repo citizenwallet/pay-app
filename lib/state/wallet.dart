@@ -95,6 +95,11 @@ class WalletState with ChangeNotifier {
         return false;
       }
 
+      final lastAccount = _preferencesService.lastAccount;
+      if (lastAccount != null) {
+        switchAccount(lastAccount);
+      }
+
       await updateBalance();
 
       loading = false;
@@ -109,6 +114,18 @@ class WalletState with ChangeNotifier {
     }
 
     return null;
+  }
+
+  void switchAccount(String account) {
+    _address = EthereumAddress.fromHex(account);
+    safeNotifyListeners();
+
+    _preferencesService.setLastAccount(account);
+
+    updateBalance();
+    updateTokenBalances();
+
+    startBalancePolling();
   }
 
   Future<void> startBalancePolling() async {

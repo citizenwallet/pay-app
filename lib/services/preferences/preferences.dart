@@ -71,11 +71,11 @@ class PreferencesService {
     return _preferences.getBool('audio_muted') ?? false;
   }
 
-  Future setLastCard(String cardAddress) async {
-    await _preferences.setString('last_card', cardAddress);
+  Future setLastAccount(String account) async {
+    await _preferences.setString('last_account', account);
   }
 
-  String? get lastCard {
-    return _preferences.getString('last_card');
+  String? get lastAccount {
+    return _preferences.getString('last_account');
   }
 }
