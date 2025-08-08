@@ -240,7 +240,16 @@ class ScannerModalState extends State<ScannerModal>
                 place.place.display == Display.amountAndMenu) &&
             place.items.isNotEmpty) {
           final myAddress = context.read<SendingState>().myAddress;
-          handleViewMenu(widget.tokenAddress, myAddress, place);
+
+          final cards = context.read<CardsState>().cards;
+
+          final lastCard = context.read<SendingState>().lastCard;
+
+          final currentCardSerial =
+              cards.firstWhereOrNull((card) => card.account == lastCard)?.uid;
+
+          handleViewMenu(widget.tokenAddress, myAddress, place,
+              serial: currentCardSerial);
         }
 
         if (place != null && (place.place.display == Display.amount)) {
@@ -415,6 +424,8 @@ class ScannerModalState extends State<ScannerModal>
   }) async {
     hideScanner();
 
+    print('serial: $serial');
+
     final navigator = GoRouter.of(context);
 
     final checkout = await navigator
@@ -439,7 +450,6 @@ class ScannerModalState extends State<ScannerModal>
 
     final safeBottomPadding = MediaQuery.of(context).padding.bottom;
     final safeTopPadding = MediaQuery.of(context).padding.top;
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     final config = context.select<WalletState, Config>((state) => state.config);
     final tokenConfig = context.select<WalletState, TokenConfig?>(
@@ -659,6 +669,7 @@ class ScannerModalState extends State<ScannerModal>
                                             widget.tokenAddress,
                                             myAddress,
                                             place,
+                                            serial: currentCardSerial,
                                           ),
                                 ),
                               ),
