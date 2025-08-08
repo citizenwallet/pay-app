@@ -70,4 +70,12 @@ class PreferencesService {
   bool get audioMuted {
     return _preferences.getBool('audio_muted') ?? false;
   }
+
+  Future setLastCard(String cardAddress) async {
+    await _preferences.setString('last_card', cardAddress);
+  }
+
+  String? get lastCard {
+    return _preferences.getString('last_card');
+  }
 }

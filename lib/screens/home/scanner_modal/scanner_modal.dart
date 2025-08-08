@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/place.dart';
@@ -7,6 +8,7 @@ import 'package:pay_app/models/place_with_menu.dart';
 import 'package:pay_app/screens/home/card_modal/card_modal.dart';
 import 'package:pay_app/screens/home/scanner_modal/footer.dart';
 import 'package:pay_app/services/config/config.dart';
+import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/state/cards.dart';
 import 'package:pay_app/state/sending.dart';
@@ -79,12 +81,16 @@ class ScannerModalState extends State<ScannerModal>
 
   double _opacity = 0;
 
+  final PageController _pageController = PageController(
+    viewportFraction: 0.85,
+    initialPage: 0,
+  );
+
   StreamSubscription<Object?>? _subscription;
 
   bool _manualScan = false;
   bool _showCards = false;
   bool _showControls = false;
-  int _selectedCardIndex = 0;
 
   @override
   void initState() {
@@ -283,12 +289,10 @@ class ScannerModalState extends State<ScannerModal>
     }
   }
 
-  void handleCardChanged(int index, CardInfo card) {
+  void handleCardChanged(CardInfo card) {
     HapticFeedback.heavyImpact();
 
-    setState(() {
-      _selectedCardIndex = index;
-    });
+    _sendingState.setLastCard(card.profile.account);
   }
 
   void handleSubmit(BuildContext context) async {
@@ -314,6 +318,7 @@ class ScannerModalState extends State<ScannerModal>
   void handleConfirmOrder(
     String tokenAddress, {
     Checkout? checkout,
+    String? serial,
   }) async {
     hideScanner();
 
@@ -321,7 +326,7 @@ class ScannerModalState extends State<ScannerModal>
 
     await delay(const Duration(milliseconds: 100));
 
-    handleSend(tokenAddress, null, null, checkout: checkout);
+    handleSend(tokenAddress, null, null, checkout: checkout, serial: serial);
   }
 
   void handleClearData() {
@@ -339,12 +344,14 @@ class ScannerModalState extends State<ScannerModal>
     String? amount,
     String? message, {
     Checkout? checkout,
+    String? serial,
   }) async {
     final success = await _sendingState.sendTransaction(
       tokenAddress,
       amount: amount,
       message: message,
       manualCheckout: checkout,
+      serial: serial,
     );
 
     if (!mounted) {
@@ -401,7 +408,11 @@ class ScannerModalState extends State<ScannerModal>
   }
 
   void handleViewMenu(
-      String tokenAddress, String account, PlaceWithMenu place) async {
+    String tokenAddress,
+    String account,
+    PlaceWithMenu place, {
+    String? serial,
+  }) async {
     hideScanner();
 
     final navigator = GoRouter.of(context);
@@ -414,7 +425,7 @@ class ScannerModalState extends State<ScannerModal>
       return;
     }
 
-    handleConfirmOrder(tokenAddress, checkout: checkout);
+    handleConfirmOrder(tokenAddress, checkout: checkout, serial: serial);
   }
 
   void handleTopUp(String tokenAddress) {}
@@ -468,6 +479,19 @@ class ScannerModalState extends State<ScannerModal>
 
     final amount =
         context.select<SendingState, double>((state) => state.amount);
+
+    final cards = context.watch<CardsState>().cards;
+
+    final initialCard = context.select<SendingState, String?>(
+      (state) => state.initialCard,
+    );
+
+    final lastCard = context.select<SendingState, String?>(
+      (state) => state.lastCard,
+    );
+
+    final currentCardSerial =
+        cards.firstWhereOrNull((card) => card.account == lastCard)?.uid;
 
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -667,6 +691,7 @@ class ScannerModalState extends State<ScannerModal>
                                           ? handlePay
                                           : () => handleConfirmOrder(
                                                 tokenConfig.address,
+                                                serial: currentCardSerial,
                                               ),
                                 ),
                               ),
@@ -738,6 +763,10 @@ class ScannerModalState extends State<ScannerModal>
                             context,
                             qrData != null || _manualScan,
                             primaryColor,
+                            cards,
+                            initialCard,
+                            lastCard,
+                            _pageController,
                           ),
                         ),
                       ),
@@ -770,6 +799,10 @@ class ScannerModalState extends State<ScannerModal>
     BuildContext context,
     bool payReady,
     Color primaryColor,
+    List<DBCard> cards,
+    String? initialCard,
+    String? lastCard,
+    PageController controller,
   ) {
     final width = MediaQuery.of(context).size.width;
 
@@ -783,7 +816,6 @@ class ScannerModalState extends State<ScannerModal>
 
     final accountProfile = context.watch<SendingState>().accountProfile;
 
-    final cards = context.watch<CardsState>().cards;
     final cardBalances = context.watch<CardsState>().cardBalances;
     final profiles = context.watch<CardsState>().profiles;
 
@@ -804,6 +836,14 @@ class ScannerModalState extends State<ScannerModal>
             ),
           ),
     ];
+    if (initialCard != null) {
+      // Sort cards by initial card first
+      cardInfoList.sort((a, b) {
+        if (a.profile.account == initialCard) return -1;
+        if (b.profile.account == initialCard) return 1;
+        return a.profile.account.compareTo(b.profile.account);
+      });
+    }
 
     return [
       SliverFillRemaining(
@@ -812,18 +852,15 @@ class ScannerModalState extends State<ScannerModal>
               ? const NeverScrollableScrollPhysics()
               : const BouncingScrollPhysics(),
           scrollDirection: Axis.horizontal,
-          controller: PageController(
-            viewportFraction: 0.85,
-            initialPage: 0,
-          ),
+          controller: controller,
           onPageChanged: (index) {
-            handleCardChanged(index, cardInfoList[index]);
+            handleCardChanged(cardInfoList[index]);
           },
           itemCount: cardInfoList.length,
           itemBuilder: (context, index) {
             final card = cardInfoList[index];
 
-            final isSelected = _selectedCardIndex == index;
+            final isSelected = card.profile.account == lastCard;
 
             if (payReady && !isSelected) {
               return const SizedBox.shrink();
