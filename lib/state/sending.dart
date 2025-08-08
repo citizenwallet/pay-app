@@ -533,7 +533,6 @@ class SendingState with ChangeNotifier {
       } else {
         // this is a card, submit tx from card as owner
         if (order != null && place != null) {
-          print('confirming card order');
           final newOrder = await _ordersService.confirmCardOrder(
             sigAuthConnection,
             serial,
@@ -547,7 +546,6 @@ class SendingState with ChangeNotifier {
           _ordersTable.upsert(newOrder);
         } else {
           if (checkout != null) {
-            print('creating card order');
             final newOrder = await _ordersService.createCardOrder(
               sigAuthConnection,
               serial,

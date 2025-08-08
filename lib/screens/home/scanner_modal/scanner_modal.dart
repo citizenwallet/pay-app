@@ -248,8 +248,12 @@ class ScannerModalState extends State<ScannerModal>
           final currentCardSerial =
               cards.firstWhereOrNull((card) => card.account == lastCard)?.uid;
 
-          handleViewMenu(widget.tokenAddress, myAddress, place,
-              serial: currentCardSerial);
+          handleViewMenu(
+            widget.tokenAddress,
+            myAddress,
+            place,
+            serial: currentCardSerial,
+          );
         }
 
         if (place != null && (place.place.display == Display.amount)) {
@@ -424,8 +428,6 @@ class ScannerModalState extends State<ScannerModal>
   }) async {
     hideScanner();
 
-    print('serial: $serial');
-
     final navigator = GoRouter.of(context);
 
     final checkout = await navigator
@@ -439,7 +441,9 @@ class ScannerModalState extends State<ScannerModal>
     handleConfirmOrder(tokenAddress, checkout: checkout, serial: serial);
   }
 
-  void handleTopUp(String tokenAddress) {}
+  void handleTopUp(String tokenAddress) {
+    // TODO: implement top up
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -680,7 +684,8 @@ class ScannerModalState extends State<ScannerModal>
                                       (placeDisplay == Display.amount ||
                                           placeDisplay ==
                                               Display.amountAndMenu)) ||
-                                  profile != null) &&
+                                  (profile != null &&
+                                      currentCardSerial == null)) &&
                               !showTransactionInput &&
                               tokenConfig != null &&
                               !isCard)
