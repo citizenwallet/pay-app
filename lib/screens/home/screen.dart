@@ -36,6 +36,7 @@ import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
 import 'package:universal_io/io.dart';
+import 'package:web3dart/web3dart.dart';
 
 import 'profile_bar.dart';
 import 'search_bar.dart';
@@ -452,8 +453,10 @@ class _HomeScreenState extends State<HomeScreen>
     clearSearch();
   }
 
-  Future<void> handleProfileTap(String myAddress,
-      {String? tokenAddress}) async {
+  Future<void> handleProfileTap(
+    String myAddress, {
+    String? tokenAddress,
+  }) async {
     _searchFocusNode.unfocus();
 
     _stopInitRetries = true;
@@ -462,7 +465,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     HapticFeedback.heavyImpact();
 
-    await showCupertinoDialog<String?>(
+    final account = await showCupertinoDialog<EthereumAddress?>(
       context: context,
       barrierDismissible: true,
       useRootNavigator: false,
@@ -471,6 +474,11 @@ class _HomeScreenState extends State<HomeScreen>
         tokenAddress: tokenAddress,
       ),
     );
+
+    if (account != null) {
+      _walletState.switchAccount(account.hexEip55);
+      _profileState.switchAccount(account.hexEip55);
+    }
 
     _backgroundColorController.reverse();
 

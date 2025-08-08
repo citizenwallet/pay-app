@@ -103,10 +103,10 @@ class _ProfileModalState extends State<ProfileModal> {
     navigator.push('/${widget.accountAddress}/my-account/settings');
   }
 
-  void handleClose(BuildContext context) {
+  void handleClose(BuildContext context, {EthereumAddress? account}) {
     final navigator = GoRouter.of(context);
     HapticFeedback.heavyImpact();
-    navigator.pop();
+    navigator.pop(account);
   }
 
   Future<void> handleCardSelect(
@@ -131,27 +131,29 @@ class _ProfileModalState extends State<ProfileModal> {
       return;
     }
 
-    HapticFeedback.heavyImpact();
+    handleClose(context, account: cardAddress);
 
-    await showCupertinoModalPopup(
-      useRootNavigator: false,
-      context: context,
-      builder: (modalContext) {
-        return provideCardState(
-          context,
-          config,
-          cardId ?? myAddress,
-          cardAddress.hexEip55,
-          myAddress,
-          CardModal(
-            uid: cardId,
-            address: cardId == null ? myAddress : null,
-            project: project,
-            tokenAddress: tokenAddress,
-          ),
-        );
-      },
-    );
+    // HapticFeedback.heavyImpact();
+
+    // await showCupertinoModalPopup(
+    //   useRootNavigator: false,
+    //   context: context,
+    //   builder: (modalContext) {
+    //     return provideCardState(
+    //       context,
+    //       config,
+    //       cardId ?? myAddress,
+    //       cardAddress.hexEip55,
+    //       myAddress,
+    //       CardModal(
+    //         uid: cardId,
+    //         address: cardId == null ? myAddress : null,
+    //         project: project,
+    //         tokenAddress: tokenAddress,
+    //       ),
+    //     );
+    //   },
+    // );
   }
 
   Future<void> handleAddCard(ProfileV1? profile) async {
@@ -314,7 +316,7 @@ class _ProfileModalState extends State<ProfileModal> {
     final cards = context.watch<CardsState>().cards;
     final cardBalances = context.watch<CardsState>().cardBalances;
 
-    final profile = context.select((ProfileState p) => p.profile);
+    final profile = context.select((ProfileState p) => p.appProfile);
     final alias = context.select((ProfileState p) => p.alias);
 
     return DismissibleModalPopup(

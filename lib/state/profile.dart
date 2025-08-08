@@ -13,6 +13,7 @@ import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/utils/random.dart';
 import 'package:pay_app/utils/uint8.dart';
+import 'package:web3dart/web3dart.dart';
 
 enum ProfileUpdateState {
   idle,
@@ -50,6 +51,8 @@ class ProfileState with ChangeNotifier {
   // constructor here
   ProfileState(this._account, this._config) {
     _account = _preferencesService.lastAccount ?? _account;
+
+    init();
   }
 
   bool _mounted = true;
@@ -65,7 +68,22 @@ class ProfileState with ChangeNotifier {
     super.dispose();
   }
 
+  void init() async {
+    final credentials = _secureService.getCredentials();
+    if (credentials == null) {
+      return;
+    }
+
+    final (account, key) = credentials;
+
+    appAccount = account;
+    appProfile = await getProfile(_config, account.hexEip55) ?? ProfileV1();
+  }
+
   // state variables here
+  late EthereumAddress appAccount;
+  ProfileV1 appProfile = ProfileV1();
+
   bool loading = true;
   bool error = false;
   ProfileV1? _profile;
