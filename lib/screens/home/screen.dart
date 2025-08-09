@@ -6,12 +6,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:pay_app/models/interaction.dart';
-import 'package:pay_app/screens/home/card_modal/card_modal.dart';
 import 'package:pay_app/screens/home/contact_list_item.dart';
 import 'package:pay_app/screens/home/profile_list_item.dart';
 import 'package:pay_app/screens/home/profile_modal.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
+import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/contacts/contacts.dart';
 import 'package:pay_app/state/contacts/selectors.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
@@ -25,7 +25,6 @@ import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
-import 'package:pay_app/utils/qr.dart';
 import 'package:pay_app/utils/ratio.dart';
 import 'package:pay_app/widgets/modals/confirm_modal.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
@@ -76,10 +75,10 @@ class _HomeScreenState extends State<HomeScreen>
   late InteractionState _interactionState;
   late PlacesState _placesState;
   late WalletState _walletState;
-  late ProfileState _profileState;
   late ContactsState _contactsState;
   late TopupState _topupState;
 
+  bool _handlingExpiredCredentials = false;
   bool _stopInitRetries = false;
   bool _pauseDeepLinkHandling = false;
 
@@ -121,31 +120,12 @@ class _HomeScreenState extends State<HomeScreen>
     _interactionState = context.read<InteractionState>();
     _placesState = context.read<PlacesState>();
     _walletState = context.read<WalletState>();
-    _profileState = context.read<ProfileState>();
     _contactsState = context.read<ContactsState>();
     _topupState = context.read<TopupState>();
   }
 
   Future<void> onLoad() async {
     if (_stopInitRetries) {
-      return;
-    }
-
-    final navigator = GoRouter.of(context);
-
-    final success = await _walletState.init();
-    if (success == null) {
-      await delay(const Duration(milliseconds: 2000));
-      return onLoad();
-    }
-
-    if (success == false) {
-      _onboardingState.clearConnectedAccountAddress();
-      navigator.go('/');
-      return;
-    }
-
-    if (!mounted) {
       return;
     }
 
@@ -156,16 +136,21 @@ class _HomeScreenState extends State<HomeScreen>
       return onLoad();
     }
 
-    _profileState.fetchProfile();
-
-    await _walletState.updateBalance();
-    await _interactionState.getInteractions();
     _interactionState.startPolling(updateBalance: _walletState.updateBalance);
-    await _placesState.getAllPlaces();
-    await _profileState.giveProfileUsername();
+  }
 
-    // Force refresh from remote API on initial load
-    await _interactionState.refreshFromRemote();
+  void handleExpiredCredentials() {
+    if (_handlingExpiredCredentials) {
+      return;
+    }
+
+    _handlingExpiredCredentials = true;
+
+    final navigator = GoRouter.of(context);
+
+    _onboardingState.clearConnectedAccountAddress();
+    navigator.go('/');
+    return;
   }
 
   Future<void> handleDeepLink(String accountAddress, String? deepLink) async {
@@ -342,6 +327,8 @@ class _HomeScreenState extends State<HomeScreen>
 
     _stopInitRetries = true;
 
+    print('/$myAddress/place/$slug');
+
     await navigator.push('/$myAddress/place/$slug', extra: {
       'openMenu': openMenu,
       'orderId': orderId,
@@ -352,49 +339,10 @@ class _HomeScreenState extends State<HomeScreen>
     clearSearch();
   }
 
-  void handleInteractionWithCard(
-    String? myAddress,
-    String cardId,
-    String? project,
-  ) async {
-    if (myAddress == null) {
-      return;
-    }
-
-    final config = context.read<WalletState>().config;
-
-    final cardAddress = await config.cardManagerContract!.getCardAddress(
-      cardId,
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    _backgroundColorController.forward();
-
-    HapticFeedback.heavyImpact();
-
-    await showCupertinoModalPopup(
-      useRootNavigator: false,
-      context: context,
-      builder: (modalContext) {
-        return provideCardState(
-          context,
-          config,
-          cardId,
-          cardAddress.hexEip55,
-          myAddress,
-          CardModal(uid: cardId, project: project),
-        );
-      },
-    );
-
-    _backgroundColorController.reverse();
-  }
-
   Future<void> handleInteractionWithContact(
-      String? myAddress, SimpleContact contact) async {
+    String? myAddress,
+    SimpleContact contact,
+  ) async {
     if (myAddress == null) {
       return;
     }
@@ -475,9 +423,12 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
 
-    if (account != null) {
-      _walletState.switchAccount(account.hexEip55);
-      _profileState.switchAccount(account.hexEip55);
+    print('profile tap: ${account?.hexEip55}');
+
+    if (account != null && mounted) {
+      final navigator = GoRouter.of(context);
+
+      navigator.replace('/$account');
     }
 
     _backgroundColorController.reverse();
@@ -566,7 +517,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     _backgroundColorController.forward();
 
-    final tokenAddress = context.read<WalletState>().currentTokenAddress;
+    final tokenAddress = context.read<AppState>().currentTokenAddress;
 
     final selectedAccount = await showCupertinoDialog<String?>(
       context: context,
@@ -583,9 +534,10 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
 
-    if (selectedAccount != null) {
-      _walletState.switchAccount(selectedAccount);
-      _profileState.switchAccount(selectedAccount);
+    if (selectedAccount != null && context.mounted) {
+      final navigator = GoRouter.of(context);
+
+      navigator.replace('/$selectedAccount');
     }
 
     _backgroundColorController.reverse();
@@ -630,6 +582,12 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final expiredCredentials =
+        context.select<WalletState, bool>((state) => state.credentialsExpired);
+    if (expiredCredentials) {
+      handleExpiredCredentials();
+    }
+
     final safeTopPadding = MediaQuery.of(context).padding.top;
     final double heightFactor = 1 - (_scrollOffset / _maxScrollOffset);
 
@@ -654,7 +612,7 @@ class _HomeScreenState extends State<HomeScreen>
     final safeBottomPadding = MediaQuery.of(context).padding.bottom;
 
     final tokenAddress =
-        context.select((WalletState state) => state.currentTokenAddress);
+        context.select((AppState state) => state.currentTokenAddress);
 
     final nothingFound = _searchController.text.isNotEmpty &&
         interactions.isEmpty &&

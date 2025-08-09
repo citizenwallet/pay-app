@@ -100,6 +100,8 @@ GoRouter createRouter(
                 final accountAddress = state.pathParameters['account']!;
                 final deepLink = state.uri.queryParameters['deepLink'];
 
+                print('switching account: $accountAddress');
+
                 return HomeScreen(
                   accountAddress: accountAddress,
                   deepLink: deepLink,

@@ -38,20 +38,17 @@ enum ProfileUpdateState {
 class ProfileState with ChangeNotifier {
   // instantiate services here
   final ContactsTable _contacts = AppDBService().contacts;
-  final PreferencesService _preferencesService = PreferencesService();
   final SecureService _secureService = SecureService();
   final PhotosService _photosService = PhotosService();
 
   // private variables here
   bool _pauseProfileCreation = false;
-  String _account;
+  final String _account;
 
   final Config _config;
 
   // constructor here
   ProfileState(this._account, this._config) {
-    _account = _preferencesService.lastAccount ?? _account;
-
     init();
   }
 
@@ -78,6 +75,10 @@ class ProfileState with ChangeNotifier {
 
     appAccount = account;
     appProfile = await getProfile(_config, account.hexEip55) ?? ProfileV1();
+
+    await fetchProfile();
+
+    giveProfileUsername();
   }
 
   // state variables here
@@ -100,13 +101,6 @@ class ProfileState with ChangeNotifier {
   Uint8List? editingImage;
   String? editingImageExt;
 
-  void switchAccount(String account) {
-    _account = account;
-    safeNotifyListeners();
-
-    fetchProfile();
-  }
-
   Future<void> fetchProfile() async {
     final contact = await _contacts.getByAccount(_account);
     final cachedProfile = contact?.getProfile();
@@ -115,7 +109,19 @@ class ProfileState with ChangeNotifier {
 
       loading = false;
       safeNotifyListeners();
+      return;
     }
+
+    final remoteProfile = await getProfile(_config, _account);
+    if (remoteProfile == null) {
+      return;
+    }
+
+    _profile = remoteProfile;
+    loading = false;
+    safeNotifyListeners();
+
+    _contacts.upsert(DBContact.fromProfile(remoteProfile));
   }
 
   // state methods here
@@ -145,14 +151,16 @@ class ProfileState with ChangeNotifier {
     debugPrint('handleNewProfile');
 
     try {
-      final contact = await _contacts.getByAccount(_account);
+      final profileAccount = appAccount.hexEip55;
+
+      final contact = await _contacts.getByAccount(profileAccount);
       final cachedProfile = contact?.getProfile();
       if (cachedProfile != null) {
         _profile = cachedProfile;
         safeNotifyListeners();
       }
 
-      final existingProfile = await getProfile(_config, _account);
+      final existingProfile = await getProfile(_config, profileAccount);
 
       if (existingProfile != null) {
         _contacts.upsert(DBContact.fromProfile(existingProfile));

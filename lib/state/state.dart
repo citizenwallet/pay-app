@@ -29,13 +29,10 @@ Widget provideAppState(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => AppState(),
+          create: (_) => AppState(config),
         ),
         ChangeNotifierProvider(
           create: (_) => CommunityState(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => WalletState(config),
         ),
         ChangeNotifierProvider(
           create: (_) => OnboardingState(config),
@@ -62,6 +59,10 @@ Widget provideAccountState(
   return MultiProvider(
     key: Key('account-$account'),
     providers: [
+      ChangeNotifierProvider(
+        key: Key('wallet-$account'),
+        create: (_) => WalletState(config, account),
+      ),
       ChangeNotifierProvider(
         key: Key('interactions-$account'),
         create: (_) => InteractionState(

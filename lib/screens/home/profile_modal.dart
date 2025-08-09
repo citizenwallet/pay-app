@@ -7,6 +7,7 @@ import 'package:pay_app/screens/home/card_modal/card_modal.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
+import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/cards.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/state.dart';
@@ -346,14 +347,14 @@ class _ProfileModalState extends State<ProfileModal> {
 
     final balance = context.watch<WalletState>().tokenBalances[
             widget.tokenAddress ??
-                context.read<WalletState>().currentTokenAddress] ??
+                context.read<AppState>().currentTokenAddress] ??
         '0.0';
 
-    final tokenConfig = context.select<WalletState, TokenConfig?>(
+    final tokenConfig = context.select<AppState, TokenConfig?>(
       (state) => state.currentTokenConfig,
     );
 
-    final primaryColor = context.select<WalletState, Color>(
+    final primaryColor = context.select<AppState, Color>(
       (state) => state.tokenPrimaryColor,
     );
 

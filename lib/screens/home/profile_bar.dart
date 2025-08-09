@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:pay_app/screens/home/token_modal.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
+import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
@@ -34,14 +35,14 @@ class ProfileBar extends StatefulWidget {
 }
 
 class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
-  late WalletState _walletState;
+  late AppState _appState;
 
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _walletState = context.read<WalletState>();
+      _appState = context.read<AppState>();
     });
   }
 
@@ -57,24 +58,25 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
     );
 
     if (selectedToken != null) {
-      _walletState.setCurrentToken(selectedToken);
+      _appState.setCurrentToken(selectedToken);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final tokenConfig = context.select<AppState, TokenConfig>(
+      (state) => state.currentTokenConfig,
+    );
+
     final balance = context.select<WalletState, String>(
-      (state) => state.tokenBalances[state.currentTokenAddress] ?? '0.0',
+      (state) => state.tokenBalances[tokenConfig.address] ?? '0.0',
     );
     final config = context.select<WalletState, Config?>(
       (state) => state.config,
     );
-    final tokenConfig = context.select<WalletState, TokenConfig?>(
-      (state) => state.currentTokenConfig,
-    );
 
     final topUpPlugin = config?.getTopUpPlugin(
-      tokenAddress: tokenConfig?.address,
+      tokenAddress: tokenConfig.address,
     );
 
     final profile = context.watch<ProfileState>().profile;
@@ -99,7 +101,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
     final width = MediaQuery.of(context).size.width;
     final adjustedWidth = widget.shrink * width;
 
-    final primaryColor = context.select<WalletState, Color>(
+    final primaryColor = context.select<AppState, Color>(
       (state) => state.tokenPrimaryColor,
     );
 
@@ -199,7 +201,7 @@ class TopUpButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = context.select<WalletState, Color>(
+    final primaryColor = context.select<AppState, Color>(
       (state) => state.tokenPrimaryColor,
     );
 

@@ -11,6 +11,10 @@ class PlacesState with ChangeNotifier {
   bool loading = false;
   bool error = false;
 
+  PlacesState() {
+    getAllPlaces();
+  }
+
   bool _mounted = true;
   void safeNotifyListeners() {
     if (_mounted) {

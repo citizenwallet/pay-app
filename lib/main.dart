@@ -12,6 +12,7 @@ import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/localization/localization_service.dart';
+import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/state.dart';
 import 'package:pay_app/state/wallet.dart';
@@ -112,7 +113,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.select<WalletState, CupertinoThemeData>(
+    final theme = context.select<AppState, CupertinoThemeData>(
       (state) => CupertinoThemeData(
         primaryColor: state.tokenPrimaryColor,
         brightness: Brightness.light,

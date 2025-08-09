@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/services/config/config.dart';
+import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
@@ -25,7 +26,7 @@ class Footer extends StatelessWidget {
     final config = context.select<WalletState, Config?>(
       (state) => state.config,
     );
-    final tokenConfig = context.select<WalletState, TokenConfig>(
+    final tokenConfig = context.select<AppState, TokenConfig>(
       (state) => state.currentTokenConfig,
     );
 

@@ -10,6 +10,7 @@ import 'package:pay_app/screens/home/scanner_modal/footer.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
+import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/cards.dart';
 import 'package:pay_app/state/sending.dart';
 import 'package:pay_app/state/state.dart';
@@ -467,7 +468,7 @@ class ScannerModalState extends State<ScannerModal>
     final safeTopPadding = MediaQuery.of(context).padding.top;
 
     final config = context.select<WalletState, Config>((state) => state.config);
-    final tokenConfig = context.select<WalletState, TokenConfig?>(
+    final tokenConfig = context.select<AppState, TokenConfig?>(
       (state) => state.currentTokenConfig,
     );
 
@@ -492,7 +493,7 @@ class ScannerModalState extends State<ScannerModal>
         order == null &&
         cardProject == null;
 
-    final primaryColor = context.select<WalletState, Color>(
+    final primaryColor = context.select<AppState, Color>(
       (state) => state.tokenPrimaryColor,
     );
 
@@ -834,12 +835,12 @@ class ScannerModalState extends State<ScannerModal>
   ) {
     final width = MediaQuery.of(context).size.width;
 
-    final accountBalance = context.select<WalletState, String>(
-      (state) => state.tokenBalances[state.currentTokenAddress] ?? '0.0',
+    final tokenConfig = context.select<AppState, TokenConfig>(
+      (state) => state.currentTokenConfig,
     );
 
-    final tokenConfig = context.select<WalletState, TokenConfig?>(
-      (state) => state.currentTokenConfig,
+    final accountBalance = context.select<WalletState, String>(
+      (state) => state.tokenBalances[tokenConfig.address] ?? '0.0',
     );
 
     final accountProfile = context.watch<SendingState>().accountProfile;

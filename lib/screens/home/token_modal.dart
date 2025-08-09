@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/services/config/config.dart';
+import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
@@ -70,7 +71,7 @@ class _TokenModalState extends State<TokenModal> {
       (state) => state.config,
     );
 
-    final currentTokenAddress = context.select<WalletState, String?>(
+    final currentTokenAddress = context.select<AppState, String?>(
       (state) => state.currentTokenAddress,
     );
 

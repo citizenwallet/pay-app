@@ -20,7 +20,10 @@ class InteractionState with ChangeNotifier {
   Timer? _pollingTimer;
 
   InteractionState({required String account})
-      : apiService = InteractionService(myAccount: account);
+      : apiService = InteractionService(myAccount: account) {
+    getInteractions();
+    refreshFromRemote();
+  }
 
   bool loading = false;
   bool error = false;
