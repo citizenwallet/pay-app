@@ -5,8 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/checkout.dart';
 
 import 'package:pay_app/models/order.dart';
-import 'package:pay_app/models/place.dart';
-import 'package:pay_app/screens/interactions/place/external_order_modal.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
@@ -18,15 +16,11 @@ import 'footer.dart';
 class InteractionWithPlaceScreen extends StatefulWidget {
   final String slug;
   final String myAddress;
-  final bool openMenu;
-  final String? orderId;
 
   const InteractionWithPlaceScreen({
     super.key,
     required this.slug,
     required this.myAddress,
-    this.openMenu = false,
-    this.orderId,
   });
 
   @override
@@ -61,33 +55,33 @@ class _InteractionWithPlaceScreenState
   }
 
   void onLoad() async {
-    _ordersWithPlaceState.fetchPlaceAndMenu().then((placeWithMenu) {
-      if (widget.openMenu &&
-          placeWithMenu != null &&
-          (placeWithMenu.place.display == Display.menu ||
-              placeWithMenu.place.display == Display.amountAndMenu) &&
-          placeWithMenu.items.isNotEmpty) {
-        handleMenuPressed();
-      }
-    });
+    // _ordersWithPlaceState.fetchPlaceAndMenu().then((placeWithMenu) {
+    //   if (widget.openMenu &&
+    //       placeWithMenu != null &&
+    //       (placeWithMenu.place.display == Display.menu ||
+    //           placeWithMenu.place.display == Display.amountAndMenu) &&
+    //       placeWithMenu.items.isNotEmpty) {
+    //     handleMenuPressed();
+    //   }
+    // });
 
-    if (widget.orderId != null) {
-      _ordersWithPlaceState.loadExternalOrder(widget.slug, widget.orderId!);
+    // if (widget.orderId != null) {
+    //   _ordersWithPlaceState.loadExternalOrder(widget.slug, widget.orderId!);
 
-      if (!mounted) {
-        return;
-      }
+    //   if (!mounted) {
+    //     return;
+    //   }
 
-      // open modal
-      showCupertinoModalPopup<String?>(
-        useRootNavigator: false,
-        barrierDismissible: false,
-        context: context,
-        builder: (modalContext) => ExternalOrderModal(onPay: onPay),
-      );
+    //   // open modal
+    //   showCupertinoModalPopup<String?>(
+    //     useRootNavigator: false,
+    //     barrierDismissible: false,
+    //     context: context,
+    //     builder: (modalContext) => ExternalOrderModal(onPay: onPay),
+    //   );
 
-      return;
-    }
+    //   return;
+    // }
   }
 
   void _onAmountFocus() {
@@ -341,7 +335,7 @@ class _InteractionWithPlaceScreenState
                 messageFocusNode: messageFocusNode,
                 display: place?.place.display,
                 place: place?.place,
-                autoFocusAmount: widget.orderId == null && !widget.openMenu,
+                autoFocusAmount: true,
               ),
             ],
           ),

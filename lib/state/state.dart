@@ -107,8 +107,6 @@ Widget providePlaceState(
   final slug = state.pathParameters['slug']!;
   final account = state.pathParameters['account']!;
 
-  print('switching place $account');
-
   return MultiProvider(
     key: Key('place-$account-$slug'),
     providers: [
@@ -117,7 +115,7 @@ Widget providePlaceState(
         create: (_) => OrdersWithPlaceState(
           config,
           slug: slug,
-          myAddress: account,
+          account: account,
         ),
       ),
       ChangeNotifierProvider(

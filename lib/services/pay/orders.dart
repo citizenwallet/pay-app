@@ -20,6 +20,8 @@ class OrdersService {
     String? tokenAddress,
   }) async {
     try {
+      print('getOrders /accounts/$account/orders');
+      print('slug: $slug');
       final queryParams = {
         if (limit != null) 'limit': limit.toString(),
         if (offset != null) 'offset': offset.toString(),

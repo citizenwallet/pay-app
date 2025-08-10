@@ -320,10 +320,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   void handleInteractionWithPlace(
     String? myAddress,
-    String slug, {
-    bool openMenu = false,
-    String? orderId,
-  }) async {
+    String slug,
+  ) async {
     if (myAddress == null) {
       return;
     }
@@ -334,12 +332,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     _stopInitRetries = true;
 
-    print('/$myAddress/place/$slug');
-
-    await navigator.push('/$myAddress/place/$slug', extra: {
-      'openMenu': openMenu,
-      'orderId': orderId,
-    });
+    await navigator.push('/$myAddress/place/$slug');
 
     _stopInitRetries = false;
 

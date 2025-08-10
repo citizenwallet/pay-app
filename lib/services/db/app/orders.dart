@@ -119,8 +119,12 @@ class OrdersTable extends DBTable {
   }
 
   // Fetch all orders
-  Future<List<app_order.Order>> getAll() async {
-    final List<Map<String, dynamic>> maps = await db.query(name);
+  Future<List<app_order.Order>> getAll(String account) async {
+    final List<Map<String, dynamic>> maps = await db.query(
+      name,
+      where: 'account = ?',
+      whereArgs: [account],
+    );
     return List.generate(maps.length, (i) => app_order.Order.fromMap(maps[i]));
   }
 
@@ -148,14 +152,15 @@ class OrdersTable extends DBTable {
 
   // Fetch orders by place_id, sorted by created_at date
   Future<List<app_order.Order>> getOrdersBySlug(
+    String account,
     String slug, {
     int? limit,
     int? offset,
   }) async {
     final List<Map<String, dynamic>> maps = await db.query(
       name,
-      where: 'slug = ?',
-      whereArgs: [slug],
+      where: 'account = ? AND slug = ?',
+      whereArgs: [account, slug],
       orderBy: 'created_at DESC',
       limit: limit,
       offset: offset,
@@ -182,14 +187,15 @@ class OrdersTable extends DBTable {
 
   // Fetch orders by status
   Future<List<app_order.Order>> getOrdersByStatus(
+    String account,
     app_order.OrderStatus status, {
     int? limit,
     int? offset,
   }) async {
     final List<Map<String, dynamic>> maps = await db.query(
       name,
-      where: 'status = ?',
-      whereArgs: [status.name],
+      where: 'account = ? AND status = ?',
+      whereArgs: [account, status.name],
       orderBy: 'created_at DESC',
       limit: limit,
       offset: offset,

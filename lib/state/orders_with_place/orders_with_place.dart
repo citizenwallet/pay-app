@@ -41,9 +41,11 @@ class OrdersWithPlaceState with ChangeNotifier {
   OrdersWithPlaceState(
     this._config, {
     required this.slug,
-    required this.myAddress,
+    required this.account,
   }) {
-    _ordersService = OrdersService(account: myAddress);
+    _ordersService = OrdersService(account: account);
+
+    fetchPlaceAndMenu();
   }
 
   void safeNotifyListeners() {
@@ -64,7 +66,7 @@ class OrdersWithPlaceState with ChangeNotifier {
   PlaceWithMenu? place;
   PlaceMenu? placeMenu;
   List<GlobalKey<State<StatefulWidget>>> categoryKeys = [];
-  String myAddress;
+  String account;
   List<Order> orders = [];
   double toSendAmount = 0.0;
   int total = 0;
@@ -187,6 +189,7 @@ class OrdersWithPlaceState with ChangeNotifier {
 
       // Then load from database
       final dbOrders = await _ordersTable.getOrdersBySlug(
+        account,
         slug,
         limit: ordersLimit,
         offset: ordersOffset,
@@ -240,6 +243,7 @@ class OrdersWithPlaceState with ChangeNotifier {
       // Update existing orders in the list with any changes
       if (orders.isNotEmpty) {
         final currentOrders = await _ordersTable.getOrdersBySlug(
+          account,
           slug,
           limit: orders.length,
           offset: 0,
@@ -284,6 +288,7 @@ class OrdersWithPlaceState with ChangeNotifier {
 
     try {
       final dbOrders = await _ordersTable.getOrdersBySlug(
+        account,
         slug,
         limit: ordersLimit,
         offset: ordersOffset,
@@ -359,7 +364,7 @@ class OrdersWithPlaceState with ChangeNotifier {
       }
 
       final toAddress = place!.place.account;
-      final fromAddress = myAddress;
+      final fromAddress = this.account;
 
       final tempId = 0;
 
@@ -509,7 +514,7 @@ class OrdersWithPlaceState with ChangeNotifier {
       }
 
       final toAddress = place!.place.account;
-      final fromAddress = myAddress;
+      final fromAddress = this.account;
 
       payingOrder = order;
       safeNotifyListeners();

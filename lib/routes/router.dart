@@ -100,8 +100,6 @@ GoRouter createRouter(
                 final accountAddress = state.pathParameters['account']!;
                 final deepLink = state.uri.queryParameters['deepLink'];
 
-                print('switching account: $accountAddress');
-
                 return HomeScreen(
                   accountAddress: accountAddress,
                   deepLink: deepLink,
@@ -146,15 +144,10 @@ GoRouter createRouter(
                   builder: (context, state) {
                     final myAddress = state.pathParameters['account']!;
                     final slug = state.pathParameters['slug']!;
-                    final extra = state.extra as Map<String, dynamic>;
-                    final openMenu = extra['openMenu'] as bool? ?? false;
-                    final orderId = extra['orderId'] as String?;
 
                     return InteractionWithPlaceScreen(
                       slug: slug,
                       myAddress: myAddress,
-                      openMenu: openMenu,
-                      orderId: orderId,
                     );
                   },
                   routes: [
