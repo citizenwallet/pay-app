@@ -81,7 +81,7 @@ class TextInputModalState extends State<TextInputModal> {
   Widget build(BuildContext context) {
     return DismissibleModalPopup(
       key: Key('text-input-modal'),
-      maxHeight: 250,
+      maxHeight: 274,
       paddingSides: 10,
       onUpdate: (details) {
         if (details.direction == DismissDirection.down &&
@@ -102,14 +102,6 @@ class TextInputModalState extends State<TextInputModal> {
                 Header(
                   title: widget.title,
                   color: CupertinoColors.systemBackground,
-                  actionButton: CupertinoButton(
-                    padding: const EdgeInsets.all(10),
-                    onPressed: () => handleDismiss(context),
-                    child: Icon(
-                      CupertinoIcons.xmark,
-                      color: textColor,
-                    ),
-                  ),
                 ),
                 Expanded(
                   child: Column(
@@ -219,6 +211,20 @@ class TextInputModalState extends State<TextInputModal> {
                             onPressed: widget.confirm
                                 ? () => handleSubmitConfirm(context)
                                 : () => handleSubmit(context),
+                          )
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 20,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Button(
+                            text: 'Cancel',
+                            color: CupertinoColors.systemGrey,
+                            labelColor: whiteColor,
+                            onPressed: () => handleDismiss(context),
                           )
                         ],
                       ),

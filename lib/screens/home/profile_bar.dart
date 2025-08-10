@@ -1,8 +1,12 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pay_app/screens/home/token_modal.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/state/app.dart';
+import 'package:pay_app/state/cards.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
@@ -36,6 +40,8 @@ class ProfileBar extends StatefulWidget {
 
 class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
   late AppState _appState;
+  late CardsState _cardsState;
+  late ProfileState _profileState;
 
   @override
   void initState() {
@@ -43,6 +49,8 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _appState = context.read<AppState>();
+      _cardsState = context.read<CardsState>();
+      _profileState = context.read<ProfileState>();
     });
   }
 
@@ -60,6 +68,20 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
     if (selectedToken != null) {
       _appState.setCurrentToken(selectedToken);
     }
+  }
+
+  Future<void> handleEditProfile() async {
+    final navigator = GoRouter.of(context);
+    HapticFeedback.heavyImpact();
+
+    navigator.push('/${widget.accountAddress}/my-account/edit');
+  }
+
+  Future<void> handleUpdateCardName(
+      String uid, String name, String originalName) async {
+    await _cardsState.updateCardName(uid, name, originalName);
+
+    _profileState.fetchProfile();
   }
 
   @override
@@ -105,6 +127,17 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
       (state) => state.tokenPrimaryColor,
     );
 
+    final cards = context.watch<CardsState>().cards;
+
+    final appProfile = context.watch<ProfileState>().appProfile;
+
+    final isAppAccount = appProfile.account == profile.account;
+
+    final card =
+        cards.firstWhereOrNull((card) => card.account == profile.account);
+
+    final updatingCardName = context.watch<CardsState>().updatingCardName;
+
     return BlurryChild(
       child: Container(
         width: width,
@@ -124,20 +157,29 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                if (profile.isAnonymous)
+                if (profile.isAnonymous || updatingCardName)
                   CardSkeleton(
                     width: (adjustedWidth < 360 ? 360 : adjustedWidth) * 0.8,
                     color: primaryColor,
                   ),
-                if (!profile.isAnonymous)
+                if (!profile.isAnonymous && !updatingCardName)
                   Card(
                     width: (adjustedWidth < 360 ? 360 : adjustedWidth) * 0.8,
                     uid: profile.account,
                     color: primaryColor,
                     profile: profile,
-                    icon: CupertinoIcons.device_phone_portrait,
+                    icon: isAppAccount
+                        ? CupertinoIcons.device_phone_portrait
+                        : null,
                     onTopUpPressed: !widget.loading && topUpPlugin != null
                         ? () => widget.onTopUpTap(topUpPlugin.url)
+                        : null,
+                    onCardNameTapped: isAppAccount ? handleEditProfile : null,
+                    onCardNameUpdated: !isAppAccount &&
+                            card != null &&
+                            !updatingCardName
+                        ? (name) =>
+                            handleUpdateCardName(card.uid, name, profile.name)
                         : null,
                     onCardPressed: (_) => handleProfileTap(),
                     onCardBalanceTapped: handleBalanceTap,

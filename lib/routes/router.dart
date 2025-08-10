@@ -101,6 +101,7 @@ GoRouter createRouter(
                 final deepLink = state.uri.queryParameters['deepLink'];
 
                 return HomeScreen(
+                  key: Key(accountAddress),
                   accountAddress: accountAddress,
                   deepLink: deepLink,
                 );

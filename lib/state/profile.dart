@@ -108,6 +108,15 @@ class ProfileState with ChangeNotifier {
 
       loading = false;
       safeNotifyListeners();
+
+      getProfile(_config, _account).then((remoteProfile) {
+        if (remoteProfile != null) {
+          _profile = remoteProfile;
+          safeNotifyListeners();
+
+          _contacts.upsert(DBContact.fromProfile(remoteProfile));
+        }
+      });
       return;
     }
 

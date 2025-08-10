@@ -3,14 +3,12 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pay_app/screens/home/card_modal/card_modal.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/cards.dart';
 import 'package:pay_app/state/profile.dart';
-import 'package:pay_app/state/state.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/card_colors.dart';
 import 'package:pay_app/theme/colors.dart';
@@ -80,6 +78,11 @@ class _ProfileModalState extends State<ProfileModal> {
     });
 
     await _cardsState.fetchCards(tokenAddress: widget.tokenAddress);
+
+    // Fetch profile for the selected account if not already loaded
+    if (!_cardsState.profiles.containsKey(widget.accountAddress)) {
+      await _cardsState.fetchProfile(widget.accountAddress);
+    }
   }
 
   void handleScrollToTop() {
@@ -88,13 +91,6 @@ class _ProfileModalState extends State<ProfileModal> {
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
-  }
-
-  Future<void> handleEditProfile() async {
-    final navigator = GoRouter.of(context);
-    HapticFeedback.heavyImpact();
-
-    navigator.push('/${widget.accountAddress}/my-account/edit');
   }
 
   void handleAppSettings() {
@@ -315,9 +311,11 @@ class _ProfileModalState extends State<ProfileModal> {
     final height = MediaQuery.of(context).size.height;
 
     final cards = context.watch<CardsState>().cards;
-    final cardBalances = context.watch<CardsState>().cardBalances;
+    final profiles = context.watch<CardsState>().profiles;
 
-    final profile = context.select((ProfileState p) => p.appProfile);
+    // Get the profile for the selected account, fallback to app profile if not found
+    final selectedProfile = profiles[widget.accountAddress] ??
+        context.select((ProfileState p) => p.appProfile);
     final alias = context.select((ProfileState p) => p.alias);
 
     return DismissibleModalPopup(
@@ -330,15 +328,14 @@ class _ProfileModalState extends State<ProfileModal> {
       onDismissed: (dir) {
         handleClose(context);
       },
-      child: _buildContent(context, cards, cardBalances, profile, alias),
+      child: _buildContent(context, cards, selectedProfile, alias),
     );
   }
 
   Widget _buildContent(
     BuildContext context,
     List<DBCard> cards,
-    Map<String, String> cardBalances,
-    ProfileV1 profile,
+    ProfileV1? profile,
     String alias,
   ) {
     final width = MediaQuery.of(context).size.width;
@@ -387,7 +384,6 @@ class _ProfileModalState extends State<ProfileModal> {
                       ..._buildCardsList(
                         context,
                         cards,
-                        cardBalances,
                         tokenConfig,
                         primaryColor,
                       ),
@@ -405,7 +401,7 @@ class _ProfileModalState extends State<ProfileModal> {
               child: _buildAccountCard(
                 ValueKey('account_card'),
                 width,
-                profile,
+                profile ?? ProfileV1(account: widget.accountAddress),
                 alias,
                 balance,
                 tokenConfig,
@@ -431,7 +427,7 @@ class _ProfileModalState extends State<ProfileModal> {
             bottom: safeArea.bottom,
             child: _buildActionButtons(
               context,
-              profile,
+              profile ?? ProfileV1(account: widget.accountAddress),
               alias,
               primaryColor,
             ),
@@ -457,18 +453,17 @@ class _ProfileModalState extends State<ProfileModal> {
           children: [
             Card(
               width: width * 0.8,
-              uid: profile.account,
+              uid: widget.accountAddress,
               color: primaryColor,
               profile: profile,
               icon: CupertinoIcons.device_phone_portrait,
               onCardPressed: (_) => handleCardSelect(
-                profile.account,
+                widget.accountAddress,
                 null,
                 'main',
                 widget.tokenAddress,
               ),
               logo: tokenConfig?.logo,
-              balance: balance,
             ),
           ],
         )
@@ -526,7 +521,6 @@ class _ProfileModalState extends State<ProfileModal> {
   List<Widget> _buildCardsList(
     BuildContext context,
     List<DBCard> cards,
-    Map<String, String> cardBalances,
     TokenConfig? tokenConfig,
     Color primaryColor,
   ) {
@@ -536,16 +530,48 @@ class _ProfileModalState extends State<ProfileModal> {
 
     final profiles = context.watch<CardsState>().profiles;
 
+    // Get the app profile for the app account card
+    final appProfile = context.select((ProfileState p) => p.appProfile);
+
+    // Only show app account card if it's different from the currently selected account
+    final shouldShowAppAccountCard =
+        appProfile.account != widget.accountAddress;
+
+    final filteredCards =
+        cards.where((card) => card.account != widget.accountAddress).toList();
+
     return [
-      if (cards.isNotEmpty)
+      if (filteredCards.isNotEmpty || shouldShowAppAccountCard)
         SliverToBoxAdapter(
           child: const SizedBox(height: 20),
         ),
+      if (shouldShowAppAccountCard)
+        SliverToBoxAdapter(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Card(
+                width: width * 0.75,
+                uid: appProfile.account,
+                color: primaryColor,
+                margin: const EdgeInsets.only(bottom: 12),
+                profile: appProfile,
+                onCardPressed: (uid) => handleCardSelect(
+                  appProfile.account,
+                  null,
+                  'main',
+                  widget.tokenAddress,
+                ),
+                logo: tokenConfig?.logo,
+              ),
+            ],
+          ),
+        ),
       SliverList(
         delegate: SliverChildBuilderDelegate(
-          childCount: cards.length,
+          childCount: filteredCards.length,
           (context, index) {
-            final card = cards[index];
+            final card = filteredCards[index];
 
             final cardColor = projectCardColor(card.project);
 
@@ -571,7 +597,6 @@ class _ProfileModalState extends State<ProfileModal> {
                       widget.tokenAddress,
                     ),
                     logo: tokenConfig?.logo,
-                    balance: cardBalances[card.account],
                   ),
               ],
             );

@@ -39,7 +39,7 @@ class CardsState with ChangeNotifier {
   }
 
   void init() async {
-    safeNotifyListeners();
+    fetchCards();
   }
 
   bool _mounted = true;
@@ -193,6 +193,7 @@ class CardsState with ChangeNotifier {
       if (updatedProfile != null) {
         updatingCardName = false;
         profiles[uid] = updatedProfile;
+
         safeNotifyListeners();
       }
     } catch (e) {
