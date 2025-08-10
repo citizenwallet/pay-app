@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/state/app.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
@@ -11,16 +12,10 @@ import 'package:provider/provider.dart';
 
 class TokenModal extends StatefulWidget {
   final Config config;
-  final Map<String, bool> tokenLoadingStates;
-  final Map<String, String> tokenBalances;
-  final Future<void> Function() onLoadTokenBalances;
 
   const TokenModal({
     super.key,
     required this.config,
-    required this.tokenLoadingStates,
-    required this.tokenBalances,
-    required this.onLoadTokenBalances,
   });
 
   @override
@@ -38,7 +33,7 @@ class _TokenModalState extends State<TokenModal> {
   }
 
   Future<void> onLoad() async {
-    await widget.onLoadTokenBalances();
+    //
   }
 
   void handleTokenSelect(String tokenKey) {
@@ -76,6 +71,9 @@ class _TokenModalState extends State<TokenModal> {
     final currentTokenAddress = context.select<AppState, String?>(
       (state) => state.currentTokenAddress,
     );
+
+    final tokenLoadingStates = context.watch<WalletState>().tokenLoadingStates;
+    final tokenBalances = context.watch<WalletState>().tokenBalances;
 
     final theme = CupertinoTheme.of(context);
     final primaryColor = theme.primaryColor;
@@ -120,9 +118,8 @@ class _TokenModalState extends State<TokenModal> {
         ...(widget.config.tokens.entries.map((entry) {
           final tokenAddress = entry.value.address;
           final tokenConfig = entry.value;
-          final isTokenLoading =
-              widget.tokenLoadingStates[tokenAddress] ?? false;
-          final balance = widget.tokenBalances[tokenAddress] ?? '0';
+          final isTokenLoading = tokenLoadingStates[tokenAddress] ?? false;
+          final balance = tokenBalances[tokenAddress] ?? '0';
 
           final isSelected = currentTokenAddress == tokenAddress;
 

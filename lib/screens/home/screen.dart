@@ -19,7 +19,6 @@ import 'package:pay_app/state/interactions/selectors.dart';
 import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/places/places.dart';
 import 'package:pay_app/state/places/selectors.dart';
-import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/state.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/wallet.dart';
@@ -37,7 +36,6 @@ import 'package:toastification/toastification.dart';
 import 'package:universal_io/io.dart';
 import 'package:web3dart/web3dart.dart';
 
-import 'profile_bar.dart';
 import 'search_bar.dart';
 import 'interaction_list_item.dart';
 import 'place_list_item.dart';
@@ -71,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen>
   final Debouncer _debouncer =
       Debouncer(timerDuration: const Duration(milliseconds: 300));
 
+  late AppState _appState;
   late OnboardingState _onboardingState;
   late InteractionState _interactionState;
   late PlacesState _placesState;
@@ -116,6 +115,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _initState() {
+    _appState = context.read<AppState>();
     _onboardingState = context.read<OnboardingState>();
     _interactionState = context.read<InteractionState>();
     _placesState = context.read<PlacesState>();
@@ -141,9 +141,13 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> handleRefresh() async {
+    HapticFeedback.lightImpact();
+
     _interactionState.startPolling(updateBalance: _walletState.updateBalance);
 
     await _interactionState.getInteractions();
+
+    HapticFeedback.heavyImpact();
   }
 
   void handleExpiredCredentials() {
@@ -296,6 +300,8 @@ class _HomeScreenState extends State<HomeScreen>
         _scrollOffset = 0;
       });
     }
+
+    _appState.setSmall(_scrollOffset == 100);
   }
 
   void goToChatHistory(String? myAddress, Interaction interaction) {
@@ -640,24 +646,34 @@ class _HomeScreenState extends State<HomeScreen>
                       scrollBehavior: const CupertinoScrollBehavior(),
                       physics: const AlwaysScrollableScrollPhysics(),
                       slivers: [
-                        SliverPersistentHeader(
-                          floating: true,
-                          pinned: true,
-                          delegate: ProfileBarDelegate(
-                            safeTopPadding: safeTopPadding,
-                            loading: loading,
-                            accountAddress: myAddress ?? '',
-                            backgroundColor:
-                                _backgroundColorAnimation.value ?? whiteColor,
-                            onProfileTap: () => handleProfileTap(
-                                myAddress ?? '',
-                                tokenAddress: tokenAddress),
-                            onTopUpTap: handleTopUp,
-                          ),
-                        ),
+                        // SliverToBoxAdapter(
+                        //   child: SizedBox(
+                        //     height: safeTopPadding + 260,
+                        //   ),
+                        // ),
+                        // CupertinoSliverRefreshControl(
+                        //   onRefresh: handleRefresh,
+                        // ),
+
+                        // SliverPersistentHeader(
+                        //   floating: true,
+                        //   pinned: true,
+                        //   delegate: ProfileBarDelegate(
+                        //     safeTopPadding: safeTopPadding,
+                        //     loading: loading,
+                        //     accountAddress: myAddress ?? '',
+                        //     backgroundColor:
+                        //         _backgroundColorAnimation.value ?? whiteColor,
+                        //     onProfileTap: () => handleProfileTap(
+                        //         myAddress ?? '',
+                        //         tokenAddress: tokenAddress),
+                        //     onTopUpTap: handleTopUp,
+                        //   ),
+                        // ),
                         SliverPersistentHeader(
                           floating: true,
                           delegate: SearchBarDelegate(
+                            safeTopPadding: safeTopPadding,
                             controller: _searchController,
                             focusNode: _searchFocusNode,
                             onSearch: handleSearch,
@@ -670,6 +686,7 @@ class _HomeScreenState extends State<HomeScreen>
                         CupertinoSliverRefreshControl(
                           onRefresh: handleRefresh,
                         ),
+
                         if (customContact != null)
                           SliverList(
                             delegate: SliverChildBuilderDelegate(
@@ -775,31 +792,31 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     ),
                   ),
-                  if (!loading && !isSearching)
-                    AnimatedPositioned(
-                      duration: const Duration(milliseconds: 100),
-                      left: 0,
-                      right: 0,
-                      bottom: -1 *
-                          progressiveClamp(
-                            -10 - safeBottomPadding,
-                            120,
-                            heightFactor,
-                          ),
-                      child: SizedBox(
-                        height: 120,
-                        width: 120,
-                        child: Center(
-                          child: ScanQrCircle(
-                            handleQRScan: (callback) => handleQRScan(
-                              context,
-                              myAddress ?? '',
-                              callback,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                  // if (!loading && !isSearching)
+                  //   AnimatedPositioned(
+                  //     duration: const Duration(milliseconds: 100),
+                  //     left: 0,
+                  //     right: 0,
+                  //     bottom: -1 *
+                  //         progressiveClamp(
+                  //           -10 - safeBottomPadding,
+                  //           120,
+                  //           heightFactor,
+                  //         ),
+                  //     child: SizedBox(
+                  //       height: 120,
+                  //       width: 120,
+                  //       child: Center(
+                  //         child: ScanQrCircle(
+                  //           handleQRScan: (callback) => handleQRScan(
+                  //             context,
+                  //             myAddress ?? '',
+                  //             callback,
+                  //           ),
+                  //         ),
+                  //       ),
+                  //     ),
+                  //   ),
                 ],
               ),
             ),
@@ -810,48 +827,49 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
-  final double safeTopPadding;
-  final bool loading;
-  final String accountAddress;
-  final Color backgroundColor;
-  final Future<void> Function() onProfileTap;
-  final Function(String) onTopUpTap;
+// class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
+//   final double safeTopPadding;
+//   final bool loading;
+//   final String accountAddress;
+//   final Color backgroundColor;
+//   final Future<void> Function() onProfileTap;
+//   final Function(String) onTopUpTap;
 
-  ProfileBarDelegate({
-    required this.safeTopPadding,
-    required this.loading,
-    required this.accountAddress,
-    required this.backgroundColor,
-    required this.onProfileTap,
-    required this.onTopUpTap,
-  });
+//   ProfileBarDelegate({
+//     required this.safeTopPadding,
+//     required this.loading,
+//     required this.accountAddress,
+//     required this.backgroundColor,
+//     required this.onProfileTap,
+//     required this.onTopUpTap,
+//   });
 
-  @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return ProfileBar(
-      shrink: 1 - (shrinkOffset / 240),
-      loading: loading,
-      accountAddress: accountAddress,
-      backgroundColor: backgroundColor,
-      onProfileTap: onProfileTap,
-      onTopUpTap: onTopUpTap,
-    );
-  }
+//   @override
+//   Widget build(
+//       BuildContext context, double shrinkOffset, bool overlapsContent) {
+//     return ProfileBar(
+//       shrink: 1 - (shrinkOffset / 240),
+//       loading: loading,
+//       accountAddress: accountAddress,
+//       backgroundColor: backgroundColor,
+//       onProfileTap: onProfileTap,
+//       onTopUpTap: onTopUpTap,
+//     );
+//   }
 
-  @override
-  double get maxExtent => 240.0 + safeTopPadding; // Maximum height of header
+//   @override
+//   double get maxExtent => 240.0 + safeTopPadding; // Maximum height of header
 
-  @override
-  double get minExtent => 200.0 + safeTopPadding; // Minimum height of header
+//   @override
+//   double get minExtent => 200.0 + safeTopPadding; // Minimum height of header
 
-  @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
-      true;
-}
+//   @override
+//   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
+//       true;
+// }
 
 class SearchBarDelegate extends SliverPersistentHeaderDelegate {
+  final double safeTopPadding;
   final TextEditingController controller;
   final FocusNode focusNode;
   final Function(String) onSearch;
@@ -861,6 +879,7 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
   final Color? backgroundColor;
 
   SearchBarDelegate({
+    required this.safeTopPadding,
     required this.controller,
     required this.focusNode,
     required this.onSearch,
@@ -876,43 +895,52 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Row(
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        Expanded(
-          child: Container(
-            height: 77,
-            width: MediaQuery.of(context).size.width,
-            color: backgroundColor,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: SearchBar(
-              controller: controller,
-              focusNode: focusNode,
-              onSearch: onSearch,
-              isFocused: isSearching,
-              backgroundColor: backgroundColor,
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                height: 77,
+                width: MediaQuery.of(context).size.width,
+                color: backgroundColor,
+                padding: EdgeInsets.symmetric(
+                  vertical: 10,
+                ),
+                child: SearchBar(
+                  controller: controller,
+                  focusNode: focusNode,
+                  onSearch: onSearch,
+                  isFocused: isSearching,
+                  backgroundColor: backgroundColor,
+                ),
+              ),
             ),
-          ),
+            if (isSearching)
+              searching
+                  ? const Padding(
+                      padding: EdgeInsets.fromLTRB(18, 0, 44, 0),
+                      child: CupertinoActivityIndicator(),
+                    )
+                  : CupertinoButton(
+                      padding: const EdgeInsets.fromLTRB(5, 0, 24, 0),
+                      onPressed: onCancel,
+                      child: Text(AppLocalizations.of(context)!.cancel),
+                    )
+          ],
         ),
-        if (isSearching)
-          searching
-              ? const Padding(
-                  padding: EdgeInsets.fromLTRB(18, 0, 44, 0),
-                  child: CupertinoActivityIndicator(),
-                )
-              : CupertinoButton(
-                  padding: const EdgeInsets.fromLTRB(5, 0, 24, 0),
-                  onPressed: onCancel,
-                  child: Text(AppLocalizations.of(context)!.cancel),
-                )
       ],
     );
   }
 
   @override
-  double get maxExtent => 77.0; // Height of your SearchBar
+  double get maxExtent =>
+      safeTopPadding + 260 + 77.0; // Height of your SearchBar
 
   @override
-  double get minExtent => 77.0; // Same as maxExtent for fixed height
+  double get minExtent =>
+      safeTopPadding + 260 + 77.0; // Same as maxExtent for fixed height
 
   @override
   bool shouldRebuild(covariant SearchBarDelegate oldDelegate) => true;

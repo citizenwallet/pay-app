@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/order.dart';
+import 'package:pay_app/routes/home_shell.dart';
 import 'package:pay_app/screens/account/settings/screen.dart';
 import 'package:pay_app/screens/account/settings/language_screen.dart';
 import 'package:pay_app/screens/interactions/place/order/screen.dart';
@@ -90,8 +91,17 @@ GoRouter createRouter(
         ),
         ShellRoute(
           navigatorKey: appShellNavigatorKey,
-          builder: (context, state, child) =>
-              provideAccountState(context, state, config, child),
+          builder: (context, state, child) => HomeShell(
+            key: Key('home-shell'),
+            state: state,
+            config: config,
+            child: provideAccountState(
+              context,
+              state,
+              config,
+              child,
+            ),
+          ),
           routes: [
             GoRoute(
               name: 'Home',

@@ -15,7 +15,7 @@ class WalletState with ChangeNotifier {
   final Config _config;
   Config get config => _config;
 
-  EthereumAddress? _address;
+  late EthereumAddress? _address;
   EthereumAddress? get address => _address;
 
   // Token balances management
@@ -45,8 +45,10 @@ class WalletState with ChangeNotifier {
     super.dispose();
   }
 
-  WalletState(this._config, String address)
-      : _address = EthereumAddress.fromHex(address) {
+  WalletState(this._config) {
+    _address = _preferencesService.lastAccount != null
+        ? EthereumAddress.fromHex(_preferencesService.lastAccount!)
+        : null;
     init();
   }
 
@@ -92,6 +94,12 @@ class WalletState with ChangeNotifier {
       error = true;
       safeNotifyListeners();
     }
+  }
+
+  void switchAccount(String account) {
+    _address = EthereumAddress.fromHex(account);
+    _preferencesService.setLastAccount(account);
+    init();
   }
 
   Future<void> startBalancePolling() async {

@@ -43,6 +43,22 @@ Widget provideAppState(
         ChangeNotifierProvider(
           create: (_) => LocaleState(),
         ),
+        ChangeNotifierProvider(
+          key: Key('topup'),
+          create: (_) => TopupState(),
+        ),
+        ChangeNotifierProvider(
+          key: Key('profile'),
+          create: (_) => ProfileState(config),
+        ),
+        ChangeNotifierProvider(
+          key: Key('cards'),
+          create: (_) => CardsState(config),
+        ),
+        ChangeNotifierProvider(
+          key: Key('wallet'),
+          create: (_) => WalletState(config),
+        ),
       ],
       builder: builder,
       child: child,
@@ -60,10 +76,6 @@ Widget provideAccountState(
     key: Key('account-$account'),
     providers: [
       ChangeNotifierProvider(
-        key: Key('wallet-$account'),
-        create: (_) => WalletState(config, account),
-      ),
-      ChangeNotifierProvider(
         key: Key('interactions-$account'),
         create: (_) => InteractionState(
           account,
@@ -74,24 +86,30 @@ Widget provideAccountState(
         create: (_) => PlacesState(),
       ),
       ChangeNotifierProvider(
-        key: Key('profile-$account'),
-        create: (_) => ProfileState(account, config),
-      ),
-      ChangeNotifierProvider(
         key: Key('contacts'),
         create: (_) => ContactsState(config),
-      ),
-      ChangeNotifierProvider(
-        key: Key('topup'),
-        create: (_) => TopupState(),
       ),
       ChangeNotifierProvider(
         key: Key('account-$account'),
         create: (_) => AccountState(config),
       ),
+    ],
+    child: child,
+  );
+}
+
+Widget provideWalletState(
+  BuildContext context,
+  Config config,
+  String account,
+  Widget child,
+) {
+  return MultiProvider(
+    key: Key('account-$account'),
+    providers: [
       ChangeNotifierProvider(
-        key: Key('cards-$account'),
-        create: (_) => CardsState(config),
+        key: Key('wallet-$account'),
+        create: (_) => WalletState(config),
       ),
     ],
     child: child,
@@ -166,6 +184,10 @@ Widget provideSendingState(
   return MultiProvider(
     key: Key('sending-$initialAddress'),
     providers: [
+      ChangeNotifierProvider(
+        key: Key('wallet-$initialAddress'),
+        create: (_) => WalletState(config),
+      ),
       ChangeNotifierProvider(
         key: Key('sending-$initialAddress'),
         create: (_) => SendingState(

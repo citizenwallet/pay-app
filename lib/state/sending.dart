@@ -46,10 +46,7 @@ class SendingState with ChangeNotifier {
     required this.initialAddress,
   }) : _config = config {
     _ordersService = OrdersService(account: initialAddress);
-    print('initialAddress: $initialAddress');
-    print('lastAccount: ${_preferencesService.lastAccount}');
     lastAccount = _preferencesService.lastAccount ?? initialAddress;
-    print('lastAccount: $lastAccount');
 
     init();
   }

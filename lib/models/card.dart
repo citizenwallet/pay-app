@@ -1,3 +1,5 @@
+import 'package:pay_app/services/wallet/contracts/profile.dart';
+
 class Card {
   final String serial;
   final String? project;
@@ -32,4 +34,18 @@ class Card {
       'owner': owner,
     };
   }
+}
+
+class CardInfo {
+  final String uid;
+  final ProfileV1 profile;
+  final String balance;
+  final String project;
+
+  CardInfo({
+    required this.uid,
+    required this.profile,
+    required this.balance,
+    required this.project,
+  });
 }

@@ -6,6 +6,7 @@ import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/contacts.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/photos/photos.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
@@ -37,17 +38,18 @@ enum ProfileUpdateState {
 class ProfileState with ChangeNotifier {
   // instantiate services here
   final ContactsTable _contacts = AppDBService().contacts;
+  final PreferencesService _preferencesService = PreferencesService();
   final SecureService _secureService = SecureService();
   final PhotosService _photosService = PhotosService();
 
   // private variables here
   bool _pauseProfileCreation = false;
-  final String _account;
+  late String _account;
 
   final Config _config;
 
   // constructor here
-  ProfileState(this._account, this._config) {
+  ProfileState(this._config) {
     init();
   }
 
@@ -75,6 +77,8 @@ class ProfileState with ChangeNotifier {
     appAccount = account;
     appProfile = await getProfile(_config, account.hexEip55) ?? ProfileV1();
 
+    _account = _preferencesService.lastAccount ?? account.hexEip55;
+
     await fetchProfile();
 
     giveProfileUsername();
@@ -99,6 +103,11 @@ class ProfileState with ChangeNotifier {
   ProfileUpdateState profileUpdateState = ProfileUpdateState.idle;
   Uint8List? editingImage;
   String? editingImageExt;
+
+  Future<void> setAccount(String account) async {
+    _account = account;
+    await fetchProfile();
+  }
 
   Future<void> fetchProfile() async {
     final contact = await _contacts.getByAccount(_account);

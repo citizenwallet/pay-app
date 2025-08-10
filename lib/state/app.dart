@@ -33,6 +33,8 @@ class AppState with ChangeNotifier {
   String currentTokenAddress;
   TokenConfig currentTokenConfig;
 
+  bool small = false;
+
   Color get tokenPrimaryColor => currentTokenConfig.color != null
       ? Color(int.parse(currentTokenConfig.color!.replaceAll('#', '0xFF')))
       : primaryColor;
@@ -43,6 +45,20 @@ class AppState with ChangeNotifier {
     currentTokenConfig = _config.getToken(tokenAddress);
 
     _preferencesService.setToken(tokenAddress);
+    safeNotifyListeners();
+  }
+
+  void setLastAccount(String account) {
+    _preferencesService.setLastAccount(account);
+    safeNotifyListeners();
+  }
+
+  void setSmall(bool small) {
+    if (this.small == small) {
+      return;
+    }
+
+    this.small = small;
     safeNotifyListeners();
   }
 }
