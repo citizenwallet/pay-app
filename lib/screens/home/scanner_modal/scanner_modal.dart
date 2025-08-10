@@ -94,6 +94,8 @@ class ScannerModalState extends State<ScannerModal>
   bool _showCards = false;
   bool _showControls = false;
 
+  bool _isDismissing = false;
+
   @override
   void initState() {
     _controller.stop();
@@ -190,6 +192,8 @@ class ScannerModalState extends State<ScannerModal>
   }
 
   void handleDismiss(BuildContext context, {bool reverse = false}) async {
+    _isDismissing = true;
+
     final lastAccount = context.read<SendingState>().lastAccount;
 
     if (reverse) {
@@ -323,6 +327,10 @@ class ScannerModalState extends State<ScannerModal>
   }
 
   void handleCardChanged(CardInfo card) {
+    if (_isDismissing) {
+      return;
+    }
+
     HapticFeedback.heavyImpact();
 
     _sendingState.setLastAccount(card.profile.account);
