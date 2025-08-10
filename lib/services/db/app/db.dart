@@ -52,7 +52,7 @@ class AppDBService extends DBService {
         await placesWithMenu.migrate(db, oldVersion, newVersion);
         return;
       },
-      version: 11,
+      version: 12,
     );
 
     final db = await databaseFactory.openDatabase(

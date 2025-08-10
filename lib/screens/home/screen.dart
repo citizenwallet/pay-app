@@ -137,6 +137,13 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     _interactionState.startPolling(updateBalance: _walletState.updateBalance);
+    _interactionState.getInteractions();
+  }
+
+  Future<void> handleRefresh() async {
+    _interactionState.startPolling(updateBalance: _walletState.updateBalance);
+
+    await _interactionState.getInteractions();
   }
 
   void handleExpiredCredentials() {
@@ -423,12 +430,12 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
 
-    print('profile tap: ${account?.hexEip55}');
-
     if (account != null && mounted) {
+      _walletState.setLastAccount(account.hexEip55);
+
       final navigator = GoRouter.of(context);
 
-      navigator.replace('/$account');
+      navigator.replace('/${account.hexEip55}');
     }
 
     _backgroundColorController.reverse();
@@ -668,7 +675,7 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ),
                         CupertinoSliverRefreshControl(
-                          onRefresh: onLoad,
+                          onRefresh: handleRefresh,
                         ),
                         if (customContact != null)
                           SliverList(

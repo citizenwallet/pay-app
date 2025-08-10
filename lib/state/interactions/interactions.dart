@@ -16,11 +16,12 @@ class InteractionState with ChangeNotifier {
   String searchQuery = '';
   List<Interaction> interactions = [];
   Map<String, bool> interactionsMap = {};
-  InteractionService apiService;
+  InteractionService apiService = InteractionService();
   Timer? _pollingTimer;
 
-  InteractionState({required String account})
-      : apiService = InteractionService(myAccount: account) {
+  final String _account;
+
+  InteractionState(account) : _account = account {
     getInteractions();
     refreshFromRemote();
   }
@@ -92,7 +93,7 @@ class InteractionState with ChangeNotifier {
   // Load interactions from local database
   Future<void> _loadFromLocalDatabase() async {
     try {
-      final localInteractions = await _interactionsTable.getAll();
+      final localInteractions = await _interactionsTable.getAll(_account);
 
       if (localInteractions.isNotEmpty) {
         interactions = localInteractions;
@@ -114,7 +115,8 @@ class InteractionState with ChangeNotifier {
     safeNotifyListeners();
 
     try {
-      final remoteInteractions = await apiService.getInteractions();
+      // TODO: something wrong with switching accounts and fetching interactions
+      final remoteInteractions = await apiService.getInteractions(_account);
 
       if (remoteInteractions.isNotEmpty) {
         // Store remote interactions in local database
@@ -170,7 +172,7 @@ class InteractionState with ChangeNotifier {
       {Future<void> Function()? updateBalance}) async {
     try {
       final newInteractions =
-          await apiService.getNewInteractions(interactionsFromDate);
+          await apiService.getNewInteractions(_account, interactionsFromDate);
 
       if (newInteractions.isNotEmpty) {
         // Store new interactions in local database
@@ -237,7 +239,7 @@ class InteractionState with ChangeNotifier {
       }
 
       // Sync with remote API
-      await apiService.setInteractionAsRead(interaction.id);
+      await apiService.setInteractionAsRead(_account, interaction.id);
     } catch (e, s) {
       debugPrint('Error marking interaction as read: $e');
       debugPrint('Stack trace: $s');
@@ -270,6 +272,7 @@ class InteractionState with ChangeNotifier {
   }) async {
     try {
       return await _interactionsTable.getInteractionsForAccount(
+        _account,
         account,
         limit: limit,
         offset: offset,
@@ -288,6 +291,7 @@ class InteractionState with ChangeNotifier {
   }) async {
     try {
       return await _interactionsTable.getPlaceInteractions(
+        _account,
         limit: limit,
         offset: offset,
       );
@@ -305,6 +309,7 @@ class InteractionState with ChangeNotifier {
   }) async {
     try {
       return await _interactionsTable.getUnreadInteractions(
+        _account,
         limit: limit,
         offset: offset,
       );

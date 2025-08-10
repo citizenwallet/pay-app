@@ -237,6 +237,10 @@ class WalletState with ChangeNotifier {
     return tokenLoadingStates[tokenAddress] ?? false;
   }
 
+  void setLastAccount(String account) {
+    _preferencesService.setLastAccount(account);
+  }
+
   void clear() {
     _address = null;
     tokenBalances = {};

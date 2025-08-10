@@ -16,6 +16,10 @@ class PreferencesService {
   Future clear() async {
     await _preferences.remove('balance');
     await _preferences.remove('profile');
+
+    await _preferences.remove('token_address');
+    await _preferences.remove('audio_muted');
+    await _preferences.remove('last_account');
   }
 
   Future setTwoFAAddress(String salt, String address) async {

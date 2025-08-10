@@ -97,7 +97,7 @@ class SendingState with ChangeNotifier {
   // state methods here
   void setLastAccount(String account) {
     _preferencesService.setLastAccount(account);
-    lastAccount = account;
+    lastAccount = EthereumAddress.fromHex(account).hexEip55;
     safeNotifyListeners();
   }
 
