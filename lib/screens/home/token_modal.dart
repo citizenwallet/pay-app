@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/state/app.dart';
-import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
@@ -11,28 +10,35 @@ import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class TokenModal extends StatefulWidget {
-  const TokenModal({super.key});
+  final Config config;
+  final Map<String, bool> tokenLoadingStates;
+  final Map<String, String> tokenBalances;
+  final Future<void> Function() onLoadTokenBalances;
+
+  const TokenModal({
+    super.key,
+    required this.config,
+    required this.tokenLoadingStates,
+    required this.tokenBalances,
+    required this.onLoadTokenBalances,
+  });
 
   @override
   State<TokenModal> createState() => _TokenModalState();
 }
 
 class _TokenModalState extends State<TokenModal> {
-  late WalletState _walletState;
-
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _walletState = context.read<WalletState>();
-
       onLoad();
     });
   }
 
   Future<void> onLoad() async {
-    await _walletState.loadTokenBalances();
+    await widget.onLoadTokenBalances();
   }
 
   void handleTokenSelect(String tokenKey) {
@@ -67,27 +73,20 @@ class _TokenModalState extends State<TokenModal> {
   }
 
   Widget _buildContent(BuildContext context) {
-    final config = context.select<WalletState, Config>(
-      (state) => state.config,
-    );
-
     final currentTokenAddress = context.select<AppState, String?>(
       (state) => state.currentTokenAddress,
     );
 
-    final tokenLoadingStates = context.watch<WalletState>().tokenLoadingStates;
-    final tokenBalances = context.watch<WalletState>().tokenBalances;
-
     final theme = CupertinoTheme.of(context);
     final primaryColor = theme.primaryColor;
 
-    if (config.tokens.isEmpty) {
+    if (widget.config.tokens.isEmpty) {
       return const Center(
         child: CupertinoActivityIndicator(),
       );
     }
 
-    if (config.tokens.isEmpty) {
+    if (widget.config.tokens.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(16),
         child: Text(
@@ -118,11 +117,12 @@ class _TokenModalState extends State<TokenModal> {
           ],
         ),
         const SizedBox(height: 12),
-        ...(config.tokens.entries.map((entry) {
+        ...(widget.config.tokens.entries.map((entry) {
           final tokenAddress = entry.value.address;
           final tokenConfig = entry.value;
-          final isTokenLoading = tokenLoadingStates[tokenAddress] ?? false;
-          final balance = tokenBalances[tokenAddress] ?? '0';
+          final isTokenLoading =
+              widget.tokenLoadingStates[tokenAddress] ?? false;
+          final balance = widget.tokenBalances[tokenAddress] ?? '0';
 
           final isSelected = currentTokenAddress == tokenAddress;
 

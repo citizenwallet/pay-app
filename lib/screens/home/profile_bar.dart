@@ -42,6 +42,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
   late AppState _appState;
   late CardsState _cardsState;
   late ProfileState _profileState;
+  late WalletState _walletState;
 
   @override
   void initState() {
@@ -51,6 +52,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
       _appState = context.read<AppState>();
       _cardsState = context.read<CardsState>();
       _profileState = context.read<ProfileState>();
+      _walletState = context.read<WalletState>();
     });
   }
 
@@ -58,11 +60,23 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
     await widget.onProfileTap();
   }
 
-  Future<void> handleBalanceTap() async {
+  Future<void> handleBalanceTap(BuildContext context) async {
     final selectedToken = await showCupertinoModalPopup<String?>(
       context: context,
       barrierDismissible: true,
-      builder: (_) => const TokenModal(),
+      builder: (_) {
+        final config = context.watch<WalletState>().config;
+        final tokenLoadingStates =
+            context.watch<WalletState>().tokenLoadingStates;
+        final tokenBalances = context.watch<WalletState>().tokenBalances;
+
+        return TokenModal(
+          config: config,
+          tokenLoadingStates: tokenLoadingStates,
+          tokenBalances: tokenBalances,
+          onLoadTokenBalances: () => _walletState.loadTokenBalances(),
+        );
+      },
     );
 
     if (selectedToken != null) {
@@ -162,7 +176,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
                     width: (adjustedWidth < 360 ? 360 : adjustedWidth) * 0.8,
                     color: primaryColor,
                   ),
-                if (!profile.isAnonymous && !updatingCardName)
+                if (!profile.isAnonymous)
                   Card(
                     width: (adjustedWidth < 360 ? 360 : adjustedWidth) * 0.8,
                     uid: profile.account,
@@ -182,7 +196,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
                             handleUpdateCardName(card.uid, name, profile.name)
                         : null,
                     onCardPressed: (_) => handleProfileTap(),
-                    onCardBalanceTapped: handleBalanceTap,
+                    onCardBalanceTapped: () => handleBalanceTap(context),
                     logo: tokenConfig?.logo,
                     balance: balance,
                   ),
