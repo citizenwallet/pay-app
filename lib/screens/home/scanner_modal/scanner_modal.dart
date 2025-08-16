@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
+import 'package:pay_app/models/card.dart';
 import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/place.dart';
@@ -24,27 +25,13 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:pay_app/utils/qr.dart';
 import 'package:pay_app/widgets/button.dart';
-import 'package:pay_app/widgets/cards/card.dart';
+import 'package:pay_app/widgets/cards/card.dart' as cardWidget;
 import 'package:pay_app/widgets/profile_card.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
 import 'package:web3dart/web3dart.dart';
-
-class CardInfo {
-  final String uid;
-  final ProfileV1 profile;
-  final String balance;
-  final String project;
-
-  CardInfo({
-    required this.uid,
-    required this.profile,
-    required this.balance,
-    required this.project,
-  });
-}
 
 class ScannerModal extends StatefulWidget {
   final String? modalKey;
@@ -877,18 +864,20 @@ class ScannerModalState extends State<ScannerModal>
       if (accountProfile != null)
         CardInfo(
           uid: 'main',
+          account: accountProfile.account,
           profile: accountProfile,
           balance: accountBalance,
           project: 'main',
         ),
-      ...cards.where((card) => profiles[card.account] != null).map(
-            (card) => CardInfo(
-              uid: card.uid,
-              profile: profiles[card.account]!,
-              balance: cardBalances[card.account] ?? '0.0',
-              project: card.project,
-            ),
-          ),
+      ...cards.map(
+        (card) => CardInfo(
+          uid: card.uid,
+          account: card.account,
+          profile: ProfileV1.cardProfile(card.account, card.uid),
+          balance: cardBalances[card.account] ?? '0.0',
+          project: card.project,
+        ),
+      ),
     ];
 
     return [
@@ -920,7 +909,7 @@ class ScannerModalState extends State<ScannerModal>
                   scale: isSelected ? 1.1 : 1,
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeInOut,
-                  child: Card(
+                  child: cardWidget.Card(
                     width: width * 0.80,
                     uid: card.uid,
                     color: primaryColor,
@@ -928,6 +917,7 @@ class ScannerModalState extends State<ScannerModal>
                         ? CupertinoIcons.device_phone_portrait
                         : null,
                     profile: card.profile,
+                    usernamePrefix: card.uid == 'main' ? '@' : '#',
                     logo: tokenConfig.logo,
                     balance: card.balance,
                   ),

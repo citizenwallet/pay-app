@@ -103,11 +103,8 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
       tokenAddress: tokenConfig.address,
     );
 
-    final profile = context.watch<ProfileState>().profile;
-
     return _buildProfileCard(
       context,
-      profile,
       balance,
       config,
       tokenConfig,
@@ -117,7 +114,6 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
 
   Widget _buildProfileCard(
     BuildContext context,
-    ProfileV1 profile,
     String balance,
     Config? config,
     TokenConfig? tokenConfig,
@@ -175,12 +171,12 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
         child: Column(
           children: [
             SizedBox(height: safeArea.top),
-            if (profile.isAnonymous || updatingCardName)
+            if (appProfile.isAnonymous || updatingCardName)
               CardSkeleton(
                 width: (adjustedWidth < 360 ? 360 : adjustedWidth) * 0.8,
                 color: primaryColor,
               ),
-            if (!profile.isAnonymous && cardInfoList.isNotEmpty)
+            if (!appProfile.isAnonymous && cardInfoList.isNotEmpty)
               SizedBox(
                 height: widget.small ? 220 : 260,
                 width: width,

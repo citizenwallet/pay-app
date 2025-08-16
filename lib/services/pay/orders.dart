@@ -20,8 +20,6 @@ class OrdersService {
     String? tokenAddress,
   }) async {
     try {
-      print('getOrders /accounts/$account/orders');
-      print('slug: $slug');
       final queryParams = {
         if (limit != null) 'limit': limit.toString(),
         if (offset != null) 'offset': offset.toString(),
@@ -61,6 +59,26 @@ class OrdersService {
       );
 
       return Order.fromJson(response);
+    } catch (e, s) {
+      debugPrint('Failed to fetch order: $e');
+      debugPrint('Stack trace: $s');
+      throw Exception('Failed to fetch order');
+    }
+  }
+
+  Future<Order> getOrdersByTxHash(String txHash) async {
+    try {
+      final response = await apiService.get(
+        url: '/app/orders?txHash=$txHash',
+      );
+
+      final orders = (response['orders'] as List);
+
+      if (orders.isEmpty) {
+        throw Exception('No orders found');
+      }
+
+      return Order.fromJson(orders.first);
     } catch (e, s) {
       debugPrint('Failed to fetch order: $e');
       debugPrint('Stack trace: $s');

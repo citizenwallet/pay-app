@@ -1,21 +1,29 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/interaction.dart';
+import 'package:pay_app/models/menu_item.dart';
+import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/transaction.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pay_app/utils/date.dart';
 import 'package:provider/provider.dart';
 
 class TransactionListItem extends StatelessWidget {
+  final String myAddress;
   final Transaction transaction;
+  final Map<String, ProfileV1> profiles;
+  final Order? order;
   final Function(Transaction) onTap;
 
   const TransactionListItem({
     super.key,
+    required this.myAddress,
     required this.transaction,
+    required this.profiles,
+    this.order,
     required this.onTap,
   });
 
@@ -23,54 +31,107 @@ class TransactionListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     const circleSize = 60.0;
 
+    final profile =
+        myAddress.toLowerCase() == transaction.toAccount.toLowerCase()
+            ? profiles[transaction.fromAccount]
+            : profiles[transaction.toAccount];
+
+    final exchangeDirection = transaction.exchangeDirection(myAddress);
+
+    final config = context.select((WalletState c) => c.config);
+
+    final logo = config.getToken(transaction.contract);
+
     return CupertinoButton(
       padding: EdgeInsets.symmetric(vertical: 4),
       onPressed: () => onTap(transaction),
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
+        decoration: BoxDecoration(
+          color: whiteColor,
+          border: Border(
+            bottom: BorderSide(
+              color: Color(0xFFF0E9F4),
+            ),
+          ),
+        ),
+        padding: const EdgeInsets.fromLTRB(
+          16,
+          0,
+          16,
+          16,
         ),
         margin: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
+        child: Column(
           children: [
-            // if (transaction. && !transaction.isTreasury)
-            //   ProfileCircle(
-            //     imageUrl: transaction.imageUrl ?? 'assets/icons/shop.png',
-            //     size: circleSize,
-            //     padding: 2,
-            //     fit: BoxFit.cover,
-            //   ),
-            // if (!interaction.isPlace && !interaction.isTreasury)
-            //   ProfileCircle(
-            //     imageUrl: interaction.imageUrl,
-            //     size: circleSize,
-            //     padding: 2,
-            //   ),
-            // if (interaction.isTreasury)
-            ProfileCircle(
-              imageUrl: 'assets/logo.svg',
-              size: circleSize,
-              padding: 2,
-            ),
-            const SizedBox(width: 12),
-            Details(
-              transaction: transaction,
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            Row(
               children: [
-                TimeAgo(lastMessageAt: transaction.createdAt),
+                ProfileCircle(
+                  imageUrl: profile?.imageSmall ?? 'assets/logo.svg',
+                  size: circleSize,
+                  padding: 2,
+                ),
+                const SizedBox(width: 12),
+                Details(
+                  profile: profile,
+                  transaction: transaction,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (order != null &&
+                        (order?.status == OrderStatus.refund ||
+                            order?.status == OrderStatus.refunded))
+                      Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: order?.status == OrderStatus.refund
+                              ? warningColor
+                              : mutedColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              order?.status.name ?? '',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: textColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 4),
+                    AmountDescription(
+                      amount: double.parse(transaction.amount),
+                      description: transaction.description,
+                      exchangeDirection: exchangeDirection,
+                      logo: logo.logo,
+                    ),
+                    TimeAgo(lastMessageAt: transaction.createdAt),
+                  ],
+                ),
               ],
             ),
-            const SizedBox(width: 12),
-            Column(
-              children: [
-                Icon(
-                  CupertinoIcons.chevron_right,
-                  color: iconColor,
-                )
-              ],
-            )
+            const SizedBox(height: 8),
+            if (order != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  8,
+                  0,
+                  8,
+                  8,
+                ),
+                child: Row(
+                  children: [
+                    OrderDetails(
+                      order: order!,
+                    ),
+                  ],
+                ),
+              )
           ],
         ),
       ),
@@ -79,43 +140,40 @@ class TransactionListItem extends StatelessWidget {
 }
 
 class Details extends StatelessWidget {
+  final ProfileV1? profile;
   final Transaction transaction;
 
   const Details({
     super.key,
+    this.profile,
     required this.transaction,
   });
 
   @override
   Widget build(BuildContext context) {
-    final config = context.select((WalletState c) => c.config);
-
-    final logo = config.getToken(transaction.contract);
-
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              // if (interaction.isPlace || interaction.isTreasury)
-              SvgPicture.asset(
-                'assets/icons/shop.svg',
-                height: 16,
-                width: 16,
-                semanticsLabel: 'shop',
-              ),
-              const SizedBox(width: 4),
-              // Name(name: interaction.isTreasury ? 'Top Up' : interaction.name),
-              Name(name: 'Tx')
+              Name(name: profile?.name ?? 'Unknown'),
             ],
           ),
           const SizedBox(height: 4),
-          AmountDescription(
-            amount: double.parse(transaction.amount),
-            description: transaction.description,
-            // exchangeDirection: transaction.exchangeDirection,
-            logo: logo.logo,
+          Row(
+            children: [
+              Text(
+                '@${profile?.username ?? 'unknown'}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF8F8A9D),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              )
+            ],
           ),
         ],
       ),
@@ -143,39 +201,17 @@ class Name extends StatelessWidget {
   }
 }
 
-class Location extends StatelessWidget {
-  final String? location;
-
-  const Location({super.key, this.location});
-
-  @override
-  Widget build(BuildContext context) {
-    if (location == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Text(
-      location!,
-      style: const TextStyle(
-        fontSize: 10,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFF8F8A9D),
-      ),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
-}
-
 class AmountDescription extends StatelessWidget {
   final double amount;
   final String? description;
+  final ExchangeDirection exchangeDirection;
   final String? logo;
 
   const AmountDescription({
     super.key,
     required this.amount,
     this.description,
+    required this.exchangeDirection,
     this.logo,
   });
 
@@ -189,52 +225,14 @@ class AmountDescription extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         Text(
-          // '${exchangeDirection == ExchangeDirection.sent ? '-' : '+'}${amount.toStringAsFixed(2)}',
-          '${amount.toStringAsFixed(2)}',
+          '${exchangeDirection == ExchangeDirection.sent ? '-' : '+'}${amount.toStringAsFixed(2)}',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF8F8A9D),
+            color: textColor,
           ),
         ),
-        const SizedBox(width: 4),
-        Expanded(
-          child: Text(
-            description ?? '',
-            style: const TextStyle(
-              fontSize: 10,
-              color: Color(0xFF8F8A9D),
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        const SizedBox(width: 4),
       ],
-    );
-  }
-}
-
-class UnreadMessageIndicator extends StatelessWidget {
-  final bool hasUnreadMessages;
-
-  const UnreadMessageIndicator({super.key, required this.hasUnreadMessages});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = CupertinoTheme.of(context);
-
-    if (!hasUnreadMessages) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(
-        color: theme.primaryColor,
-        shape: BoxShape.circle,
-      ),
     );
   }
 }
@@ -252,6 +250,72 @@ class TimeAgo extends StatelessWidget {
         fontSize: 10,
         color: Color(0xFF8F8A9D),
       ),
+    );
+  }
+}
+
+class OrderDetails extends StatelessWidget {
+  final Order order;
+
+  const OrderDetails({
+    super.key,
+    required this.order,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final items = order.items;
+    final description = order.description;
+    final menuItems = order.place.items;
+
+    if (items.isEmpty && (description == null || description.trim().isEmpty)) {
+      return const SizedBox.shrink();
+    }
+
+    final mappedItems = menuItems.fold<Map<int, MenuItem>>(
+      {},
+      (acc, item) => {
+        ...acc,
+        item.id: item,
+      },
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Order #${order.id}',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        SizedBox(height: 4),
+        if (description != null && description.isNotEmpty && items.isEmpty)
+          Text(
+            description,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: textMutedColor,
+            ),
+          ),
+        ...items.map(
+          (item) => Text(
+            key: Key('item-${item.id}'),
+            '${mappedItems[item.id]?.name ?? ''} x ${item.quantity}',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: textMutedColor,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

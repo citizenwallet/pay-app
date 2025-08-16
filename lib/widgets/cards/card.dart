@@ -243,16 +243,29 @@ class _CardState extends State<Card> {
                                 ),
                         ],
                       ),
-                      if (widget.profile != null) const SizedBox(height: 4),
+                      if (widget.profile != null) const SizedBox(height: 6),
                       if (widget.profile != null)
-                        Text(
-                          '${widget.usernamePrefix}${widget.profile!.username}',
-                          style: const TextStyle(
-                            color: CupertinoColors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          children: [
+                            Text(
+                              widget.usernamePrefix,
+                              style: TextStyle(
+                                color: whiteColor.withAlpha(200),
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              widget.profile!.username,
+                              style: TextStyle(
+                                color: whiteColor.withAlpha(200),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                     ],
                   ),

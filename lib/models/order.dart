@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
+import 'package:pay_app/models/menu_item.dart';
 import 'package:pay_app/models/place.dart';
 import 'package:web3dart/web3dart.dart' show EthereumAddress;
 
@@ -31,11 +32,13 @@ class OrderPlace {
   final String slug;
   final Display display;
   final String account;
+  final List<MenuItem> items;
 
   OrderPlace({
     required this.slug,
     required this.display,
     required this.account,
+    required this.items,
   });
 
   factory OrderPlace.fromJson(Map<String, dynamic> json) {
@@ -48,6 +51,11 @@ class OrderPlace {
           Display.values.firstWhereOrNull((e) => e.name == json['display']) ??
               Display.amount,
       account: account,
+      items: json['items'] != null
+          ? (json['items'] as List)
+              .map((item) => MenuItem.fromJson(item))
+              .toList()
+          : [],
     );
   }
 
@@ -61,6 +69,11 @@ class OrderPlace {
           Display.values.firstWhereOrNull((e) => e.name == json['display']) ??
               Display.amount,
       account: account,
+      items: json['items'] != null
+          ? (json['items'] as List)
+              .map((item) => MenuItem.fromJson(item))
+              .toList()
+          : [],
     );
   }
 
@@ -181,6 +194,11 @@ class Order {
       'place': jsonEncode(place.toMap()),
     };
   }
+
+  bool get isFinalized =>
+      status == OrderStatus.paid ||
+      status == OrderStatus.refunded ||
+      status == OrderStatus.correction;
 
   static OrderStatus _parseOrderStatus(String status) {
     return OrderStatus.values.firstWhere(

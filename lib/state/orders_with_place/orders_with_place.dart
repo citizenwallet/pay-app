@@ -382,6 +382,7 @@ class OrdersWithPlaceState with ChangeNotifier {
           slug: slug,
           display: place!.place.display,
           account: place!.place.account,
+          items: place!.items,
         ),
       );
 

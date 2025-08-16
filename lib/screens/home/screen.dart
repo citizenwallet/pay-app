@@ -633,6 +633,9 @@ class _HomeScreenState extends State<HomeScreen>
 
     final transactions =
         context.select((TransactionsState state) => state.transactions);
+    final orders = context.select((TransactionsState state) => state.orders);
+    final profiles =
+        context.select((TransactionsState state) => state.profiles);
 
     final nothingFound = _searchController.text.isNotEmpty &&
         interactions.isEmpty &&
@@ -715,29 +718,33 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                             ),
                           ),
-                        if (isCard)
+                        if (isCard && myAddress != null)
                           SliverList(
                             delegate: SliverChildBuilderDelegate(
                               childCount: transactions.length,
                               (context, index) => TransactionListItem(
+                                myAddress: myAddress,
                                 transaction: transactions[index],
+                                profiles: profiles,
+                                order: orders[transactions[index].txHash],
                                 onTap: (transaction) => handleTransactionTap(
                                     myAddress, transaction),
                               ),
                             ),
                           ),
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            childCount: places.length,
-                            (context, index) => PlaceListItem(
-                              place: places[index],
-                              onTap: (place) => handleInteractionWithPlace(
-                                myAddress,
-                                place.slug,
+                        if (!isCard)
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              childCount: places.length,
+                              (context, index) => PlaceListItem(
+                                place: places[index],
+                                onTap: (place) => handleInteractionWithPlace(
+                                  myAddress,
+                                  place.slug,
+                                ),
                               ),
                             ),
                           ),
-                        ),
                         if (!isCard && contacts.isNotEmpty && isSearching)
                           SliverList(
                             delegate: SliverChildBuilderDelegate(

@@ -2,29 +2,41 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/transaction.dart';
 import 'package:pay_app/services/audio/audio.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
+import 'package:pay_app/services/db/app/contacts.dart';
 import 'package:pay_app/services/db/app/db.dart';
+import 'package:pay_app/services/db/app/orders.dart';
 import 'package:pay_app/services/db/app/transactions.dart';
+import 'package:pay_app/services/pay/orders.dart';
 import 'package:pay_app/services/pay/transactions.dart';
 import 'package:pay_app/services/secure/secure.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
+import 'package:pay_app/services/wallet/wallet.dart';
 
 class TransactionsState with ChangeNotifier {
   late Config _config;
 
+  final ContactsTable _contacts = AppDBService().contacts;
   final TransactionsTable _transactionsTable = AppDBService().transactions;
+  final OrdersTable _ordersTable = AppDBService().orders;
   final AudioService _audioService = AudioService();
   final ConfigService _configService = ConfigService();
   final SecureService _secureService = SecureService();
 
   late TransactionsService transactionsService;
+  late OrdersService ordersService;
 
   String accountAddress;
 
   List<Transaction> transactions = [];
   List<Transaction> newTransactions = [];
+
+  Map<String, Order> orders = {};
+  Map<String, ProfileV1> profiles = {};
 
   Timer? _pollingTimer;
 
@@ -40,6 +52,7 @@ class TransactionsState with ChangeNotifier {
     required this.accountAddress,
   }) {
     transactionsService = TransactionsService(account: accountAddress);
+    ordersService = OrdersService(account: accountAddress);
     init();
   }
 
@@ -68,6 +81,58 @@ class TransactionsState with ChangeNotifier {
     _mounted = false;
     stopPolling();
     super.dispose();
+  }
+
+  void loadProfiles(List<Transaction> transactions) {
+    for (final transaction in transactions) {
+      if (transaction.fromProfile != null) {
+        fetchProfile(transaction.fromAccount);
+      }
+    }
+  }
+
+  void fetchProfile(String account) async {
+    final contact = await _contacts.getByAccount(account);
+    final profile = contact?.getProfile();
+    if (profile != null) {
+      profiles[account] = profile;
+      safeNotifyListeners();
+
+      return;
+    }
+
+    final remoteProfile = await getProfile(_config, account);
+    if (remoteProfile == null) {
+      return;
+    }
+
+    profiles[account] = remoteProfile;
+    safeNotifyListeners();
+
+    _contacts.upsert(DBContact.fromProfile(remoteProfile));
+  }
+
+  void fetchOrdersByTxHash(String txHash) async {
+    final order = await _ordersTable.getByTxHash(txHash);
+    if (order != null) {
+      orders[txHash] = order;
+      safeNotifyListeners();
+
+      if (order.isFinalized) {
+        return;
+      }
+    }
+
+    try {
+      final apiOrder = await ordersService.getOrdersByTxHash(txHash);
+
+      orders[txHash] = apiOrder;
+      safeNotifyListeners();
+
+      await _ordersTable.upsert(apiOrder);
+    } catch (e) {
+      debugPrint('Error fetching orders by tx hash: $e');
+    }
   }
 
   void startPolling({Future<void> Function()? updateBalance}) {
@@ -101,7 +166,19 @@ class TransactionsState with ChangeNotifier {
         // Store new transactions in database
         await _transactionsTable.upsertMany(newTransactions);
 
+        for (final transaction in newTransactions) {
+          if (transaction.fromProfile != null) {
+            _contacts.upsert(DBContact.fromProfile(transaction.fromProfile!));
+          }
+
+          if (transaction.toProfile != null) {
+            _contacts.upsert(DBContact.fromProfile(transaction.toProfile!));
+          }
+        }
+
         _upsertNewTransactions(newTransactions);
+
+        loadProfiles(newTransactions);
 
         safeNotifyListeners();
         updateBalance?.call();
@@ -128,6 +205,9 @@ class TransactionsState with ChangeNotifier {
 
       if (dbTransactions.isNotEmpty) {
         _upsertTransactions(dbTransactions);
+
+        loadProfiles(dbTransactions);
+
         transactionsOffset += dbTransactions.length;
         hasMoreTransactions = dbTransactions.length == transactionsLimit;
         safeNotifyListeners();
@@ -162,6 +242,9 @@ class TransactionsState with ChangeNotifier {
 
       if (dbTransactions.isNotEmpty) {
         _upsertTransactions(dbTransactions);
+
+        loadProfiles(dbTransactions);
+
         transactionsOffset += dbTransactions.length;
         hasMoreTransactions = dbTransactions.length == transactionsLimit;
         safeNotifyListeners();
@@ -190,6 +273,18 @@ class TransactionsState with ChangeNotifier {
         // Store transactions in database
         await _transactionsTable.upsertMany(apiTransactions);
 
+        for (final transaction in apiTransactions) {
+          if (transaction.fromProfile != null) {
+            _contacts.upsert(DBContact.fromProfile(transaction.fromProfile!));
+          }
+
+          if (transaction.toProfile != null) {
+            _contacts.upsert(DBContact.fromProfile(transaction.toProfile!));
+          }
+        }
+
+        loadProfiles(apiTransactions);
+
         // Refresh the current view if we have new transactions
         final currentTransactions =
             await _transactionsTable.getTransactionsForAccount(
@@ -200,6 +295,9 @@ class TransactionsState with ChangeNotifier {
 
         if (currentTransactions.isNotEmpty) {
           _upsertTransactions(currentTransactions);
+
+          loadProfiles(currentTransactions);
+
           safeNotifyListeners();
         }
       }
@@ -222,6 +320,8 @@ class TransactionsState with ChangeNotifier {
       } else {
         existingList.add(newTransaction);
       }
+
+      fetchOrdersByTxHash(newTransaction.txHash);
     }
 
     // Sort by creation date (newest first) to maintain proper order
@@ -241,6 +341,8 @@ class TransactionsState with ChangeNotifier {
       } else {
         existingList.insert(0, newTransaction);
       }
+
+      fetchOrdersByTxHash(newTransaction.txHash);
 
       // Remove old pending transactions
       existingList.removeWhere((element) =>
@@ -281,6 +383,19 @@ class TransactionsState with ChangeNotifier {
 
       if (apiTransactions.isNotEmpty) {
         _upsertTransactions(apiTransactions);
+
+        for (final transaction in apiTransactions) {
+          if (transaction.fromProfile != null) {
+            _contacts.upsert(DBContact.fromProfile(transaction.fromProfile!));
+          }
+
+          if (transaction.toProfile != null) {
+            _contacts.upsert(DBContact.fromProfile(transaction.toProfile!));
+          }
+        }
+
+        loadProfiles(apiTransactions);
+
         transactionsOffset = apiTransactions.length;
         hasMoreTransactions = apiTransactions.length == transactionsLimit;
         safeNotifyListeners();
@@ -313,6 +428,19 @@ class TransactionsState with ChangeNotifier {
 
       if (apiTransactions.isNotEmpty) {
         _upsertTransactions(apiTransactions);
+
+        for (final transaction in apiTransactions) {
+          if (transaction.fromProfile != null) {
+            _contacts.upsert(DBContact.fromProfile(transaction.fromProfile!));
+          }
+
+          if (transaction.toProfile != null) {
+            _contacts.upsert(DBContact.fromProfile(transaction.toProfile!));
+          }
+        }
+
+        loadProfiles(apiTransactions);
+
         transactionsOffset += apiTransactions.length;
         hasMoreTransactions = apiTransactions.length == transactionsLimit;
         safeNotifyListeners();
