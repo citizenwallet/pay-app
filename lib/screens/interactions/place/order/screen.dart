@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
@@ -13,12 +14,22 @@ class OrderScreen extends StatefulWidget {
 }
 
 class _OrderScreenState extends State<OrderScreen> {
+  void handleBack() {
+    final navigator = GoRouter.of(context);
+    navigator.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final order = widget.order;
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: handleBack,
+          child: const Icon(CupertinoIcons.chevron_left),
+        ),
         middle:
             Text('${AppLocalizations.of(context)!.orderDetails} #${order.id}'),
       ),
