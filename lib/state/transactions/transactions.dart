@@ -1,10 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/services.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/transaction.dart';
-import 'package:pay_app/services/audio/audio.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/db/app/contacts.dart';
@@ -13,7 +11,6 @@ import 'package:pay_app/services/db/app/orders.dart';
 import 'package:pay_app/services/db/app/transactions.dart';
 import 'package:pay_app/services/pay/orders.dart';
 import 'package:pay_app/services/pay/transactions.dart';
-import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 
@@ -23,9 +20,7 @@ class TransactionsState with ChangeNotifier {
   final ContactsTable _contacts = AppDBService().contacts;
   final TransactionsTable _transactionsTable = AppDBService().transactions;
   final OrdersTable _ordersTable = AppDBService().orders;
-  final AudioService _audioService = AudioService();
   final ConfigService _configService = ConfigService();
-  final SecureService _secureService = SecureService();
 
   late TransactionsService transactionsService;
   late OrdersService ordersService;
@@ -43,7 +38,7 @@ class TransactionsState with ChangeNotifier {
   int transactionsLimit = 10;
   int transactionsOffset = 0;
 
-  bool loading = false;
+  bool loading = true;
   bool error = false;
   bool loadingMore = false;
   bool hasMoreTransactions = true;

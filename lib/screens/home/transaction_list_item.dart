@@ -16,7 +16,7 @@ class TransactionListItem extends StatelessWidget {
   final Transaction transaction;
   final Map<String, ProfileV1> profiles;
   final Order? order;
-  final Function(Transaction) onTap;
+  final Function(Transaction, Order?) onTap;
 
   const TransactionListItem({
     super.key,
@@ -44,7 +44,7 @@ class TransactionListItem extends StatelessWidget {
 
     return CupertinoButton(
       padding: EdgeInsets.symmetric(vertical: 4),
-      onPressed: () => onTap(transaction),
+      onPressed: () => onTap(transaction, order),
       child: Container(
         decoration: BoxDecoration(
           color: whiteColor,
@@ -58,9 +58,8 @@ class TransactionListItem extends StatelessWidget {
           16,
           0,
           16,
-          8,
+          4,
         ),
-        margin: const EdgeInsets.symmetric(vertical: 4),
         child: Column(
           children: [
             Row(
@@ -316,6 +315,123 @@ class OrderDetails extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class TransactionListItemSkeleton extends StatelessWidget {
+  const TransactionListItemSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    const circleSize = 60.0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: whiteColor,
+        border: Border(
+          bottom: BorderSide(
+            color: Color(0xFFF0E9F4),
+          ),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(
+        16,
+        0,
+        16,
+        8,
+      ),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // Profile circle skeleton
+              Container(
+                width: circleSize,
+                height: circleSize,
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemGrey.withAlpha(40),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: CupertinoColors.systemGrey.withAlpha(80),
+                    width: 2,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Details skeleton
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Name skeleton
+                    Container(
+                      height: 20,
+                      width: 120,
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.systemGrey.withAlpha(40),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Username skeleton
+                    Container(
+                      height: 14,
+                      width: 80,
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.systemGrey.withAlpha(30),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Amount and time skeleton
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const SizedBox(height: 4),
+                  // Amount skeleton
+                  Row(
+                    children: [
+                      // Coin logo skeleton
+                      Container(
+                        width: 15,
+                        height: 15,
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.systemGrey.withAlpha(40),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      // Amount text skeleton
+                      Container(
+                        height: 16,
+                        width: 60,
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.systemGrey.withAlpha(40),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  // Time skeleton
+                  Container(
+                    height: 12,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.systemGrey.withAlpha(30),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

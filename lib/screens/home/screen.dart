@@ -7,6 +7,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:pay_app/models/interaction.dart';
+import 'package:pay_app/models/order.dart';
 import 'package:pay_app/screens/home/contact_list_item.dart';
 import 'package:pay_app/screens/home/profile_list_item.dart';
 import 'package:pay_app/screens/home/profile_modal.dart';
@@ -590,9 +591,19 @@ class _HomeScreenState extends State<HomeScreen>
     _interactionState.markInteractionAsRead(interaction);
   }
 
-  void handleTransactionTap(String? myAddress, tx.Transaction transaction) {
-    // goToChatHistory(myAddress, interaction);
-    // _interactionState.markInteractionAsRead(interaction);
+  void handleTransactionTap(
+    String? myAddress,
+    tx.Transaction transaction,
+    Order? order,
+  ) {
+    final navigator = GoRouter.of(context);
+
+    if (order != null) {
+      navigator.push('/$myAddress/place/${order.place.slug}/order/${order.id}',
+          extra: order);
+    } else {
+      // navigator.push('/$myAddress/transaction/${transaction.id}');
+    }
   }
 
   void _dismissKeyboard() {
@@ -631,6 +642,8 @@ class _HomeScreenState extends State<HomeScreen>
         state.cards.firstWhereOrNull((card) => card.account == myAddress) !=
         null);
 
+    final transactionsLoading =
+        context.select((TransactionsState state) => state.loading);
     final transactions =
         context.select((TransactionsState state) => state.transactions);
     final orders = context.select((TransactionsState state) => state.orders);
@@ -658,128 +671,185 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   Container(
                     color: _backgroundColorAnimation.value,
-                    child: CustomScrollView(
-                      controller: _scrollController,
-                      scrollBehavior: const CupertinoScrollBehavior(),
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      slivers: [
-                        SliverPersistentHeader(
-                          floating: true,
-                          delegate: SearchBarDelegate(
-                            safeTopPadding: safeTopPadding,
-                            controller: _searchController,
-                            focusNode: _searchFocusNode,
-                            onSearch: handleSearch,
-                            onCancel: clearSearch,
-                            isSearching: isSearching,
-                            searching: searching || _interactionState.syncing,
-                            backgroundColor: _backgroundColorAnimation.value,
-                            isCard: isCard,
-                          ),
-                        ),
-                        CupertinoSliverRefreshControl(
-                          onRefresh: handleRefresh,
-                        ),
-                        if (!isCard && customContact != null)
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              childCount: 1,
-                              (context, index) => ContactListItem(
-                                contact: customContact,
-                                onTap: (contact) =>
-                                    handleInteractionWithContact(
-                                  myAddress,
-                                  contact,
+                    child: isCard
+                        ? CustomScrollView(
+                            controller: _scrollController,
+                            scrollBehavior: const CupertinoScrollBehavior(),
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            slivers: [
+                              SliverPersistentHeader(
+                                floating: true,
+                                delegate: SearchBarDelegate(
+                                  safeTopPadding: safeTopPadding,
+                                  controller: _searchController,
+                                  focusNode: _searchFocusNode,
+                                  onSearch: handleSearch,
+                                  onCancel: clearSearch,
+                                  isSearching: isSearching,
+                                  searching:
+                                      searching || _interactionState.syncing,
+                                  backgroundColor:
+                                      _backgroundColorAnimation.value,
+                                  isCard: isCard,
                                 ),
                               ),
-                            ),
-                          ),
-                        if (!isCard && customContactProfileByUsername != null)
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              childCount: 1,
-                              (context, index) => ProfileListItem(
-                                profile: customContactProfileByUsername,
-                                onTap: (profile) => handleInteractionWithUser(
-                                  myAddress,
-                                  profile.account,
+                              CupertinoSliverRefreshControl(
+                                onRefresh: handleRefresh,
+                              ),
+                              if (myAddress != null)
+                                SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    childCount: transactions.length,
+                                    (context, index) => AnimatedOpacity(
+                                      key: Key(
+                                        'transaction-list-item-${transactions[index].id}',
+                                      ),
+                                      opacity: transactionsLoading ? 0.0 : 1.0,
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      curve: Curves.easeInOut,
+                                      child: TransactionListItem(
+                                        myAddress: myAddress,
+                                        transaction: transactions[index],
+                                        profiles: profiles,
+                                        order:
+                                            orders[transactions[index].txHash],
+                                        onTap: (transaction, order) =>
+                                            handleTransactionTap(
+                                          myAddress,
+                                          transaction,
+                                          order,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              if (nothingFound)
+                                SliverToBoxAdapter(
+                                  child: Center(
+                                    child: Text(AppLocalizations.of(context)!
+                                        .noResultsFound),
+                                  ),
+                                ),
+                              SliverToBoxAdapter(
+                                child: SizedBox(
+                                  height: 10,
                                 ),
                               ),
-                            ),
-                          ),
-                        if (!isCard)
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              childCount: interactions.length,
-                              (context, index) => InteractionListItem(
-                                interaction: interactions[index],
-                                onTap: (interaction) => handleInteractionTap(
-                                    myAddress, interaction),
-                              ),
-                            ),
-                          ),
-                        if (isCard && myAddress != null)
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              childCount: transactions.length,
-                              (context, index) => TransactionListItem(
-                                myAddress: myAddress,
-                                transaction: transactions[index],
-                                profiles: profiles,
-                                order: orders[transactions[index].txHash],
-                                onTap: (transaction) => handleTransactionTap(
-                                    myAddress, transaction),
-                              ),
-                            ),
-                          ),
-                        if (!isCard)
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              childCount: places.length,
-                              (context, index) => PlaceListItem(
-                                place: places[index],
-                                onTap: (place) => handleInteractionWithPlace(
-                                  myAddress,
-                                  place.slug,
+                            ],
+                          )
+                        : CustomScrollView(
+                            controller: _scrollController,
+                            scrollBehavior: const CupertinoScrollBehavior(),
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            slivers: [
+                              SliverPersistentHeader(
+                                floating: true,
+                                delegate: SearchBarDelegate(
+                                  safeTopPadding: safeTopPadding,
+                                  controller: _searchController,
+                                  focusNode: _searchFocusNode,
+                                  onSearch: handleSearch,
+                                  onCancel: clearSearch,
+                                  isSearching: isSearching,
+                                  searching:
+                                      searching || _interactionState.syncing,
+                                  backgroundColor:
+                                      _backgroundColorAnimation.value,
+                                  isCard: isCard,
                                 ),
                               ),
-                            ),
-                          ),
-                        if (!isCard && contacts.isNotEmpty && isSearching)
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              childCount: contacts.length,
-                              (context, index) => ContactListItem(
-                                contact: contacts[index],
-                                onTap: (contact) =>
-                                    handleInteractionWithContact(
-                                  myAddress,
-                                  contact,
+                              CupertinoSliverRefreshControl(
+                                onRefresh: handleRefresh,
+                              ),
+                              if (customContact != null)
+                                SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    childCount: 1,
+                                    (context, index) => ContactListItem(
+                                      contact: customContact,
+                                      onTap: (contact) =>
+                                          handleInteractionWithContact(
+                                        myAddress,
+                                        contact,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              if (customContactProfileByUsername != null)
+                                SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    childCount: 1,
+                                    (context, index) => ProfileListItem(
+                                      profile: customContactProfileByUsername,
+                                      onTap: (profile) =>
+                                          handleInteractionWithUser(
+                                        myAddress,
+                                        profile.account,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  childCount: interactions.length,
+                                  (context, index) => InteractionListItem(
+                                    interaction: interactions[index],
+                                    onTap: (interaction) =>
+                                        handleInteractionTap(
+                                            myAddress, interaction),
+                                  ),
                                 ),
                               ),
-                            ),
+                              SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  childCount: places.length,
+                                  (context, index) => PlaceListItem(
+                                    place: places[index],
+                                    onTap: (place) =>
+                                        handleInteractionWithPlace(
+                                      myAddress,
+                                      place.slug,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              if (contacts.isNotEmpty && isSearching)
+                                SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    childCount: contacts.length,
+                                    (context, index) => ContactListItem(
+                                      contact: contacts[index],
+                                      onTap: (contact) =>
+                                          handleInteractionWithContact(
+                                        myAddress,
+                                        contact,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              if (loading &&
+                                  places.isEmpty &&
+                                  interactions.isEmpty &&
+                                  contacts.isEmpty)
+                                SliverFillRemaining(
+                                  child: Center(
+                                      child: CupertinoActivityIndicator()),
+                                ),
+                              if (nothingFound)
+                                SliverToBoxAdapter(
+                                  child: Center(
+                                    child: Text(AppLocalizations.of(context)!
+                                        .noResultsFound),
+                                  ),
+                                ),
+                              SliverToBoxAdapter(
+                                child: SizedBox(
+                                  height: 10,
+                                ),
+                              ),
+                            ],
                           ),
-                        if (loading &&
-                            places.isEmpty &&
-                            interactions.isEmpty &&
-                            contacts.isEmpty)
-                          SliverFillRemaining(
-                            child: Center(child: CupertinoActivityIndicator()),
-                          ),
-                        if (nothingFound)
-                          SliverToBoxAdapter(
-                            child: Center(
-                              child: Text(
-                                  AppLocalizations.of(context)!.noResultsFound),
-                            ),
-                          ),
-                        SliverToBoxAdapter(
-                          child: SizedBox(
-                            height: 10,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                   Positioned(
                     bottom: 0,
