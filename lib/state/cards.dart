@@ -123,8 +123,6 @@ class CardsState with ChangeNotifier {
           _config.getToken(tokenAddress ?? _config.getPrimaryToken().address);
 
       for (final card in cards) {
-        await fetchProfile(card.account);
-
         final balance = await getBalance(
           _config,
           EthereumAddress.fromHex(card.account),

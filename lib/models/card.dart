@@ -38,12 +38,14 @@ class Card {
 
 class CardInfo {
   final String uid;
+  final String account;
   final ProfileV1 profile;
   final String balance;
   final String project;
 
   CardInfo({
     required this.uid,
+    required this.account,
     required this.profile,
     required this.balance,
     required this.project,

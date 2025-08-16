@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/l10n/app_localizations.dart';
-import 'package:pay_app/models/card.dart';
 import 'package:pay_app/screens/home/profile_bar.dart';
 import 'package:pay_app/screens/home/scanner_modal/scanner_modal.dart'
     as scanner;
@@ -15,6 +14,7 @@ import 'package:pay_app/state/state.dart';
 import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
+import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
@@ -45,10 +45,9 @@ class _HomeShellState extends State<HomeShell> {
 
   String? _selectedAddress;
 
-  final PageController _pageController = PageController(
-    viewportFraction: 0.85,
-    initialPage: 0,
-  );
+  bool _hideProfileBar = false;
+
+  PageController? _pageController;
 
   @override
   void initState() {
@@ -59,13 +58,43 @@ class _HomeShellState extends State<HomeShell> {
       _topupState = context.read<TopupState>();
       _profileState = context.read<ProfileState>();
       _walletState = context.read<WalletState>();
+
+      setState(() {
+        _pageController = PageController(
+          viewportFraction: 0.85,
+          initialPage: 0,
+          onAttach: (ScrollPosition position) {
+            onAttach();
+          },
+        );
+      });
     });
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _pageController?.dispose();
     super.dispose();
+  }
+
+  void onAttach() async {
+    await delay(const Duration(milliseconds: 500));
+
+    final lastAccount = _appState.lastAccount;
+
+    if (lastAccount != null && mounted) {
+      // switch to page of last account
+      final cards = context.read<CardsState>().cards;
+      final index = cards.indexWhere(
+        (card) => card.account == lastAccount,
+      );
+
+      _pageController?.animateToPage(
+        index == -1 ? 0 : index + 1,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.decelerate,
+      );
+    }
   }
 
   void handleDismissKeyboard() {
@@ -88,51 +117,12 @@ class _HomeShellState extends State<HomeShell> {
     navigator.replace('/$account');
   }
 
-  // Future<void> handleProfileTap(
-  //   String myAddress, {
-  //   String? tokenAddress,
-  // }) async {
-  //   _searchFocusNode.unfocus();
-
-  //   _stopInitRetries = true;
-
-  //   _backgroundColorController.forward();
-
-  //   HapticFeedback.heavyImpact();
-
-  //   final account = await showCupertinoDialog<EthereumAddress?>(
-  //     context: context,
-  //     barrierDismissible: true,
-  //     useRootNavigator: false,
-  //     builder: (modalContext) => ProfileModal(
-  //       accountAddress: myAddress,
-  //       tokenAddress: tokenAddress,
-  //     ),
-  //   );
-
-  //   if (account != null && mounted) {
-  //     _walletState.setLastAccount(account.hexEip55);
-
-  //     final navigator = GoRouter.of(context);
-
-  //     navigator.replace('/${account.hexEip55}');
-  //   }
-
-  //   _backgroundColorController.reverse();
-
-  //   _stopInitRetries = false;
-
-  //   clearSearch();
-  // }
-
   void handleTopUp(String baseUrl) async {
     await _topupState.generateTopupUrl(baseUrl);
 
     if (!mounted) {
       return;
     }
-
-    // _backgroundColorController.forward();
 
     HapticFeedback.heavyImpact();
 
@@ -160,10 +150,6 @@ class _HomeShellState extends State<HomeShell> {
       },
     );
 
-    // _stopInitRetries = false;
-
-    // _backgroundColorController.reverse();
-
     if (result == null) {
       return;
     }
@@ -188,7 +174,7 @@ class _HomeShellState extends State<HomeShell> {
       ),
     );
 
-    // await _walletState.updateBalance();
+    await _walletState.updateBalance();
   }
 
   Future<void> handleQRScan(
@@ -228,7 +214,7 @@ class _HomeShellState extends State<HomeShell> {
         (card) => card.account == selectedAccount,
       );
 
-      _pageController.jumpToPage(index == -1 ? 0 : index + 1);
+      _pageController?.jumpToPage(index == -1 ? 0 : index + 1);
 
       handleCardChanged(selectedAccount);
 
@@ -247,22 +233,38 @@ class _HomeShellState extends State<HomeShell> {
 
     final navigated = parts.length > 2;
 
+    if (_hideProfileBar && !navigated) {
+      setState(() {
+        _hideProfileBar = navigated;
+      });
+    }
+
     final small = context.select<AppState, bool>((state) => state.small);
 
     return Stack(
       children: [
         widget.child,
-        if (!navigated)
-          ProfileBar(
-            selectedAddress: _selectedAddress,
-            onCardChanged: handleCardChanged,
-            pageController: _pageController,
-            small: small,
-            config: widget.config,
-            loading: false,
-            accountAddress: accountAddress,
-            backgroundColor: backgroundColor,
-            onTopUpTap: handleTopUp,
+        if (!_hideProfileBar && _pageController != null)
+          AnimatedOpacity(
+            opacity: navigated ? 0 : 1,
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeInOut,
+            onEnd: () {
+              setState(() {
+                _hideProfileBar = navigated;
+              });
+            },
+            child: ProfileBar(
+              selectedAddress: _selectedAddress,
+              onCardChanged: handleCardChanged,
+              pageController: _pageController!,
+              small: small,
+              config: widget.config,
+              loading: false,
+              accountAddress: accountAddress,
+              backgroundColor: backgroundColor,
+              onTopUpTap: handleTopUp,
+            ),
           ),
         if (!navigated)
           AnimatedPositioned(

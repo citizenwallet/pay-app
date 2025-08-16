@@ -14,7 +14,8 @@ class AppState with ChangeNotifier {
   // constructor here
   AppState(this._config)
       : currentTokenAddress = _config.getPrimaryToken().address,
-        currentTokenConfig = _config.getPrimaryToken();
+        currentTokenConfig = _config.getPrimaryToken(),
+        lastAccount = PreferencesService().lastAccount;
 
   bool _mounted = true;
   void safeNotifyListeners() {
@@ -30,6 +31,7 @@ class AppState with ChangeNotifier {
   }
 
   // state variables here
+  String? lastAccount;
   String currentTokenAddress;
   TokenConfig currentTokenConfig;
 
@@ -49,6 +51,7 @@ class AppState with ChangeNotifier {
   }
 
   void setLastAccount(String account) {
+    lastAccount = account;
     _preferencesService.setLastAccount(account);
     safeNotifyListeners();
   }

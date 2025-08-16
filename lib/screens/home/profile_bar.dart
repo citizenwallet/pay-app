@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -48,8 +47,6 @@ class ProfileBar extends StatefulWidget {
 
 class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
   late AppState _appState;
-  late CardsState _cardsState;
-  late ProfileState _profileState;
 
   @override
   void initState() {
@@ -57,8 +54,6 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _appState = context.read<AppState>();
-      _cardsState = context.read<CardsState>();
-      _profileState = context.read<ProfileState>();
     });
   }
 
@@ -91,13 +86,6 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
     HapticFeedback.heavyImpact();
 
     navigator.push('/${widget.accountAddress}/my-account/edit');
-  }
-
-  Future<void> handleUpdateCardName(
-      String uid, String name, String originalName) async {
-    await _cardsState.updateCardName(uid, name, originalName);
-
-    _profileState.fetchProfile();
   }
 
   @override
@@ -145,7 +133,6 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
 
     final cards = context.watch<CardsState>().cards;
     final cardBalances = context.watch<CardsState>().cardBalances;
-    final profiles = context.watch<CardsState>().profiles;
 
     final appProfile = context.watch<ProfileState>().appProfile;
 
@@ -155,18 +142,22 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
     final List<CardInfo> cardInfoList = [
       CardInfo(
         uid: 'main',
+        account: appProfile.account,
         profile: appProfile,
         balance: balance,
         project: 'main',
       ),
-      ...cards.where((card) => profiles[card.account] != null).map(
-            (card) => CardInfo(
-              uid: card.uid,
-              profile: profiles[card.account]!,
-              balance: cardBalances[card.account] ?? '0.0',
-              project: card.project,
-            ),
-          ),
+      ...cards.map(
+        (card) {
+          return CardInfo(
+            uid: card.uid,
+            account: card.account,
+            profile: ProfileV1.cardProfile(card.account, card.uid),
+            balance: cardBalances[card.account] ?? '0.0',
+            project: card.project,
+          );
+        },
+      ),
     ];
 
     return BlurryChild(
@@ -198,17 +189,14 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
                   scrollDirection: Axis.horizontal,
                   controller: widget.pageController,
                   onPageChanged: (index) {
-                    widget.onCardChanged(cardInfoList[index].profile.account);
+                    widget.onCardChanged(cardInfoList[index].account);
                   },
                   itemCount: cardInfoList.length,
                   itemBuilder: (context, index) {
                     final card = cardInfoList[index];
-                    final isAppAccount =
-                        appProfile.account == card.profile.account;
-                    final cardData = cards.firstWhereOrNull(
-                        (c) => c.account == card.profile.account);
+                    final isAppAccount = appProfile.account == card.account;
 
-                    final isSelected = card.profile.account ==
+                    final isSelected = card.account ==
                         (widget.selectedAddress ?? appProfile.account);
 
                     return Container(
@@ -228,6 +216,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
                             uid: card.uid,
                             color: primaryColor,
                             profile: card.profile,
+                            usernamePrefix: isAppAccount ? '@' : '#',
                             icon: isAppAccount
                                 ? CupertinoIcons.device_phone_portrait
                                 : null,
@@ -237,12 +226,6 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
                                     : null,
                             onCardNameTapped:
                                 isAppAccount ? handleEditProfile : null,
-                            onCardNameUpdated: !isAppAccount &&
-                                    cardData != null &&
-                                    !updatingCardName
-                                ? (name) => handleUpdateCardName(
-                                    cardData.uid, name, card.profile.name)
-                                : null,
                             onCardPressed: (_) => handleProfileTap(),
                             onCardBalanceTapped: config != null
                                 ? () => handleBalanceTap(

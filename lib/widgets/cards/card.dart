@@ -19,6 +19,7 @@ class Card extends StatefulWidget {
   final Color color;
   final EdgeInsets? margin;
   final ProfileV1? profile;
+  final String usernamePrefix;
   final String? logo;
   final String? balance;
   final IconData? icon;
@@ -35,6 +36,7 @@ class Card extends StatefulWidget {
     required this.color,
     this.margin,
     this.profile,
+    this.usernamePrefix = '@',
     this.logo,
     this.balance,
     this.icon,
@@ -244,7 +246,7 @@ class _CardState extends State<Card> {
                       if (widget.profile != null) const SizedBox(height: 4),
                       if (widget.profile != null)
                         Text(
-                          '@${widget.profile!.username}',
+                          '${widget.usernamePrefix}${widget.profile!.username}',
                           style: const TextStyle(
                             color: CupertinoColors.white,
                             fontSize: 14,

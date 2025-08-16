@@ -145,9 +145,13 @@ Future<ProfileV1?> getProfile(Config config, String addr) async {
 
     final profile = ProfileV1.fromJson(profileData);
 
-    profile.parseIPFSImageURLs(config.ipfs.url);
+    if (profile.parent == null) {
+      profile.parseIPFSImageURLs(config.ipfs.url);
 
-    return profile;
+      return profile;
+    }
+
+    return getProfile(config, profile.parent!);
   } catch (exception) {
     //
   }
@@ -164,9 +168,13 @@ Future<ProfileV1?> getProfileByUsername(Config config, String username) async {
 
     final profile = ProfileV1.fromJson(profileData);
 
-    profile.parseIPFSImageURLs(config.ipfs.url);
+    if (profile.parent == null) {
+      profile.parseIPFSImageURLs(config.ipfs.url);
 
-    return profile;
+      return profile;
+    }
+
+    return getProfile(config, profile.parent!);
   } catch (exception) {
     //
   }
@@ -194,9 +202,13 @@ Future<ProfileV1?> getProfileFromUrl(Config config, String url) async {
 
     final profile = ProfileV1.fromJson(profileData);
 
-    profile.parseIPFSImageURLs(config.ipfs.url);
+    if (profile.parent == null) {
+      profile.parseIPFSImageURLs(config.ipfs.url);
 
-    return profile;
+      return profile;
+    }
+
+    return getProfile(config, profile.parent!);
   } catch (exception) {
     //
   }

@@ -16,6 +16,7 @@ import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/scanner.dart';
 import 'package:pay_app/state/sending.dart';
 import 'package:pay_app/state/topup.dart';
+import 'package:pay_app/state/transactions/transactions.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/state/locale_state.dart';
@@ -92,6 +93,10 @@ Widget provideAccountState(
       ChangeNotifierProvider(
         key: Key('account-$account'),
         create: (_) => AccountState(config),
+      ),
+      ChangeNotifierProvider(
+        key: Key('transactions-$account'),
+        create: (_) => TransactionsState(accountAddress: account),
       ),
     ],
     child: child,

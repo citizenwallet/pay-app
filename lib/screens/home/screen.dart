@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:dart_debouncer/dart_debouncer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
@@ -9,9 +10,11 @@ import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/screens/home/contact_list_item.dart';
 import 'package:pay_app/screens/home/profile_list_item.dart';
 import 'package:pay_app/screens/home/profile_modal.dart';
+import 'package:pay_app/screens/home/transaction_list_item.dart';
 import 'package:pay_app/services/contacts/contacts.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/state/app.dart';
+import 'package:pay_app/state/cards.dart';
 import 'package:pay_app/state/contacts/contacts.dart';
 import 'package:pay_app/state/contacts/selectors.dart';
 import 'package:pay_app/state/interactions/interactions.dart';
@@ -21,6 +24,7 @@ import 'package:pay_app/state/places/places.dart';
 import 'package:pay_app/state/places/selectors.dart';
 import 'package:pay_app/state/state.dart';
 import 'package:pay_app/state/topup.dart';
+import 'package:pay_app/state/transactions/transactions.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
@@ -35,6 +39,7 @@ import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
 import 'package:universal_io/io.dart';
 import 'package:web3dart/web3dart.dart';
+import 'package:pay_app/models/transaction.dart' as tx;
 
 import 'search_bar.dart';
 import 'interaction_list_item.dart';
@@ -76,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen>
   late WalletState _walletState;
   late ContactsState _contactsState;
   late TopupState _topupState;
+  late CardsState _cardsState;
 
   bool _handlingExpiredCredentials = false;
   bool _stopInitRetries = false;
@@ -122,6 +128,7 @@ class _HomeScreenState extends State<HomeScreen>
     _walletState = context.read<WalletState>();
     _contactsState = context.read<ContactsState>();
     _topupState = context.read<TopupState>();
+    _cardsState = context.read<CardsState>();
   }
 
   Future<void> onLoad() async {
@@ -138,6 +145,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     _interactionState.startPolling(updateBalance: _walletState.updateBalance);
     _interactionState.getInteractions();
+    _cardsState.fetchCards();
   }
 
   Future<void> handleRefresh() async {
@@ -582,6 +590,11 @@ class _HomeScreenState extends State<HomeScreen>
     _interactionState.markInteractionAsRead(interaction);
   }
 
+  void handleTransactionTap(String? myAddress, tx.Transaction transaction) {
+    // goToChatHistory(myAddress, interaction);
+    // _interactionState.markInteractionAsRead(interaction);
+  }
+
   void _dismissKeyboard() {
     FocusScope.of(context).unfocus();
   }
@@ -595,7 +608,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     final safeTopPadding = MediaQuery.of(context).padding.top;
-    final double heightFactor = 1 - (_scrollOffset / _maxScrollOffset);
 
     final loading = context.select((WalletState state) => state.loading);
 
@@ -615,10 +627,12 @@ class _HomeScreenState extends State<HomeScreen>
     final myAddress =
         context.select((WalletState state) => state.address?.hexEip55);
 
-    final safeBottomPadding = MediaQuery.of(context).padding.bottom;
+    final isCard = context.select((CardsState state) =>
+        state.cards.firstWhereOrNull((card) => card.account == myAddress) !=
+        null);
 
-    final tokenAddress =
-        context.select((AppState state) => state.currentTokenAddress);
+    final transactions =
+        context.select((TransactionsState state) => state.transactions);
 
     final nothingFound = _searchController.text.isNotEmpty &&
         interactions.isEmpty &&
@@ -646,30 +660,6 @@ class _HomeScreenState extends State<HomeScreen>
                       scrollBehavior: const CupertinoScrollBehavior(),
                       physics: const AlwaysScrollableScrollPhysics(),
                       slivers: [
-                        // SliverToBoxAdapter(
-                        //   child: SizedBox(
-                        //     height: safeTopPadding + 260,
-                        //   ),
-                        // ),
-                        // CupertinoSliverRefreshControl(
-                        //   onRefresh: handleRefresh,
-                        // ),
-
-                        // SliverPersistentHeader(
-                        //   floating: true,
-                        //   pinned: true,
-                        //   delegate: ProfileBarDelegate(
-                        //     safeTopPadding: safeTopPadding,
-                        //     loading: loading,
-                        //     accountAddress: myAddress ?? '',
-                        //     backgroundColor:
-                        //         _backgroundColorAnimation.value ?? whiteColor,
-                        //     onProfileTap: () => handleProfileTap(
-                        //         myAddress ?? '',
-                        //         tokenAddress: tokenAddress),
-                        //     onTopUpTap: handleTopUp,
-                        //   ),
-                        // ),
                         SliverPersistentHeader(
                           floating: true,
                           delegate: SearchBarDelegate(
@@ -681,13 +671,13 @@ class _HomeScreenState extends State<HomeScreen>
                             isSearching: isSearching,
                             searching: searching || _interactionState.syncing,
                             backgroundColor: _backgroundColorAnimation.value,
+                            isCard: isCard,
                           ),
                         ),
                         CupertinoSliverRefreshControl(
                           onRefresh: handleRefresh,
                         ),
-
-                        if (customContact != null)
+                        if (!isCard && customContact != null)
                           SliverList(
                             delegate: SliverChildBuilderDelegate(
                               childCount: 1,
@@ -701,7 +691,7 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                             ),
                           ),
-                        if (customContactProfileByUsername != null)
+                        if (!isCard && customContactProfileByUsername != null)
                           SliverList(
                             delegate: SliverChildBuilderDelegate(
                               childCount: 1,
@@ -714,16 +704,28 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                             ),
                           ),
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            childCount: interactions.length,
-                            (context, index) => InteractionListItem(
-                              interaction: interactions[index],
-                              onTap: (interaction) =>
-                                  handleInteractionTap(myAddress, interaction),
+                        if (!isCard)
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              childCount: interactions.length,
+                              (context, index) => InteractionListItem(
+                                interaction: interactions[index],
+                                onTap: (interaction) => handleInteractionTap(
+                                    myAddress, interaction),
+                              ),
                             ),
                           ),
-                        ),
+                        if (isCard)
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              childCount: transactions.length,
+                              (context, index) => TransactionListItem(
+                                transaction: transactions[index],
+                                onTap: (transaction) => handleTransactionTap(
+                                    myAddress, transaction),
+                              ),
+                            ),
+                          ),
                         SliverList(
                           delegate: SliverChildBuilderDelegate(
                             childCount: places.length,
@@ -736,7 +738,7 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                           ),
                         ),
-                        if (contacts.isNotEmpty && isSearching)
+                        if (!isCard && contacts.isNotEmpty && isSearching)
                           SliverList(
                             delegate: SliverChildBuilderDelegate(
                               childCount: contacts.length,
@@ -792,31 +794,6 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     ),
                   ),
-                  // if (!loading && !isSearching)
-                  //   AnimatedPositioned(
-                  //     duration: const Duration(milliseconds: 100),
-                  //     left: 0,
-                  //     right: 0,
-                  //     bottom: -1 *
-                  //         progressiveClamp(
-                  //           -10 - safeBottomPadding,
-                  //           120,
-                  //           heightFactor,
-                  //         ),
-                  //     child: SizedBox(
-                  //       height: 120,
-                  //       width: 120,
-                  //       child: Center(
-                  //         child: ScanQrCircle(
-                  //           handleQRScan: (callback) => handleQRScan(
-                  //             context,
-                  //             myAddress ?? '',
-                  //             callback,
-                  //           ),
-                  //         ),
-                  //       ),
-                  //     ),
-                  //   ),
                 ],
               ),
             ),
@@ -827,47 +804,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-// class ProfileBarDelegate extends SliverPersistentHeaderDelegate {
-//   final double safeTopPadding;
-//   final bool loading;
-//   final String accountAddress;
-//   final Color backgroundColor;
-//   final Future<void> Function() onProfileTap;
-//   final Function(String) onTopUpTap;
-
-//   ProfileBarDelegate({
-//     required this.safeTopPadding,
-//     required this.loading,
-//     required this.accountAddress,
-//     required this.backgroundColor,
-//     required this.onProfileTap,
-//     required this.onTopUpTap,
-//   });
-
-//   @override
-//   Widget build(
-//       BuildContext context, double shrinkOffset, bool overlapsContent) {
-//     return ProfileBar(
-//       shrink: 1 - (shrinkOffset / 240),
-//       loading: loading,
-//       accountAddress: accountAddress,
-//       backgroundColor: backgroundColor,
-//       onProfileTap: onProfileTap,
-//       onTopUpTap: onTopUpTap,
-//     );
-//   }
-
-//   @override
-//   double get maxExtent => 240.0 + safeTopPadding; // Maximum height of header
-
-//   @override
-//   double get minExtent => 200.0 + safeTopPadding; // Minimum height of header
-
-//   @override
-//   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
-//       true;
-// }
-
 class SearchBarDelegate extends SliverPersistentHeaderDelegate {
   final double safeTopPadding;
   final TextEditingController controller;
@@ -877,6 +813,7 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
   final bool isSearching;
   final bool searching;
   final Color? backgroundColor;
+  final bool isCard;
 
   SearchBarDelegate({
     required this.safeTopPadding,
@@ -887,6 +824,7 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
     this.isSearching = false,
     this.searching = false,
     this.backgroundColor,
+    this.isCard = false,
   });
 
   @override
@@ -900,23 +838,24 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
       children: [
         Row(
           children: [
-            Expanded(
-              child: Container(
-                height: 77,
-                width: MediaQuery.of(context).size.width,
-                color: backgroundColor,
-                padding: EdgeInsets.symmetric(
-                  vertical: 10,
-                ),
-                child: SearchBar(
-                  controller: controller,
-                  focusNode: focusNode,
-                  onSearch: onSearch,
-                  isFocused: isSearching,
-                  backgroundColor: backgroundColor,
+            if (!isCard)
+              Expanded(
+                child: Container(
+                  height: 77,
+                  width: MediaQuery.of(context).size.width,
+                  color: backgroundColor,
+                  padding: EdgeInsets.symmetric(
+                    vertical: 10,
+                  ),
+                  child: SearchBar(
+                    controller: controller,
+                    focusNode: focusNode,
+                    onSearch: onSearch,
+                    isFocused: isSearching,
+                    backgroundColor: backgroundColor,
+                  ),
                 ),
               ),
-            ),
             if (isSearching)
               searching
                   ? const Padding(
@@ -936,11 +875,13 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   double get maxExtent =>
-      safeTopPadding + 260 + 77.0; // Height of your SearchBar
+      safeTopPadding + 260 + (isCard ? 0 : 77.0); // Height of your SearchBar
 
   @override
   double get minExtent =>
-      safeTopPadding + 260 + 77.0; // Same as maxExtent for fixed height
+      safeTopPadding +
+      260 +
+      (isCard ? 0 : 77.0); // Same as maxExtent for fixed height
 
   @override
   bool shouldRebuild(covariant SearchBarDelegate oldDelegate) => true;

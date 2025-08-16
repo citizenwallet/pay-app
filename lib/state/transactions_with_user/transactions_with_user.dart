@@ -36,7 +36,7 @@ class TransactionsWithUserState with ChangeNotifier {
   final InviteService _inviteService = InviteService();
   late ProfileService myProfileService;
   late ProfileService withUserProfileService;
-  late TransactionsService transactionsWithUserService;
+  late TransactionsWithUserService transactionsWithUserService;
 
   String withUserAddress;
   ProfileV1? withUser;
@@ -65,7 +65,7 @@ class TransactionsWithUserState with ChangeNotifier {
   }) {
     myProfileService = ProfileService(account: myAddress);
     withUserProfileService = ProfileService(account: withUserAddress);
-    transactionsWithUserService = TransactionsService(
+    transactionsWithUserService = TransactionsWithUserService(
         firstAccount: myAddress, secondAccount: withUserAddress);
 
     init();
