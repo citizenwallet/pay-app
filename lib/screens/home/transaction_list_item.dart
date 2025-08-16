@@ -58,9 +58,9 @@ class TransactionListItem extends StatelessWidget {
           16,
           0,
           16,
-          16,
+          8,
         ),
-        margin: const EdgeInsets.symmetric(vertical: 8),
+        margin: const EdgeInsets.symmetric(vertical: 4),
         child: Column(
           children: [
             Row(
@@ -122,7 +122,7 @@ class TransactionListItem extends StatelessWidget {
                   8,
                   0,
                   8,
-                  8,
+                  4,
                 ),
                 child: Row(
                   children: [
