@@ -29,9 +29,7 @@ import 'package:pay_app/state/transactions/transactions.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
-import 'package:pay_app/utils/ratio.dart';
 import 'package:pay_app/widgets/modals/confirm_modal.dart';
-import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:pay_app/screens/home/scanner_modal/scanner_modal.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
@@ -65,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen>
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _cardScrollController = ScrollController();
 
   bool isKeyboardVisible = false;
   bool isSearching = false;
@@ -83,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen>
   late ContactsState _contactsState;
   late TopupState _topupState;
   late CardsState _cardsState;
+  late TransactionsState _transactionsState;
 
   bool _handlingExpiredCredentials = false;
   bool _stopInitRetries = false;
@@ -112,6 +112,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     _searchFocusNode.addListener(_searchListener);
     _scrollController.addListener(_scrollListener);
+    _cardScrollController.addListener(_cardScrollListener);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Start listening to lifecycle changes.
@@ -130,6 +131,7 @@ class _HomeScreenState extends State<HomeScreen>
     _contactsState = context.read<ContactsState>();
     _topupState = context.read<TopupState>();
     _cardsState = context.read<CardsState>();
+    _transactionsState = context.read<TransactionsState>();
   }
 
   Future<void> onLoad() async {
@@ -147,6 +149,11 @@ class _HomeScreenState extends State<HomeScreen>
     _interactionState.startPolling(updateBalance: _walletState.updateBalance);
     _interactionState.getInteractions();
     _cardsState.fetchCards();
+
+    // Initialize transactions for the current account
+    if (widget.accountAddress.isNotEmpty) {
+      _transactionsState.getTransactions();
+    }
   }
 
   Future<void> handleRefresh() async {
@@ -155,6 +162,9 @@ class _HomeScreenState extends State<HomeScreen>
     _interactionState.startPolling(updateBalance: _walletState.updateBalance);
 
     await _interactionState.getInteractions();
+
+    // Refresh transactions as well
+    await _transactionsState.refreshTransactions();
 
     HapticFeedback.heavyImpact();
   }
@@ -243,6 +253,9 @@ class _HomeScreenState extends State<HomeScreen>
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
 
+    _cardScrollController.removeListener(_cardScrollListener);
+    _cardScrollController.dispose();
+
     _backgroundColorController.dispose();
 
     super.dispose();
@@ -311,6 +324,18 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     _appState.setSmall(_scrollOffset == 100);
+  }
+
+  void _cardScrollListener() {
+    // Check if we're near the bottom of the scroll view
+    if (_cardScrollController.position.pixels >=
+        _cardScrollController.position.maxScrollExtent - 200) {
+      // Load more transactions when user scrolls near the bottom
+      if (!_transactionsState.loadingMore &&
+          _transactionsState.hasMoreTransactions) {
+        _transactionsState.loadMoreTransactions();
+      }
+    }
   }
 
   void goToChatHistory(String? myAddress, Interaction interaction) {
@@ -649,6 +674,8 @@ class _HomeScreenState extends State<HomeScreen>
     final orders = context.select((TransactionsState state) => state.orders);
     final profiles =
         context.select((TransactionsState state) => state.profiles);
+    final loadingMore =
+        context.select((TransactionsState state) => state.loadingMore);
 
     final nothingFound = _searchController.text.isNotEmpty &&
         interactions.isEmpty &&
@@ -673,7 +700,7 @@ class _HomeScreenState extends State<HomeScreen>
                     color: _backgroundColorAnimation.value,
                     child: isCard
                         ? CustomScrollView(
-                            controller: _scrollController,
+                            controller: _cardScrollController,
                             scrollBehavior: const CupertinoScrollBehavior(),
                             physics: const AlwaysScrollableScrollPhysics(),
                             slivers: [
@@ -721,6 +748,15 @@ class _HomeScreenState extends State<HomeScreen>
                                           order,
                                         ),
                                       ),
+                                    ),
+                                  ),
+                                ),
+                              if (loadingMore)
+                                SliverToBoxAdapter(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Center(
+                                      child: CupertinoActivityIndicator(),
                                     ),
                                   ),
                                 ),
