@@ -7,10 +7,19 @@ class InteractionService {
   final APIService apiService =
       APIService(baseURL: dotenv.env['CHECKOUT_API_BASE_URL'] ?? '');
 
-  Future<List<Interaction>> getInteractions(String account) async {
+  Future<List<Interaction>> getInteractions(
+    String account, {
+    String? token,
+  }) async {
     try {
-      final response =
-          await apiService.get(url: '/accounts/$account/interactions');
+      String url = '/accounts/$account/interactions';
+      if (token != null) {
+        url += '?token=$token';
+      }
+
+      print('url: $url');
+
+      final response = await apiService.get(url: url);
 
       final Map<String, dynamic> data = response;
       final List<dynamic> interactionsApiResponse = data['interactions'];
@@ -28,12 +37,17 @@ class InteractionService {
   // polling new interactions since fromDate
   Future<List<Interaction>> getNewInteractions(
     String account,
-    DateTime fromDate,
-  ) async {
+    DateTime fromDate, {
+    String? token,
+  }) async {
     try {
-      final response = await apiService.get(
-          url:
-              '/accounts/$account/interactions/new?from_date=${fromDate.toUtc()}');
+      String url =
+          '/accounts/$account/interactions/new?from_date=${fromDate.toUtc()}';
+      if (token != null) {
+        url += '&token=$token';
+      }
+
+      final response = await apiService.get(url: url);
 
       final Map<String, dynamic> data = response;
       final List<dynamic> interactionsApiResponse = data['interactions'];

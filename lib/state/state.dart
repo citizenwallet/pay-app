@@ -72,18 +72,19 @@ Widget provideAccountState(
   Widget child,
 ) {
   final account = state.pathParameters['account']!;
+  final token = state.uri.queryParameters['token'];
 
   return MultiProvider(
-    key: Key('account-$account'),
+    key: Key('account-$account-$token'),
     providers: [
       ChangeNotifierProvider(
-        key: Key('interactions-$account'),
+        key: Key('interactions-$account-$token'),
         create: (_) => InteractionState(
           account,
         ),
       ),
       ChangeNotifierProvider(
-        key: Key('places-$account'),
+        key: Key('places-$account-$token'),
         create: (_) => PlacesState(),
       ),
       ChangeNotifierProvider(
@@ -95,7 +96,7 @@ Widget provideAccountState(
         create: (_) => AccountState(config),
       ),
       ChangeNotifierProvider(
-        key: Key('transactions-$account'),
+        key: Key('transactions-$account-$token'),
         create: (_) => TransactionsState(accountAddress: account),
       ),
     ],

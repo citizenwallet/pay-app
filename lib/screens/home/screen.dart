@@ -146,8 +146,10 @@ class _HomeScreenState extends State<HomeScreen>
       return onLoad();
     }
 
+    final currentTokenAddress = context.read<AppState>().currentTokenAddress;
+
     _interactionState.startPolling(updateBalance: _walletState.updateBalance);
-    _interactionState.getInteractions();
+    _interactionState.getInteractions(token: currentTokenAddress);
     _cardsState.fetchCards();
 
     // Initialize transactions for the current account
@@ -161,7 +163,9 @@ class _HomeScreenState extends State<HomeScreen>
 
     _interactionState.startPolling(updateBalance: _walletState.updateBalance);
 
-    await _interactionState.getInteractions();
+    final currentTokenAddress = context.read<AppState>().currentTokenAddress;
+
+    await _interactionState.getInteractions(token: currentTokenAddress);
 
     // Refresh transactions as well
     await _transactionsState.refreshTransactions();

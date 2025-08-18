@@ -7,8 +7,10 @@ import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/db/app/interactions.dart';
 import 'package:pay_app/services/db/app/places_with_menu.dart';
 import 'package:pay_app/services/pay/interactions.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 
 class InteractionState with ChangeNotifier {
+  final PreferencesService _preferencesService = PreferencesService();
   final InteractionsTable _interactionsTable = AppDBService().interactions;
   final PlacesWithMenuTable _placesWithMenuTable =
       AppDBService().placesWithMenu;
@@ -22,8 +24,10 @@ class InteractionState with ChangeNotifier {
   final String _account;
 
   InteractionState(account) : _account = account {
-    getInteractions();
-    refreshFromRemote();
+    final token = _preferencesService.tokenAddress;
+
+    getInteractions(token: token);
+    refreshFromRemote(token: token);
   }
 
   bool loading = false;
@@ -64,17 +68,17 @@ class InteractionState with ChangeNotifier {
   }
 
   // Load interactions from local database first, then sync with remote
-  Future<void> getInteractions() async {
+  Future<void> getInteractions({String? token}) async {
     loading = true;
     error = false;
     safeNotifyListeners();
 
     try {
       // First, load from local database for immediate display
-      await _loadFromLocalDatabase();
+      await _loadFromLocalDatabase(token: token);
 
       // Then sync with remote API in background
-      await _syncWithRemoteAPI();
+      await _syncWithRemoteAPI(token: token);
     } catch (e, s) {
       debugPrint('Error fetching interactions: $e');
       debugPrint('Stack trace: $s');
@@ -91,9 +95,12 @@ class InteractionState with ChangeNotifier {
   }
 
   // Load interactions from local database
-  Future<void> _loadFromLocalDatabase() async {
+  Future<void> _loadFromLocalDatabase({String? token}) async {
     try {
-      final localInteractions = await _interactionsTable.getAll(_account);
+      final localInteractions = await _interactionsTable.getAll(
+        _account,
+        token: token,
+      );
 
       if (localInteractions.isNotEmpty) {
         interactions = localInteractions;
@@ -110,13 +117,15 @@ class InteractionState with ChangeNotifier {
   }
 
   // Sync with remote API and update local database
-  Future<void> _syncWithRemoteAPI() async {
+  Future<void> _syncWithRemoteAPI({String? token}) async {
     syncing = true;
     safeNotifyListeners();
 
     try {
-      // TODO: something wrong with switching accounts and fetching interactions
-      final remoteInteractions = await apiService.getInteractions(_account);
+      final remoteInteractions = await apiService.getInteractions(
+        _account,
+        token: token,
+      );
 
       if (remoteInteractions.isNotEmpty) {
         // Store remote interactions in local database
@@ -130,7 +139,7 @@ class InteractionState with ChangeNotifier {
         }
 
         // Reload from local database to get the updated data
-        await _loadFromLocalDatabase();
+        await _loadFromLocalDatabase(token: token);
       }
     } catch (e, s) {
       debugPrint('Error syncing with remote API: $e');
@@ -169,10 +178,13 @@ class InteractionState with ChangeNotifier {
   static const pollingInterval = 3000; // ms
   DateTime interactionsFromDate = DateTime.now();
   Future<void> _pollInteractions(
-      {Future<void> Function()? updateBalance}) async {
+      {Future<void> Function()? updateBalance, String? token}) async {
     try {
-      final newInteractions =
-          await apiService.getNewInteractions(_account, interactionsFromDate);
+      final newInteractions = await apiService.getNewInteractions(
+        _account,
+        interactionsFromDate,
+        token: token,
+      );
 
       if (newInteractions.isNotEmpty) {
         // Store new interactions in local database
@@ -186,7 +198,7 @@ class InteractionState with ChangeNotifier {
         }
 
         // Reload from local database to get the updated data
-        await _loadFromLocalDatabase();
+        await _loadFromLocalDatabase(token: token);
 
         interactionsFromDate = DateTime.now();
         updateBalance?.call();
@@ -252,12 +264,12 @@ class InteractionState with ChangeNotifier {
   }
 
   // Force refresh from remote API
-  Future<void> refreshFromRemote() async {
+  Future<void> refreshFromRemote({String? token}) async {
     syncing = true;
     safeNotifyListeners();
 
     try {
-      await _syncWithRemoteAPI();
+      await _syncWithRemoteAPI(token: token);
     } finally {
       syncing = false;
       safeNotifyListeners();
@@ -269,6 +281,7 @@ class InteractionState with ChangeNotifier {
     String account, {
     int? limit,
     int? offset,
+    String? token,
   }) async {
     try {
       return await _interactionsTable.getInteractionsForAccount(
@@ -276,6 +289,7 @@ class InteractionState with ChangeNotifier {
         account,
         limit: limit,
         offset: offset,
+        token: token,
       );
     } catch (e, s) {
       debugPrint('Error getting interactions for account: $e');
@@ -306,12 +320,14 @@ class InteractionState with ChangeNotifier {
   Future<List<Interaction>> getUnreadInteractions({
     int? limit,
     int? offset,
+    String? token,
   }) async {
     try {
       return await _interactionsTable.getUnreadInteractions(
         _account,
         limit: limit,
         offset: offset,
+        token: token,
       );
     } catch (e, s) {
       debugPrint('Error getting unread interactions: $e');

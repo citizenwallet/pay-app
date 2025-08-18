@@ -13,8 +13,12 @@ class AppState with ChangeNotifier {
 
   // constructor here
   AppState(this._config)
-      : currentTokenAddress = _config.getPrimaryToken().address,
-        currentTokenConfig = _config.getPrimaryToken(),
+      : currentTokenAddress = PreferencesService().tokenAddress != null
+            ? _config.getToken(PreferencesService().tokenAddress!).address
+            : _config.getPrimaryToken().address,
+        currentTokenConfig = PreferencesService().tokenAddress != null
+            ? _config.getToken(PreferencesService().tokenAddress!)
+            : _config.getPrimaryToken(),
         lastAccount = PreferencesService().lastAccount;
 
   bool _mounted = true;

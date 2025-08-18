@@ -53,7 +53,7 @@ class Interaction {
   });
 
   factory Interaction.fromJson(Map<String, dynamic> json) {
-    final transaction = json['transaction'] as Map<String, dynamic>;
+    final transaction = json['transaction'] as Map<String, dynamic>?;
     final withProfile = json['with_profile'] as Map<String, dynamic>;
     final withPlace = json['with_place'] as Map<String, dynamic>?;
 
@@ -66,14 +66,14 @@ class Interaction {
       withAccount: withProfile['account'],
       imageUrl: withPlace != null ? withPlace['image'] : withProfile['image'],
       name: withPlace != null ? withPlace['name'] : withProfile['name'],
-      contract: transaction['contract'],
-      amount: double.tryParse(transaction['value']) ?? 0,
-      description: transaction['description'],
+      contract: transaction?['contract'] ?? '',
+      amount: double.tryParse(transaction?['value'] ?? '0') ?? 0,
+      description: transaction?['description'] ?? '',
       isPlace: withPlace != null,
       isTreasury: withProfile['account'] == zeroAddress,
       placeId: withPlace?['id'],
       hasUnreadMessages: json['new_interaction'],
-      lastMessageAt: DateTime.parse(transaction['created_at']),
+      lastMessageAt: DateTime.parse(json['created_at']),
       hasMenuItem: false,
       place: withPlace != null ? PlaceWithMenu.fromJson(withPlace) : null,
       profile: ProfileV1.fromJson(withProfile),

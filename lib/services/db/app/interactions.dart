@@ -98,12 +98,22 @@ class InteractionsTable extends DBTable {
   }
 
   // Fetch all interactions sorted by lastMessageAt (most recent first)
-  Future<List<app_interaction.Interaction>> getAll(String account) async {
+  Future<List<app_interaction.Interaction>> getAll(
+    String account, {
+    String? token,
+  }) async {
+    String whereClause = 'account = ?';
+    List<dynamic> whereArgs = [account];
+    if (token != null) {
+      whereClause += ' AND contract = ?';
+      whereArgs.add(token);
+    }
+
     final List<Map<String, dynamic>> maps = await db.query(
       name,
       orderBy: 'last_message_at DESC',
-      where: 'account = ?',
-      whereArgs: [account],
+      where: whereClause,
+      whereArgs: whereArgs,
     );
     return List.generate(
         maps.length, (i) => app_interaction.Interaction.fromMap(maps[i]));
@@ -114,14 +124,21 @@ class InteractionsTable extends DBTable {
     String account, {
     int? limit,
     int? offset,
+    String? token,
   }) async {
+    String whereClause = 'account = ?';
+    List<dynamic> whereArgs = [account];
+    if (token != null) {
+      whereClause += ' AND contract = ?';
+      whereArgs.add(token);
+    }
     final List<Map<String, dynamic>> maps = await db.query(
       name,
       orderBy: 'last_message_at DESC',
       limit: limit,
       offset: offset,
-      where: 'account = ?',
-      whereArgs: [account],
+      where: whereClause,
+      whereArgs: whereArgs,
     );
     return List.generate(
         maps.length, (i) => app_interaction.Interaction.fromMap(maps[i]));
@@ -144,11 +161,18 @@ class InteractionsTable extends DBTable {
     String withAccount, {
     int? limit,
     int? offset,
+    String? token,
   }) async {
+    String whereClause = 'account = ? AND with_account = ?';
+    List<dynamic> whereArgs = [account, withAccount];
+    if (token != null) {
+      whereClause += ' AND contract = ?';
+      whereArgs.add(token);
+    }
     final List<Map<String, dynamic>> maps = await db.query(
       name,
-      where: 'account = ? AND with_account = ?',
-      whereArgs: [account, withAccount],
+      where: whereClause,
+      whereArgs: whereArgs,
       orderBy: 'last_message_at DESC',
       limit: limit,
       offset: offset,
@@ -180,11 +204,18 @@ class InteractionsTable extends DBTable {
     String account, {
     int? limit,
     int? offset,
+    String? token,
   }) async {
+    String whereClause = 'account = ? AND has_unread_messages = 1';
+    List<dynamic> whereArgs = [account];
+    if (token != null) {
+      whereClause += ' AND contract = ?';
+      whereArgs.add(token);
+    }
     final List<Map<String, dynamic>> maps = await db.query(
       name,
-      where: 'account = ? AND has_unread_messages = 1',
-      whereArgs: [account],
+      where: whereClause,
+      whereArgs: whereArgs,
       orderBy: 'last_message_at DESC',
       limit: limit,
       offset: offset,

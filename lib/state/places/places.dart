@@ -2,17 +2,20 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/place.dart';
 import 'package:pay_app/services/pay/places.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 
 class PlacesState with ChangeNotifier {
   String searchQuery = '';
   List<Place> places = [];
-  PlacesService apiService = PlacesService();
+  final PlacesService apiService = PlacesService();
+  final PreferencesService _preferencesService = PreferencesService();
 
   bool loading = false;
   bool error = false;
 
   PlacesState() {
-    getAllPlaces();
+    final token = _preferencesService.tokenAddress;
+    getAllPlaces(token: token);
   }
 
   bool _mounted = true;
@@ -38,13 +41,13 @@ class PlacesState with ChangeNotifier {
     safeNotifyListeners();
   }
 
-  Future<void> getAllPlaces() async {
+  Future<void> getAllPlaces({String? token}) async {
     loading = true;
     error = false;
     safeNotifyListeners();
 
     try {
-      final places = await apiService.getAllPlaces();
+      final places = await apiService.getAllPlaces(token: token);
       this.places = places;
     } catch (e, s) {
       debugPrint('Error fetching places: $e');

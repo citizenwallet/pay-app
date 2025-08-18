@@ -8,9 +8,13 @@ class PlacesService {
   final APIService apiService =
       APIService(baseURL: dotenv.env['CHECKOUT_API_BASE_URL'] ?? '');
 
-  Future<List<Place>> getAllPlaces() async {
+  Future<List<Place>> getAllPlaces({String? token}) async {
     try {
-      final response = await apiService.get(url: '/places');
+      String url = '/places';
+      if (token != null) {
+        url += '?token=$token';
+      }
+      final response = await apiService.get(url: url);
 
       final Map<String, dynamic> data = response;
       final List<dynamic> placesApiResponse = data['places'];

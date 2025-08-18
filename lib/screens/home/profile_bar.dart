@@ -78,6 +78,13 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
 
     if (selectedToken != null) {
       _appState.setCurrentToken(selectedToken);
+
+      if (!context.mounted) {
+        return;
+      }
+
+      final navigator = GoRouter.of(context);
+      navigator.replace('/$account?token=$selectedToken');
     }
   }
 

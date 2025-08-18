@@ -150,7 +150,7 @@ class _CardState extends State<Card> {
     final balanceTappable = widget.onCardBalanceTapped != null;
 
     final container = AnimatedContainer(
-      duration: const Duration(milliseconds: 100),
+      duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       width: cardWidth,
       height: cardHeight,
