@@ -38,6 +38,7 @@
     "noOrdersFound": "No orders found",
     "transactionFailed": "Transaction failed",
     "items": "Items",
+    "tokens": "Tokens",
     "orderNumber": "Order #{orderId}",
     "qrCode": "QR code",
     "terminal": "terminal",
@@ -217,6 +218,9 @@
     },
     "@items": {
         "description": "Items text"
+    },
+    "@tokens": {
+        "description": "Tokens text"
     },
     "@orderNumber": {
         "description": "Order number text",

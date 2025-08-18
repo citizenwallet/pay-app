@@ -230,7 +230,7 @@ class _HomeShellState extends State<HomeShell> {
     callback();
   }
 
-  Future<void> handleAddCard(String account, ProfileV1? profile) async {
+  Future<void> handleAddCard(String account) async {
     HapticFeedback.heavyImpact();
 
     final result = await showCupertinoModalPopup<(String, String?)?>(
@@ -247,7 +247,7 @@ class _HomeShellState extends State<HomeShell> {
 
     final (uid, uri) = result;
 
-    final (token, error) = await _cardsState.claim(uid, uri, profile?.name);
+    final (token, error) = await _cardsState.claim(uid, uri, 'card');
 
     if (error == null) {
       if (!mounted) {
@@ -427,6 +427,7 @@ class _HomeShellState extends State<HomeShell> {
               accountAddress: accountAddress,
               backgroundColor: backgroundColor,
               onTopUpTap: handleTopUp,
+              onAddCard: handleAddCard,
             ),
           ),
         if (!navigated)

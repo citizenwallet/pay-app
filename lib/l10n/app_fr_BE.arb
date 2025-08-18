@@ -38,6 +38,7 @@
     "noOrdersFound": "Aucune commande trouvée",
     "transactionFailed": "Transaction échouée",
     "items": "Articles",
+    "tokens": "Tokens",
     "orderNumber": "Commande #{orderId}",
     "qrCode": "Code QR",
     "terminal": "terminal",

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/card.dart';
+import 'package:pay_app/screens/home/actions_modal.dart';
 import 'package:pay_app/screens/home/token_modal.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
@@ -11,7 +12,9 @@ import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/state.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
+import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/widgets/blurry_child.dart';
+import 'package:pay_app/widgets/button.dart';
 import 'package:pay_app/widgets/cards/card.dart' as cardWidget;
 import 'package:pay_app/widgets/cards/card_skeleton.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
@@ -27,6 +30,7 @@ class ProfileBar extends StatefulWidget {
   final String accountAddress;
   final Color backgroundColor;
   final Function(String) onTopUpTap;
+  final Function(String account) onAddCard;
 
   const ProfileBar({
     super.key,
@@ -39,6 +43,7 @@ class ProfileBar extends StatefulWidget {
     required this.accountAddress,
     required this.backgroundColor,
     required this.onTopUpTap,
+    required this.onAddCard,
   });
 
   @override
@@ -48,6 +53,8 @@ class ProfileBar extends StatefulWidget {
 class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
   late AppState _appState;
   late CardsState _cardsState;
+
+  bool _isActionButtons = false;
 
   @override
   void initState() {
@@ -96,6 +103,49 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
     HapticFeedback.heavyImpact();
 
     navigator.push('/${widget.accountAddress}/my-account/edit');
+  }
+
+  void handleCardChanged(String account) {
+    setState(() {
+      _isActionButtons = false;
+    });
+    widget.onCardChanged(account);
+  }
+
+  void handleSettings(int lastPage) async {
+    setState(() {
+      _isActionButtons = true;
+    });
+
+    final option = await showCupertinoModalPopup<String?>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => ActionsModal(),
+    );
+
+    widget.pageController.animateToPage(
+      lastPage,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+    );
+
+    await delay(const Duration(milliseconds: 300));
+
+    if (!mounted) {
+      return;
+    }
+
+    if (option == 'settings') {
+      final navigator = GoRouter.of(context);
+      HapticFeedback.heavyImpact();
+
+      navigator.push('/${widget.accountAddress}/my-account/settings');
+      return;
+    }
+
+    if (option == 'add-card') {
+      widget.onAddCard(widget.accountAddress);
+    }
   }
 
   @override
@@ -166,6 +216,8 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
       ),
     ];
 
+    double cardWidth = (adjustedWidth < 360 ? 360 : adjustedWidth) * 0.8;
+
     return BlurryChild(
       child: Container(
         width: width,
@@ -183,7 +235,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
             SizedBox(height: safeArea.top),
             if (appProfile.isAnonymous || updatingCardName)
               CardSkeleton(
-                width: (adjustedWidth < 360 ? 360 : adjustedWidth) * 0.8,
+                width: cardWidth,
                 color: primaryColor,
               ),
             if (!appProfile.isAnonymous && cardInfoList.isNotEmpty)
@@ -195,15 +247,41 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
                   scrollDirection: Axis.horizontal,
                   controller: widget.pageController,
                   onPageChanged: (index) {
-                    widget.onCardChanged(cardInfoList[index].account);
+                    if (index == cardInfoList.length) {
+                      handleSettings(cardInfoList.length - 1);
+                      return;
+                    }
+
+                    handleCardChanged(cardInfoList[index].account);
                   },
-                  itemCount: cardInfoList.length,
+                  itemCount: cardInfoList.length + 1,
                   itemBuilder: (context, index) {
+                    if (index == cardInfoList.length) {
+                      return Container(
+                        key: Key('action-buttons'),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                        child: Center(
+                          child: AnimatedScale(
+                            scale: _isActionButtons ? 1.1 : 1,
+                            duration: const Duration(milliseconds: 200),
+                            curve: Curves.easeInOut,
+                            child: CardSkeleton(
+                              width: cardWidth,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ),
+                      );
+                    }
                     final card = cardInfoList[index];
                     final isAppAccount = appProfile.account == card.account;
 
-                    final isSelected = card.account ==
-                        (widget.selectedAddress ?? appProfile.account);
+                    final isSelected = !_isActionButtons &&
+                        card.account ==
+                            (widget.selectedAddress ?? appProfile.account);
 
                     return Container(
                       key: Key(card.uid),
@@ -217,8 +295,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
                           duration: const Duration(milliseconds: 200),
                           curve: Curves.easeInOut,
                           child: cardWidget.Card(
-                            width: (adjustedWidth < 360 ? 360 : adjustedWidth) *
-                                0.8,
+                            width: cardWidth,
                             uid: card.uid,
                             color: primaryColor,
                             profile: card.profile,

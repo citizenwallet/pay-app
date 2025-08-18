@@ -17,6 +17,8 @@ class Card extends StatefulWidget {
   final String uid;
   final double width;
   final Color color;
+  final Color? textColor;
+  final Color? borderColor;
   final EdgeInsets? margin;
   final ProfileV1? profile;
   final String usernamePrefix;
@@ -34,6 +36,8 @@ class Card extends StatefulWidget {
     required this.uid,
     this.width = 200,
     required this.color,
+    this.textColor,
+    this.borderColor,
     this.margin,
     this.profile,
     this.usernamePrefix = '@',
@@ -158,7 +162,9 @@ class _CardState extends State<Card> {
       decoration: BoxDecoration(
         color: widget.color,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: CupertinoColors.white.withAlpha(160)),
+        border: Border.all(
+          color: widget.borderColor ?? whiteColor.withAlpha(160),
+        ),
         boxShadow: [
           BoxShadow(
             color: blackColor.withAlpha(60),
@@ -213,8 +219,9 @@ class _CardState extends State<Card> {
                                           widget.profile != null
                                               ? widget.profile!.name
                                               : 'anonymous',
-                                          style: const TextStyle(
-                                            color: CupertinoColors.white,
+                                          style: TextStyle(
+                                            color:
+                                                widget.textColor ?? whiteColor,
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -223,7 +230,7 @@ class _CardState extends State<Card> {
                                         const SizedBox(width: 4),
                                         Icon(
                                           CupertinoIcons.pen,
-                                          color: whiteColor,
+                                          color: widget.textColor ?? whiteColor,
                                           size: 20,
                                         ),
                                       ],
@@ -234,8 +241,8 @@ class _CardState extends State<Card> {
                                   widget.profile != null
                                       ? widget.profile!.name
                                       : 'anonymous',
-                                  style: const TextStyle(
-                                    color: CupertinoColors.white,
+                                  style: TextStyle(
+                                    color: widget.textColor ?? whiteColor,
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -250,7 +257,8 @@ class _CardState extends State<Card> {
                             Text(
                               widget.usernamePrefix,
                               style: TextStyle(
-                                color: whiteColor.withAlpha(200),
+                                color: (widget.textColor ?? whiteColor)
+                                    .withAlpha(200),
                                 fontSize: 14,
                                 fontWeight: FontWeight.normal,
                               ),
@@ -259,7 +267,8 @@ class _CardState extends State<Card> {
                             Text(
                               widget.profile!.username,
                               style: TextStyle(
-                                color: whiteColor.withAlpha(200),
+                                color: (widget.textColor ?? whiteColor)
+                                    .withAlpha(200),
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -274,12 +283,12 @@ class _CardState extends State<Card> {
                 widget.icon != null
                     ? Icon(
                         widget.icon,
-                        color: CupertinoColors.white,
+                        color: widget.textColor ?? whiteColor,
                         size: 24,
                       )
                     : Image.asset(
                         'assets/icons/nfc.png',
-                        color: CupertinoColors.white,
+                        color: widget.textColor ?? whiteColor,
                         width: 24,
                         height: 24,
                       ),
@@ -351,7 +360,7 @@ class _CardState extends State<Card> {
                               Text(
                                 widget.balance!,
                                 style: TextStyle(
-                                  color: CupertinoColors.white,
+                                  color: widget.textColor ?? whiteColor,
                                   fontSize: 20,
                                   letterSpacing: 1,
                                   fontWeight: FontWeight.w600,
@@ -361,7 +370,7 @@ class _CardState extends State<Card> {
                               if (balanceTappable)
                                 Icon(
                                   CupertinoIcons.chevron_down,
-                                  color: CupertinoColors.white,
+                                  color: widget.textColor ?? whiteColor,
                                   size: 14,
                                 ),
                             ],

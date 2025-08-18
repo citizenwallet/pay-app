@@ -38,6 +38,7 @@
     "noOrdersFound": "Geen bestellingen gevonden",
     "transactionFailed": "Transactie mislukt",
     "items": "Artikelen",
+    "tokens": "Tokens",
     "orderNumber": "Bestelling #{orderId}",
     "qrCode": "QR-code",
     "terminal": "terminal",

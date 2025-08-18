@@ -105,7 +105,7 @@ class _TokenModalState extends State<TokenModal> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Text(
-              AppLocalizations.of(context)!.items,
+              AppLocalizations.of(context)!.tokens,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,

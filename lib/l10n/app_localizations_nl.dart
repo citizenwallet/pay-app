@@ -81,7 +81,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String get deleteData => 'Gegevens verwijderen en uitloggen';
 
   @override
-  String get deleteDataConfirm => 'Je profiel wordt gewist en je wordt uitgelogd.';
+  String get deleteDataConfirm =>
+      'Je profiel wordt gewist en je wordt uitgelogd.';
 
   @override
   String get cardAdded => 'Kaart toegevoegd';
@@ -121,6 +122,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get items => 'Artikelen';
+
+  @override
+  String get tokens => 'Tokens';
 
   @override
   String orderNumber(String orderId) {
@@ -325,7 +329,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
 /// The translations for Dutch Flemish, as used in Belgium (`nl_BE`).
 class AppLocalizationsNlBe extends AppLocalizationsNl {
-  AppLocalizationsNlBe(): super('nl_BE');
+  AppLocalizationsNlBe() : super('nl_BE');
 
   @override
   String get appTitle => 'Brussels Pay';
@@ -400,7 +404,8 @@ class AppLocalizationsNlBe extends AppLocalizationsNl {
   String get deleteData => 'Gegevens verwijderen en uitloggen';
 
   @override
-  String get deleteDataConfirm => 'Je profiel wordt gewist en je wordt uitgelogd.';
+  String get deleteDataConfirm =>
+      'Je profiel wordt gewist en je wordt uitgelogd.';
 
   @override
   String get cardAdded => 'Kaart toegevoegd';
@@ -440,6 +445,9 @@ class AppLocalizationsNlBe extends AppLocalizationsNl {
 
   @override
   String get items => 'Artikelen';
+
+  @override
+  String get tokens => 'Tokens';
 
   @override
   String orderNumber(String orderId) {

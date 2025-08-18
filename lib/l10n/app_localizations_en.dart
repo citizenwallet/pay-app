@@ -81,7 +81,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteData => 'Delete data & log out';
 
   @override
-  String get deleteDataConfirm => 'Your profile will be cleared and you will be logged out.';
+  String get deleteDataConfirm =>
+      'Your profile will be cleared and you will be logged out.';
 
   @override
   String get cardAdded => 'Card added';
@@ -121,6 +122,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get items => 'Items';
+
+  @override
+  String get tokens => 'Tokens';
 
   @override
   String orderNumber(String orderId) {
