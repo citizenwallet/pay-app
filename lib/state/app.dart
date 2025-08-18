@@ -41,9 +41,7 @@ class AppState with ChangeNotifier {
 
   bool small = false;
 
-  Color get tokenPrimaryColor => currentTokenConfig.color != null
-      ? Color(int.parse(currentTokenConfig.color!.replaceAll('#', '0xFF')))
-      : primaryColor;
+  Color get tokenPrimaryColor => currentTokenConfig.color ?? primaryColor;
 
   // state methods here
   void setCurrentToken(String tokenAddress) {

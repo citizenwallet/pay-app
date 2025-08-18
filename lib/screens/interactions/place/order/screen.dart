@@ -2,7 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/l10n/app_localizations.dart';
+import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
+import 'package:provider/provider.dart';
 
 class OrderScreen extends StatefulWidget {
   final Order order;
@@ -22,6 +24,9 @@ class _OrderScreenState extends State<OrderScreen> {
   @override
   Widget build(BuildContext context) {
     final order = widget.order;
+
+    final config = context.select((WalletState c) => c.config);
+    final tokenConfig = config.getToken(order.token);
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
@@ -65,7 +70,7 @@ class _OrderScreenState extends State<OrderScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    Amount(amount: order.total),
+                    Amount(amount: order.total, logo: tokenConfig.logo),
                   ],
                 ),
               ),
@@ -118,35 +123,35 @@ class _OrderScreenState extends State<OrderScreen> {
                 ),
 
               // Order items
-              // if (order.items.isNotEmpty) ...[
-              //   const SizedBox(height: 24),
-              //   const Text(
-              //     'Items',
-              //     style: TextStyle(
-              //       fontSize: 20,
-              //       fontWeight: FontWeight.bold,
-              //     ),
-              //   ),
-              //   const SizedBox(height: 8),
-              //   ListView.builder(
-              //     shrinkWrap: true,
-              //     physics: const NeverScrollableScrollPhysics(),
-              //     itemCount: order.items.length,
-              //     itemBuilder: (context, index) {
-              //       final item = order.items[index];
-              //       return Padding(
-              //         padding: const EdgeInsets.symmetric(vertical: 8.0),
-              //         child: Row(
-              //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //           children: [
-              //             Text('Item #${item.id}'),
-              //             Text('Quantity: ${item.quantity}'),
-              //           ],
-              //         ),
-              //       );
-              //     },
-              //   ),
-              // ],
+              if (order.items.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                const Text(
+                  'Items',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: order.items.length,
+                  itemBuilder: (context, index) {
+                    final item = order.items[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Item #${item.id}'),
+                          Text('Quantity: ${item.quantity}'),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
 
               // Additional order details
               const SizedBox(height: 24),
@@ -211,10 +216,12 @@ class _OrderScreenState extends State<OrderScreen> {
 
 class Amount extends StatelessWidget {
   final double amount;
+  final String? logo;
 
   const Amount({
     super.key,
     required this.amount,
+    this.logo,
   });
 
   @override
@@ -224,6 +231,7 @@ class Amount extends StatelessWidget {
       children: [
         CoinLogo(
           size: 24,
+          logo: logo,
         ),
         const SizedBox(width: 4),
         Text(

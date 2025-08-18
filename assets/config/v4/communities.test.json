@@ -40,7 +40,8 @@
       "decimals": 6,
       "chain_id": 100,
       "logo": "https://assets.citizenwallet.xyz/wallet-config/_images/wallet.pay.brussels.png",
-      "color": "#3431c4"
+      "color": "#3431c4",
+      "project": "main"
     },
     "100:0x601D2Dc12bE367d1653d803827875c2Bcaeb4A20": {
       "standard": "erc20",
@@ -50,7 +51,8 @@
       "decimals": 6,
       "chain_id": 100,
       "logo": "https://assets.citizenwallet.xyz/wallet-config/_images/class.png",
-      "color": "#ec6825"
+      "color": "#ec6825",
+      "project": "class"
     }
   },
   "scan": {

@@ -7,6 +7,7 @@ import 'package:pay_app/screens/home/profile_bar.dart';
 import 'package:pay_app/screens/home/scanner_modal/scanner_modal.dart'
     as scanner;
 import 'package:pay_app/services/config/config.dart';
+import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/cards.dart';
 import 'package:pay_app/state/profile.dart';
@@ -15,6 +16,7 @@ import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
+import 'package:pay_app/widgets/modals/nfc_modal.dart';
 import 'package:pay_app/widgets/scan_qr_circle.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
@@ -39,6 +41,7 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   late AppState _appState;
+  late CardsState _cardsState;
   late TopupState _topupState;
   late ProfileState _profileState;
   late WalletState _walletState;
@@ -55,6 +58,7 @@ class _HomeShellState extends State<HomeShell> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _appState = context.read<AppState>();
+      _cardsState = context.read<CardsState>();
       _topupState = context.read<TopupState>();
       _profileState = context.read<ProfileState>();
       _walletState = context.read<WalletState>();
@@ -224,6 +228,165 @@ class _HomeShellState extends State<HomeShell> {
     }
 
     callback();
+  }
+
+  Future<void> handleAddCard(String account, ProfileV1? profile) async {
+    HapticFeedback.heavyImpact();
+
+    final result = await showCupertinoModalPopup<(String, String?)?>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => const NFCModal(
+        modalKey: 'modal-nfc-scanner',
+      ),
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    final (uid, uri) = result;
+
+    final (token, error) = await _cardsState.claim(uid, uri, profile?.name);
+
+    if (error == null) {
+      if (!mounted) {
+        return;
+      }
+
+      toastification.showCustom(
+        context: context,
+        autoCloseDuration: const Duration(seconds: 5),
+        alignment: Alignment.bottomCenter,
+        builder: (context, toast) => Toast(
+          icon: const Text('✅'),
+          title: Text(AppLocalizations.of(context)!.cardAdded),
+        ),
+      );
+
+      return;
+    }
+
+    await handleAddCardError(error);
+
+    if (token != null && mounted) {
+      print('token: $token');
+      final navigator = GoRouter.of(context);
+      navigator.replace('/$account?token=$token');
+    }
+    return;
+  }
+
+  Future<void> handleAddCardError(AddCardError error) async {
+    if (error == AddCardError.cardAlreadyExists) {
+      // show error
+      if (!mounted) {
+        return;
+      }
+
+      toastification.showCustom(
+        context: context,
+        autoCloseDuration: const Duration(seconds: 5),
+        alignment: Alignment.bottomCenter,
+        builder: (context, toast) => Toast(
+          icon: const Text('✅'),
+          title: Text(AppLocalizations.of(context)!.cardAlreadyAdded),
+        ),
+      );
+    }
+
+    if (error == AddCardError.cardNotConfigured) {
+      // show error
+      if (!mounted) {
+        return;
+      }
+
+      // show a confirmation modal
+      final confirmed = await showCupertinoDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => CupertinoAlertDialog(
+          title: Text(AppLocalizations.of(context)!.cardNotConfigured),
+          content: Text(
+              'This card is not configured. Would you like to configure it?'),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(AppLocalizations.of(context)!.cancel),
+            ),
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(AppLocalizations.of(context)!.configure),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == null || !confirmed) {
+        return;
+      }
+
+      await delay(const Duration(milliseconds: 500));
+
+      if (!mounted) {
+        return;
+      }
+
+      final writeResult = await showCupertinoModalPopup<(String, String?)?>(
+        context: context,
+        barrierDismissible: true,
+        builder: (_) => const NFCModal(
+          modalKey: 'modal-nfc-scanner',
+          write: true,
+        ),
+      );
+
+      if (writeResult == null) {
+        await handleAddCardError(AddCardError.unknownError);
+        return;
+      }
+
+      final (uid, uri) = writeResult;
+
+      if (uri == null) {
+        await handleAddCardError(AddCardError.unknownError);
+        return;
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      toastification.showCustom(
+        context: context,
+        autoCloseDuration: const Duration(seconds: 5),
+        alignment: Alignment.bottomCenter,
+        builder: (context, toast) => Toast(
+          icon: const Text('✅'),
+          title: Text(AppLocalizations.of(context)!.cardConfigured),
+        ),
+      );
+
+      return;
+    }
+
+    if (error == AddCardError.nfcNotAvailable) {
+      // show error
+      if (!mounted) {
+        return;
+      }
+
+      toastification.showCustom(
+        context: context,
+        autoCloseDuration: const Duration(seconds: 5),
+        alignment: Alignment.bottomCenter,
+        builder: (context, toast) => Toast(
+          icon: const Text('❌'),
+          title: Text(AppLocalizations.of(context)!.nfcNotAvailable),
+        ),
+      );
+    }
   }
 
   @override

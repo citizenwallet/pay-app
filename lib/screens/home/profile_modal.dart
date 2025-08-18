@@ -10,7 +10,6 @@ import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/cards.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/wallet.dart';
-import 'package:pay_app/theme/card_colors.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/widgets/button.dart';
@@ -170,7 +169,11 @@ class _ProfileModalState extends State<ProfileModal> {
 
     final (uid, uri) = result;
 
-    final error = await _cardsState.claim(uid, uri, profile?.name);
+    final (token, error) = await _cardsState.claim(uid, uri, profile?.name);
+
+    if (token != null) {
+      print('token: $token');
+    }
 
     if (error == null) {
       if (!mounted) {
@@ -530,6 +533,8 @@ class _ProfileModalState extends State<ProfileModal> {
 
     final profiles = context.watch<CardsState>().profiles;
 
+    final config = context.read<WalletState>().config;
+
     // Get the app profile for the app account card
     final appProfile = context.select((ProfileState p) => p.appProfile);
 
@@ -573,7 +578,9 @@ class _ProfileModalState extends State<ProfileModal> {
           (context, index) {
             final card = filteredCards[index];
 
-            final cardColor = projectCardColor(card.project);
+            final tokenConfig = config.getTokenByProject(card.project);
+
+            final cardColor = tokenConfig.color ?? primaryColor;
 
             return Row(
               mainAxisAlignment: MainAxisAlignment.center,

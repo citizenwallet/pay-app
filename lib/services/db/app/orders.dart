@@ -26,7 +26,8 @@ class OrdersTable extends DBTable {
       type TEXT,
       account TEXT,
       fees INTEGER NOT NULL DEFAULT 0,
-      place TEXT NOT NULL
+      place TEXT NOT NULL,
+      token TEXT NOT NULL
     )
   ''';
 
@@ -89,6 +90,18 @@ class OrdersTable extends DBTable {
         'CREATE INDEX idx_${name}_slug ON $name (slug)',
       ],
       8: [
+        'DROP TABLE $name',
+        createQuery,
+        'CREATE INDEX idx_${name}_place_id ON $name (place_id)',
+        'CREATE INDEX idx_${name}_account ON $name (account)',
+        'CREATE INDEX idx_${name}_created_at ON $name (created_at)',
+        'CREATE INDEX idx_${name}_status ON $name (status)',
+        'CREATE INDEX idx_${name}_tx_hash ON $name (tx_hash)',
+        'CREATE INDEX idx_${name}_place_created ON $name (place_id, created_at)',
+        'CREATE INDEX idx_${name}_account_created ON $name (account, created_at)',
+        'CREATE INDEX idx_${name}_slug ON $name (slug)',
+      ],
+      14: [
         'DROP TABLE $name',
         createQuery,
         'CREATE INDEX idx_${name}_place_id ON $name (place_id)',

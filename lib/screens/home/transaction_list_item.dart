@@ -3,19 +3,19 @@ import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/models/menu_item.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/transaction.dart';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
-import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/utils/date.dart';
-import 'package:provider/provider.dart';
 
 class TransactionListItem extends StatelessWidget {
   final String myAddress;
   final Transaction transaction;
   final Map<String, ProfileV1> profiles;
   final Order? order;
+  final TokenConfig? tokenConfig;
   final Function(Transaction, Order?) onTap;
 
   const TransactionListItem({
@@ -24,6 +24,7 @@ class TransactionListItem extends StatelessWidget {
     required this.transaction,
     required this.profiles,
     this.order,
+    this.tokenConfig,
     required this.onTap,
   });
 
@@ -31,16 +32,17 @@ class TransactionListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     const circleSize = 60.0;
 
-    final profile =
+    ProfileV1? profile =
         myAddress.toLowerCase() == transaction.toAccount.toLowerCase()
             ? profiles[transaction.fromAccount]
             : profiles[transaction.toAccount];
 
+    if (profile != null &&
+        profile.account == '0x0000000000000000000000000000000000000000') {
+      profile = ProfileV1.treasuryProfile(tokenConfig);
+    }
+
     final exchangeDirection = transaction.exchangeDirection(myAddress);
-
-    final config = context.select((WalletState c) => c.config);
-
-    final logo = config.getToken(transaction.contract);
 
     return CupertinoButton(
       padding: EdgeInsets.symmetric(vertical: 4),
@@ -107,7 +109,7 @@ class TransactionListItem extends StatelessWidget {
                       amount: double.parse(transaction.amount),
                       description: transaction.description,
                       exchangeDirection: exchangeDirection,
-                      logo: logo.logo,
+                      logo: tokenConfig?.logo,
                     ),
                     TimeAgo(lastMessageAt: transaction.createdAt),
                   ],
@@ -156,22 +158,26 @@ class Details extends StatelessWidget {
         children: [
           Row(
             children: [
-              Name(name: profile?.name ?? 'Unknown'),
+              Expanded(
+                child: Name(name: profile?.name ?? 'Unknown'),
+              ),
             ],
           ),
           const SizedBox(height: 4),
           Row(
             children: [
-              Text(
-                '@${profile?.username ?? 'unknown'}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF8F8A9D),
+              Expanded(
+                child: Text(
+                  '@${profile?.username ?? 'unknown'}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF8F8A9D),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              )
+              ),
             ],
           ),
         ],

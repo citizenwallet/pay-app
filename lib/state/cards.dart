@@ -7,11 +7,13 @@ import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/db/app/contacts.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/pay/cards.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/sigauth/sigauth.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/utils/currency.dart';
+import 'package:pay_app/utils/projects.dart';
 import 'package:web3dart/credentials.dart';
 
 enum AddCardError {
@@ -30,6 +32,8 @@ class CardsState with ChangeNotifier {
   final SecureService _secureService = SecureService();
   final CardsService _cardsService = CardsService();
 
+  final PreferencesService _preferencesService = PreferencesService();
+
   // private variables here
   final Config _config;
 
@@ -39,7 +43,8 @@ class CardsState with ChangeNotifier {
   }
 
   void init() async {
-    fetchCards();
+    final token = _preferencesService.tokenAddress;
+    fetchCards(tokenAddress: token);
   }
 
   bool _mounted = true;
@@ -251,12 +256,13 @@ class CardsState with ChangeNotifier {
     }
   }
 
-  Future<AddCardError?> claim(
+  Future<(String?, AddCardError?)> claim(
     String uid,
     String? uri,
     String? name, {
     String? project,
   }) async {
+    String? tokenAddress;
     try {
       updatingCardNameUid = uid;
       claimingCard = true;
@@ -267,7 +273,7 @@ class CardsState with ChangeNotifier {
         claimingCard = false;
         safeNotifyListeners();
 
-        return AddCardError.unknownError;
+        return (tokenAddress, AddCardError.unknownError);
       }
 
       final (account, key) = credentials;
@@ -282,19 +288,13 @@ class CardsState with ChangeNotifier {
 
       final sigAuthConnection = sigAuthService.connect();
 
-      String? parsedProject = project;
-      if (uri != null) {
-        final parsedUri = Uri.parse(uri);
+      String? parsedProject = project ?? parseProject(uri);
 
-        if (parsedUri.queryParameters.containsKey('project')) {
-          parsedProject = parsedUri.queryParameters['project']!;
-        }
+      final tokenConfig = _config.getTokenByProject(parsedProject ?? 'main');
 
-        // error when ordering cards, it should be project
-        if (parsedUri.queryParameters.containsKey('community')) {
-          parsedProject = parsedUri.queryParameters['community']!;
-        }
-      }
+      tokenAddress = tokenConfig.address;
+
+      _preferencesService.setToken(tokenConfig.address);
 
       await _cardsService.claim(
         sigAuthConnection,
@@ -311,7 +311,7 @@ class CardsState with ChangeNotifier {
         claimingCard = false;
         safeNotifyListeners();
 
-        return AddCardError.cardAlreadyExists;
+        return (tokenAddress, AddCardError.cardAlreadyExists);
       }
 
       final card = DBCard(
@@ -338,7 +338,7 @@ class CardsState with ChangeNotifier {
         claimingCard = false;
         safeNotifyListeners();
         // this is not an error, it just means the card is not configured
-        return AddCardError.cardNotConfigured;
+        return (tokenAddress, AddCardError.cardNotConfigured);
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -347,13 +347,13 @@ class CardsState with ChangeNotifier {
       claimingCard = false;
       safeNotifyListeners();
 
-      return AddCardError.unknownError;
+      return (tokenAddress, AddCardError.unknownError);
     }
 
     updatingCardNameUid = null;
     claimingCard = false;
     safeNotifyListeners();
 
-    return null;
+    return (tokenAddress, null);
   }
 }

@@ -102,6 +102,7 @@ class Order {
   final EthereumAddress? account;
   final double fees;
   final OrderPlace place;
+  final String token;
 
   Order({
     required this.id,
@@ -119,6 +120,7 @@ class Order {
     this.account,
     this.fees = 0,
     required this.place,
+    required this.token,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -145,6 +147,7 @@ class Order {
           : null,
       fees: (json['fees'] ?? 0).toDouble() / 100,
       place: place,
+      token: json['token'],
     );
   }
 
@@ -172,6 +175,7 @@ class Order {
           : null,
       fees: (json['fees'] ?? 0).toDouble() / 100,
       place: place,
+      token: json['token'],
     );
   }
 
@@ -192,6 +196,7 @@ class Order {
       'account': account?.hexEip55,
       'fees': (fees * 100).toInt(),
       'place': jsonEncode(place.toMap()),
+      'token': token,
     };
   }
 

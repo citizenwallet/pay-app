@@ -47,6 +47,7 @@ class ProfileBar extends StatefulWidget {
 
 class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
   late AppState _appState;
+  late CardsState _cardsState;
 
   @override
   void initState() {
@@ -54,6 +55,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _appState = context.read<AppState>();
+      _cardsState = context.read<CardsState>();
     });
   }
 
@@ -78,6 +80,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
 
     if (selectedToken != null) {
       _appState.setCurrentToken(selectedToken);
+      _cardsState.init();
 
       if (!context.mounted) {
         return;

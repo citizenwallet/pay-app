@@ -150,11 +150,11 @@ class _HomeScreenState extends State<HomeScreen>
 
     _interactionState.startPolling(updateBalance: _walletState.updateBalance);
     _interactionState.getInteractions(token: currentTokenAddress);
-    _cardsState.fetchCards();
+    _cardsState.fetchCards(tokenAddress: currentTokenAddress);
 
     // Initialize transactions for the current account
     if (widget.accountAddress.isNotEmpty) {
-      _transactionsState.getTransactions();
+      _transactionsState.getTransactions(token: currentTokenAddress);
     }
   }
 
@@ -681,6 +681,11 @@ class _HomeScreenState extends State<HomeScreen>
     final loadingMore =
         context.select((TransactionsState state) => state.loadingMore);
 
+    final config = context.select((WalletState state) => state.config);
+    final currentTokenAddress =
+        context.select((AppState state) => state.currentTokenAddress);
+    final tokenConfig = config.getToken(currentTokenAddress);
+
     final nothingFound = _searchController.text.isNotEmpty &&
         interactions.isEmpty &&
         places.isEmpty &&
@@ -745,6 +750,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         profiles: profiles,
                                         order:
                                             orders[transactions[index].txHash],
+                                        tokenConfig: tokenConfig,
                                         onTap: (transaction, order) =>
                                             handleTransactionTap(
                                           myAddress,

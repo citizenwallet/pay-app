@@ -384,6 +384,7 @@ class OrdersWithPlaceState with ChangeNotifier {
           account: place!.place.account,
           items: place!.items,
         ),
+        token: token.address,
       );
 
       payingOrder = order;

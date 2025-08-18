@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/utils/uint8.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:smartcontracts/contracts/apps/Profile.g.dart';
@@ -87,6 +88,16 @@ class ProfileV1 {
         image = 'assets/icons/card.png',
         imageMedium = 'assets/icons/card.png',
         imageSmall = 'assets/icons/card.png';
+
+  // treasury profile
+  ProfileV1.treasuryProfile(TokenConfig? tokenConfig)
+      : account = '0x0000000000000000000000000000000000000000',
+        username = tokenConfig?.symbol ?? 'treasury',
+        name = tokenConfig?.name ?? 'Treasury',
+        description = '',
+        image = tokenConfig?.logo ?? 'assets/icons/profile.png',
+        imageMedium = tokenConfig?.logo ?? 'assets/icons/profile.png',
+        imageSmall = tokenConfig?.logo ?? 'assets/icons/profile.png';
 
   // from json
   ProfileV1.fromJson(Map<String, dynamic> json)

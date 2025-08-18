@@ -11,11 +11,13 @@ import 'package:pay_app/services/db/app/orders.dart';
 import 'package:pay_app/services/db/app/transactions.dart';
 import 'package:pay_app/services/pay/orders.dart';
 import 'package:pay_app/services/pay/transactions.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 
 class TransactionsState with ChangeNotifier {
   late Config _config;
+  final PreferencesService _preferencesService = PreferencesService();
 
   final ContactsTable _contacts = AppDBService().contacts;
   final TransactionsTable _transactionsTable = AppDBService().transactions;
@@ -61,7 +63,8 @@ class TransactionsState with ChangeNotifier {
     _config = config;
 
     // Initial sync with API to populate database
-    getTransactions();
+    final token = _preferencesService.tokenAddress;
+    getTransactions(token: token);
   }
 
   bool _mounted = true;
@@ -80,9 +83,8 @@ class TransactionsState with ChangeNotifier {
 
   void loadProfiles(List<Transaction> transactions) {
     for (final transaction in transactions) {
-      if (transaction.fromProfile != null) {
-        fetchProfile(transaction.fromAccount);
-      }
+      fetchProfile(transaction.fromAccount);
+      fetchProfile(transaction.toAccount);
     }
   }
 
@@ -184,7 +186,7 @@ class TransactionsState with ChangeNotifier {
     }
   }
 
-  Future<void> getTransactions() async {
+  Future<void> getTransactions({String? token}) async {
     debugPrint('get transactions');
     loading = true;
     error = false;
@@ -196,6 +198,7 @@ class TransactionsState with ChangeNotifier {
         accountAddress,
         limit: transactionsLimit,
         offset: transactionsOffset,
+        token: token,
       );
 
       if (dbTransactions.isNotEmpty) {
@@ -209,7 +212,7 @@ class TransactionsState with ChangeNotifier {
       }
 
       // Then sync with API to get latest transactions
-      await _syncTransactionsFromAPI();
+      await _syncTransactionsFromAPI(token: token);
     } catch (e, s) {
       debugPrint('Error fetching transactions: $e');
       debugPrint('Stack trace: $s');
@@ -256,12 +259,13 @@ class TransactionsState with ChangeNotifier {
     }
   }
 
-  Future<void> _syncTransactionsFromAPI() async {
+  Future<void> _syncTransactionsFromAPI({String? token}) async {
     try {
       // Get transactions from API with a larger limit to ensure we have recent data
       final (apiTransactions, _) = await transactionsService.getTransactions(
         limit: 50, // Get more transactions to ensure we have recent data
         offset: 0,
+        contract: token,
       );
 
       if (apiTransactions.isNotEmpty) {
@@ -286,6 +290,7 @@ class TransactionsState with ChangeNotifier {
           accountAddress,
           limit: transactions.length + 10, // Get a bit more than current
           offset: 0,
+          token: token,
         );
 
         if (currentTransactions.isNotEmpty) {
@@ -349,7 +354,7 @@ class TransactionsState with ChangeNotifier {
     this.newTransactions = [...existingList];
   }
 
-  Future<void> refreshTransactions() async {
+  Future<void> refreshTransactions({String? token}) async {
     // Reset pagination state
     transactionsOffset = 0;
     hasMoreTransactions = true;
@@ -359,7 +364,7 @@ class TransactionsState with ChangeNotifier {
     safeNotifyListeners();
 
     // Reload from database and sync with API
-    await getTransactions();
+    await getTransactions(token: token);
   }
 
   // Filter transactions by contract if needed
