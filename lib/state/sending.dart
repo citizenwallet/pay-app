@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/models/checkout_item.dart';
@@ -364,6 +366,7 @@ class SendingState with ChangeNotifier {
     String? amount,
     String? message,
     Checkout? manualCheckout,
+    PlaceWithMenu? manualPlace,
     String? serial,
   }) async {
     try {
@@ -415,6 +418,8 @@ class SendingState with ChangeNotifier {
         throw Exception('Invalid amount');
       }
 
+      final place = manualPlace ?? this.place;
+
       final String? toAddress = switch (data.format) {
         QRFormat.checkoutUrl => place?.place.account,
         QRFormat.sendtoUrl => profile?.account,
@@ -433,10 +438,11 @@ class SendingState with ChangeNotifier {
       Checkout? checkout = manualCheckout;
       switch (data.format) {
         case QRFormat.checkoutUrl:
-          List<CheckoutItem> items = [];
-          if (order != null && place != null) {
+          if (checkout == null && order != null && place != null) {
+            List<CheckoutItem> items = [];
+            final mappedItems = place.mappedItems;
             for (final item in order!.items) {
-              final menuItem = place?.mappedItems[item.id];
+              final menuItem = mappedItems[item.id];
               if (menuItem == null) {
                 continue;
               }
@@ -446,13 +452,13 @@ class SendingState with ChangeNotifier {
                 quantity: item.quantity,
               ));
             }
-          }
 
-          checkout = Checkout(
-            items: items,
-            manualAmount: double.parse(sendAmount),
-            message: sendMessage,
-          );
+            checkout = Checkout(
+              items: items,
+              manualAmount: double.parse(sendAmount),
+              message: sendMessage,
+            );
+          }
           break;
         default:
           checkout = null;

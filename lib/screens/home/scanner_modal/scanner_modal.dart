@@ -376,6 +376,7 @@ class ScannerModalState extends State<ScannerModal>
   void handleConfirmOrder(
     String tokenAddress, {
     Checkout? checkout,
+    PlaceWithMenu? place,
     String? serial,
   }) async {
     hideScanner();
@@ -384,7 +385,14 @@ class ScannerModalState extends State<ScannerModal>
 
     await delay(const Duration(milliseconds: 100));
 
-    handleSend(tokenAddress, null, null, checkout: checkout, serial: serial);
+    handleSend(
+      tokenAddress,
+      null,
+      null,
+      checkout: checkout,
+      place: place,
+      serial: serial,
+    );
   }
 
   void handleClearData() {
@@ -402,6 +410,7 @@ class ScannerModalState extends State<ScannerModal>
     String? amount,
     String? message, {
     Checkout? checkout,
+    PlaceWithMenu? place,
     String? serial,
   }) async {
     final success = await _sendingState.sendTransaction(
@@ -509,7 +518,12 @@ class ScannerModalState extends State<ScannerModal>
       return;
     }
 
-    handleConfirmOrder(tokenAddress, checkout: checkout, serial: serial);
+    handleConfirmOrder(
+      tokenAddress,
+      checkout: checkout,
+      place: place,
+      serial: serial,
+    );
   }
 
   void handleTopUp(String tokenAddress) {
@@ -793,6 +807,7 @@ class ScannerModalState extends State<ScannerModal>
                                           ? handlePay
                                           : () => handleConfirmOrder(
                                                 tokenConfig.address,
+                                                place: place,
                                                 serial: currentCardSerial,
                                               ),
                                 ),

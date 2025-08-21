@@ -46,6 +46,13 @@ class Checkout {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'items': items.map((item) => item.toMap()).toList(),
+      'total': total,
+    };
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'items': items.map((item) => item.toMap()).toList(),
