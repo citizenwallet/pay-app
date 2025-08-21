@@ -830,7 +830,13 @@ class ScannerModalState extends State<ScannerModal>
                           SizedBox(height: safeBottomPadding),
                           if (showTransactionInput)
                             Footer(
-                              onSend: handleSend,
+                              onSend: (tokenAddress, amount, message) =>
+                                  handleSend(
+                                tokenAddress,
+                                amount,
+                                message,
+                                serial: currentCardSerial,
+                              ),
                               onTopUpPressed: handleTopUp,
                               amountFocusNode: _amountFocusNode,
                               messageFocusNode: _messageFocusNode,
