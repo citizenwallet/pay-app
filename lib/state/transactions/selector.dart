@@ -7,10 +7,6 @@ class TransactionsSelector {
     return state.transactions;
   }
 
-  static List<Transaction> getNewTransactions(TransactionsState state) {
-    return state.newTransactions;
-  }
-
   static bool isLoading(TransactionsState state) {
     return state.loading;
   }

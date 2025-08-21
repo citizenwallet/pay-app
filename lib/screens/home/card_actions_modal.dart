@@ -13,12 +13,10 @@ import 'package:provider/provider.dart';
 
 class CardActionsModal extends StatefulWidget {
   final CardInfo card;
-  final bool isAppAccount;
 
   const CardActionsModal({
     super.key,
     required this.card,
-    required this.isAppAccount,
   });
 
   @override
@@ -101,10 +99,7 @@ class _TokenModalState extends State<CardActionsModal> {
                 uid: widget.card.uid,
                 color: color,
                 profile: widget.card.profile,
-                usernamePrefix: widget.isAppAccount ? '@' : '#',
-                icon: widget.isAppAccount
-                    ? CupertinoIcons.device_phone_portrait
-                    : null,
+                usernamePrefix: '#',
                 logo: tokenConfig.logo,
                 balance: widget.card.balance,
               ),

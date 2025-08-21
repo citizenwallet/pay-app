@@ -69,7 +69,6 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
 
   Future<void> handleCardPressed(
     int lastPage,
-    bool isAppAccount,
     String appAccount,
     CardInfo card,
   ) async {
@@ -79,7 +78,6 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
       barrierColor: blackColor.withAlpha(240),
       builder: (_) => CardActionsModal(
         card: card,
-        isAppAccount: isAppAccount,
       ),
     );
 
@@ -362,12 +360,13 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
                                     : null,
                             onCardNameTapped:
                                 isAppAccount ? handleEditProfile : null,
-                            onCardPressed: (_) => handleCardPressed(
-                              index,
-                              isAppAccount,
-                              appProfile.account,
-                              card,
-                            ),
+                            onCardPressed: isAppAccount
+                                ? null
+                                : (_) => handleCardPressed(
+                                      index,
+                                      appProfile.account,
+                                      card,
+                                    ),
                             onCardBalanceTapped: config != null
                                 ? () => handleBalanceTap(
                                       context,
