@@ -8,6 +8,7 @@ import 'package:pay_app/models/place.dart';
 import 'package:pay_app/models/place_with_menu.dart';
 import 'package:pay_app/screens/home/card_modal/card_modal.dart';
 import 'package:pay_app/screens/home/scanner_modal/footer.dart';
+import 'package:pay_app/screens/interactions/place/menu/screen.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
@@ -63,6 +64,7 @@ class ScannerModalState extends State<ScannerModal>
     facing: CameraFacing.back,
     torchEnabled: false,
     formats: <BarcodeFormat>[BarcodeFormat.qrCode],
+    returnImage: true,
   );
 
   final FocusNode _amountFocusNode = FocusNode();
@@ -89,6 +91,8 @@ class ScannerModalState extends State<ScannerModal>
   bool _showControls = false;
 
   bool _isDismissing = false;
+
+  Uint8List? _image;
 
   @override
   void initState() {
@@ -183,9 +187,10 @@ class ScannerModalState extends State<ScannerModal>
     _controller.dispose();
   }
 
-  void showScanner() {
+  void showScanner() async {
     setState(() {
       _opacity = 1;
+      _image = null;
     });
   }
 
@@ -195,10 +200,14 @@ class ScannerModalState extends State<ScannerModal>
     });
   }
 
-  void handleDismiss(BuildContext context, {bool reverse = false}) async {
+  void handleDismiss(
+    BuildContext context, {
+    bool reverse = false,
+    String? cardAddress,
+  }) async {
     _isDismissing = true;
 
-    final lastAccount = context.read<SendingState>().lastAccount;
+    final lastAccount = cardAddress ?? context.read<SendingState>().lastAccount;
 
     if (reverse) {
       hideScanner();
@@ -227,6 +236,13 @@ class ScannerModalState extends State<ScannerModal>
     final rawValue = capture.barcodes[0].rawValue;
     if (rawValue == null) {
       return;
+    }
+
+    if (_image == null) {
+      _image = capture.image;
+      setState(() {
+        _image = capture.image;
+      });
     }
 
     handleScanData(rawValue);
@@ -276,7 +292,10 @@ class ScannerModalState extends State<ScannerModal>
               .firstWhereOrNull((card) => card.account == lastAccount)
               ?.uid;
 
+          final config = context.read<WalletState>().config;
+
           handleViewMenu(
+            config,
             widget.tokenAddress,
             initialAddress,
             place,
@@ -426,7 +445,7 @@ class ScannerModalState extends State<ScannerModal>
 
     HapticFeedback.heavyImpact();
 
-    await showCupertinoModalPopup(
+    final newCardAddress = await showCupertinoModalPopup<String?>(
       useRootNavigator: false,
       context: context,
       barrierColor: blackColor.withAlpha(160),
@@ -444,10 +463,25 @@ class ScannerModalState extends State<ScannerModal>
 
     _cardsState.fetchCards(tokenAddress: widget.tokenAddress);
 
+    if (newCardAddress != null) {
+      if (!mounted) {
+        return;
+      }
+
+      handleDismiss(
+        context,
+        reverse: true,
+        cardAddress: newCardAddress,
+      );
+
+      return;
+    }
+
     handleClearData();
   }
 
   void handleViewMenu(
+    Config config,
     String tokenAddress,
     String account,
     PlaceWithMenu place, {
@@ -455,10 +489,20 @@ class ScannerModalState extends State<ScannerModal>
   }) async {
     hideScanner();
 
-    final navigator = GoRouter.of(context);
-
-    final checkout = await navigator
-        .push<Checkout?>('/$account/place/${place.place.slug}/menu');
+    final checkout = await showCupertinoModalPopup<Checkout?>(
+      useRootNavigator: false,
+      context: context,
+      barrierColor: blackColor.withAlpha(160),
+      builder: (modalContext) {
+        return providePlaceState(
+          context,
+          config,
+          place.place.slug,
+          account,
+          PlaceMenuScreen(),
+        );
+      },
+    );
 
     if (checkout == null) {
       showScanner();
@@ -568,6 +612,20 @@ class ScannerModalState extends State<ScannerModal>
                         ),
                       ),
                     ),
+                  ),
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    child: _image != null
+                        ? Image.memory(
+                            _image!,
+                            height: height,
+                            width: width,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const SizedBox.shrink(),
+                          )
+                        : const SizedBox.shrink(),
                   ),
                   Positioned(
                     top: safeTopPadding + 20,
@@ -697,6 +755,7 @@ class ScannerModalState extends State<ScannerModal>
                                   onPressed: place == null || transactionSending
                                       ? null
                                       : () => handleViewMenu(
+                                            config,
                                             widget.tokenAddress,
                                             lastAccount!,
                                             place,

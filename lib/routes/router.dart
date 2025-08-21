@@ -108,12 +108,10 @@ GoRouter createRouter(
               path: '/:account',
               builder: (context, state) {
                 final accountAddress = state.pathParameters['account']!;
-                final deepLink = state.uri.queryParameters['deepLink'];
 
                 return HomeScreen(
                   key: Key(accountAddress),
                   accountAddress: accountAddress,
-                  deepLink: deepLink,
                 );
               },
             ),
@@ -139,15 +137,18 @@ GoRouter createRouter(
               name: 'EditMyAccount',
               path: '/:account/my-account/edit',
               builder: (context, state) {
-                final accountAddress = state.pathParameters['account']!;
-
                 return const EditAccountScreen();
               },
             ),
             ShellRoute(
               navigatorKey: placeShellNavigatorKey,
-              builder: (context, state, child) =>
-                  providePlaceState(context, state, config, child),
+              builder: (context, state, child) => providePlaceState(
+                context,
+                config,
+                state.pathParameters['slug']!,
+                state.pathParameters['account']!,
+                child,
+              ),
               routes: [
                 GoRoute(
                   name: 'InteractionWithPlace',

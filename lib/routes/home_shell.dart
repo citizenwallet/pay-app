@@ -49,6 +49,9 @@ class _HomeShellState extends State<HomeShell> {
   String? _selectedAddress;
 
   bool _hideProfileBar = false;
+  bool _pauseDeepLinkHandling = false;
+
+  String? _deepLink;
 
   PageController? _pageController;
 
@@ -180,6 +183,27 @@ class _HomeShellState extends State<HomeShell> {
     );
 
     await _walletState.updateBalance();
+  }
+
+  Future<void> handleDeepLink(String accountAddress, String? deepLink) async {
+    if (deepLink != null && !_pauseDeepLinkHandling) {
+      _pauseDeepLinkHandling = true;
+
+      await delay(const Duration(milliseconds: 100));
+
+      if (!mounted) {
+        return;
+      }
+
+      await handleQRScan(
+        context,
+        accountAddress,
+        () {},
+        manualResult: deepLink,
+      );
+
+      _pauseDeepLinkHandling = false;
+    }
   }
 
   Future<void> handleQRScan(
@@ -402,9 +426,15 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final accountAddress = widget.state.pathParameters['account']!;
+    final deepLink = widget.state.uri.queryParameters['deepLink'];
     final parts = widget.state.uri.toString().split('/');
 
     final navigated = parts.length > 2;
+
+    if (_deepLink != deepLink && deepLink != null) {
+      handleDeepLink(accountAddress, deepLink);
+    }
+    _deepLink = deepLink;
 
     if (_hideProfileBar && !navigated) {
       setState(() {

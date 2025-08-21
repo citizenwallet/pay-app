@@ -116,18 +116,19 @@ class _CardModalState extends State<CardModal> {
   }
 
   void handleClaimCard(String uid, String? project) async {
-    await _cardsState.claim(uid, null, null, project: project);
+    final (_, cardAddress, _) =
+        await _cardsState.claim(uid, null, null, project: project);
 
     if (!mounted) {
       return;
     }
 
-    handleClose(context);
+    handleClose(context, cardAddress: cardAddress);
   }
 
-  void handleClose(BuildContext context) {
+  void handleClose(BuildContext context, {String? cardAddress}) {
     final navigator = GoRouter.of(context);
-    navigator.pop();
+    navigator.pop(cardAddress);
   }
 
   void handleOrderPressed(Order order) {

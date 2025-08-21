@@ -46,12 +46,10 @@ import 'place_list_item.dart';
 
 class HomeScreen extends StatefulWidget {
   final String accountAddress;
-  final String? deepLink;
 
   const HomeScreen({
     super.key,
     required this.accountAddress,
-    this.deepLink,
   });
 
   @override
@@ -86,7 +84,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   bool _handlingExpiredCredentials = false;
   bool _stopInitRetries = false;
-  bool _pauseDeepLinkHandling = false;
 
   late AnimationController _backgroundColorController;
   late Animation<Color?> _backgroundColorAnimation;
@@ -118,7 +115,6 @@ class _HomeScreenState extends State<HomeScreen>
       // Start listening to lifecycle changes.
       WidgetsBinding.instance.addObserver(this);
       await onLoad();
-      handleDeepLink(widget.accountAddress, widget.deepLink);
     });
   }
 
@@ -185,35 +181,6 @@ class _HomeScreenState extends State<HomeScreen>
     _onboardingState.clearConnectedAccountAddress();
     navigator.go('/');
     return;
-  }
-
-  Future<void> handleDeepLink(String accountAddress, String? deepLink) async {
-    if (deepLink != null && !_pauseDeepLinkHandling) {
-      _pauseDeepLinkHandling = true;
-
-      await delay(const Duration(milliseconds: 100));
-
-      if (!mounted) {
-        return;
-      }
-
-      await handleQRScan(context, accountAddress, () {},
-          manualResult: deepLink);
-
-      _pauseDeepLinkHandling = false;
-    }
-  }
-
-  @override
-  void didUpdateWidget(HomeScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.deepLink != widget.deepLink && widget.deepLink != null) {
-      handleDeepLink(
-        widget.accountAddress,
-        widget.deepLink,
-      );
-    }
   }
 
   @override

@@ -124,13 +124,11 @@ Widget provideWalletState(
 
 Widget providePlaceState(
   BuildContext context,
-  GoRouterState state,
   Config config,
+  String slug,
+  String account,
   Widget child,
 ) {
-  final slug = state.pathParameters['slug']!;
-  final account = state.pathParameters['account']!;
-
   return MultiProvider(
     key: Key('place-$account-$slug'),
     providers: [

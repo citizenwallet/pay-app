@@ -127,6 +127,8 @@ Future<String> getBalance(
         break;
     }
 
+    print('balance: $balance');
+
     return balance.toString();
   } catch (e, s) {
     debugPrint('error: $e');
