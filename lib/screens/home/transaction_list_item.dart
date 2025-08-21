@@ -105,9 +105,8 @@ class TransactionListItem extends StatelessWidget {
                         ),
                       ),
                     const SizedBox(height: 4),
-                    AmountDescription(
+                    Amount(
                       amount: double.parse(transaction.amount),
-                      description: transaction.description,
                       exchangeDirection: exchangeDirection,
                       logo: tokenConfig?.logo,
                     ),
@@ -129,6 +128,7 @@ class TransactionListItem extends StatelessWidget {
                   children: [
                     OrderDetails(
                       order: order!,
+                      description: transaction.description,
                     ),
                   ],
                 ),
@@ -206,16 +206,14 @@ class Name extends StatelessWidget {
   }
 }
 
-class AmountDescription extends StatelessWidget {
+class Amount extends StatelessWidget {
   final double amount;
-  final String? description;
   final ExchangeDirection exchangeDirection;
   final String? logo;
 
-  const AmountDescription({
+  const Amount({
     super.key,
     required this.amount,
-    this.description,
     required this.exchangeDirection,
     this.logo,
   });
@@ -261,21 +259,19 @@ class TimeAgo extends StatelessWidget {
 
 class OrderDetails extends StatelessWidget {
   final Order order;
+  final String? description;
 
   const OrderDetails({
     super.key,
     required this.order,
+    this.description,
   });
 
   @override
   Widget build(BuildContext context) {
     final items = order.items;
-    final description = order.description;
+    final description = this.description ?? order.description;
     final menuItems = order.place.items;
-
-    if (items.isEmpty && (description == null || description.trim().isEmpty)) {
-      return const SizedBox.shrink();
-    }
 
     final mappedItems = menuItems.fold<Map<int, MenuItem>>(
       {},
@@ -298,7 +294,7 @@ class OrderDetails extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         if (description != null && description.isNotEmpty && items.isEmpty)
           Text(
             description,

@@ -30,7 +30,6 @@ class TransactionsState with ChangeNotifier {
   String accountAddress;
 
   List<Transaction> transactions = [];
-  List<Transaction> newTransactions = [];
 
   Map<String, Order> orders = {};
   Map<String, ProfileV1> profiles = {};
@@ -115,7 +114,8 @@ class TransactionsState with ChangeNotifier {
       orders[txHash] = order;
       safeNotifyListeners();
 
-      if (order.isFinalized) {
+      if (order.createdAt
+          .isBefore(transactionsFromDate.subtract(Duration(days: 7)))) {
         return;
       }
     }
@@ -160,6 +160,8 @@ class TransactionsState with ChangeNotifier {
           await transactionsService.getNewTransactions(transactionsFromDate);
 
       if (newTransactions.isNotEmpty) {
+        transactionsFromDate = DateTime.now();
+
         // Store new transactions in database
         await _transactionsTable.upsertMany(newTransactions);
 
@@ -213,6 +215,8 @@ class TransactionsState with ChangeNotifier {
 
       // Then sync with API to get latest transactions
       await _syncTransactionsFromAPI(token: token);
+
+      startPolling();
     } catch (e, s) {
       debugPrint('Error fetching transactions: $e');
       debugPrint('Stack trace: $s');
@@ -330,7 +334,7 @@ class TransactionsState with ChangeNotifier {
   }
 
   void _upsertNewTransactions(List<Transaction> newTransactions) {
-    final existingList = [...this.newTransactions];
+    final existingList = [...transactions];
 
     for (final newTransaction in newTransactions) {
       final index =
@@ -351,7 +355,7 @@ class TransactionsState with ChangeNotifier {
               .isBefore(DateTime.now().subtract(Duration(seconds: 20))));
     }
 
-    this.newTransactions = [...existingList];
+    transactions = [...existingList];
   }
 
   Future<void> refreshTransactions({String? token}) async {
