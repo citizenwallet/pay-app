@@ -256,13 +256,14 @@ class CardsState with ChangeNotifier {
     }
   }
 
-  Future<(String?, AddCardError?)> claim(
+  Future<(String?, String?, AddCardError?)> claim(
     String uid,
     String? uri,
     String? name, {
     String? project,
   }) async {
     String? tokenAddress;
+    EthereumAddress? cardAddress;
     try {
       updatingCardNameUid = uid;
       claimingCard = true;
@@ -273,7 +274,7 @@ class CardsState with ChangeNotifier {
         claimingCard = false;
         safeNotifyListeners();
 
-        return (tokenAddress, AddCardError.unknownError);
+        return (tokenAddress, null, AddCardError.unknownError);
       }
 
       final (account, key) = credentials;
@@ -302,7 +303,7 @@ class CardsState with ChangeNotifier {
         project: parsedProject,
       );
 
-      final cardAddress = await _config.cardManagerContract!.getCardAddress(
+      cardAddress = await _config.cardManagerContract!.getCardAddress(
         uid,
       );
 
@@ -311,7 +312,11 @@ class CardsState with ChangeNotifier {
         claimingCard = false;
         safeNotifyListeners();
 
-        return (tokenAddress, AddCardError.cardAlreadyExists);
+        return (
+          tokenAddress,
+          existingCard.account,
+          AddCardError.cardAlreadyExists
+        );
       }
 
       final card = DBCard(
@@ -338,7 +343,11 @@ class CardsState with ChangeNotifier {
         claimingCard = false;
         safeNotifyListeners();
         // this is not an error, it just means the card is not configured
-        return (tokenAddress, AddCardError.cardNotConfigured);
+        return (
+          tokenAddress,
+          cardAddress.hexEip55,
+          AddCardError.cardNotConfigured
+        );
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -347,13 +356,13 @@ class CardsState with ChangeNotifier {
       claimingCard = false;
       safeNotifyListeners();
 
-      return (tokenAddress, AddCardError.unknownError);
+      return (tokenAddress, cardAddress?.hexEip55, AddCardError.unknownError);
     }
 
     updatingCardNameUid = null;
     claimingCard = false;
     safeNotifyListeners();
 
-    return (tokenAddress, null);
+    return (tokenAddress, cardAddress.hexEip55, null);
   }
 }

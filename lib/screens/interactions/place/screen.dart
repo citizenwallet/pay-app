@@ -7,6 +7,7 @@ import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/state/topup.dart';
+import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
 import 'header.dart';
@@ -221,6 +222,7 @@ class _InteractionWithPlaceScreenState
       context: context,
       barrierDismissible: true,
       useRootNavigator: false,
+      barrierColor: blackColor.withAlpha(160),
       builder: (modalContext) {
         final topupUrl =
             modalContext.select((TopupState state) => state.topupUrl);

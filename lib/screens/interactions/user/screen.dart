@@ -130,6 +130,7 @@ class _InteractionWithUserScreenState extends State<InteractionWithUserScreen> {
       context: context,
       barrierDismissible: true,
       useRootNavigator: false,
+      barrierColor: blackColor.withAlpha(160),
       builder: (modalContext) {
         final topupUrl =
             modalContext.select((TopupState state) => state.topupUrl);

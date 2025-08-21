@@ -138,6 +138,7 @@ class _HomeShellState extends State<HomeShell> {
       context: context,
       barrierDismissible: true,
       useRootNavigator: false,
+      barrierColor: blackColor.withAlpha(160),
       builder: (modalContext) {
         final topupUrl =
             modalContext.select((TopupState state) => state.topupUrl);
@@ -230,12 +231,13 @@ class _HomeShellState extends State<HomeShell> {
     callback();
   }
 
-  Future<void> handleAddCard(String account) async {
+  Future<void> handleAddCard() async {
     HapticFeedback.heavyImpact();
 
     final result = await showCupertinoModalPopup<(String, String?)?>(
       context: context,
       barrierDismissible: true,
+      barrierColor: blackColor.withAlpha(160),
       builder: (_) => const NFCModal(
         modalKey: 'modal-nfc-scanner',
       ),
@@ -247,11 +249,19 @@ class _HomeShellState extends State<HomeShell> {
 
     final (uid, uri) = result;
 
-    final (token, error) = await _cardsState.claim(uid, uri, 'card');
+    final (token, cardAddress, error) =
+        await _cardsState.claim(uid, uri, 'card');
 
     if (error == null) {
       if (!mounted) {
         return;
+      }
+
+      if (token != null && cardAddress != null) {
+        final navigator = GoRouter.of(context);
+        navigator.replace('/$cardAddress?token=$token');
+
+        handleCardChanged(cardAddress);
       }
 
       toastification.showCustom(
@@ -269,10 +279,9 @@ class _HomeShellState extends State<HomeShell> {
 
     await handleAddCardError(error);
 
-    if (token != null && mounted) {
-      print('token: $token');
+    if (token != null && cardAddress != null && mounted) {
       final navigator = GoRouter.of(context);
-      navigator.replace('/$account?token=$token');
+      navigator.replace('/$cardAddress?token=$token');
     }
     return;
   }
@@ -336,6 +345,7 @@ class _HomeShellState extends State<HomeShell> {
       final writeResult = await showCupertinoModalPopup<(String, String?)?>(
         context: context,
         barrierDismissible: true,
+        barrierColor: blackColor.withAlpha(160),
         builder: (_) => const NFCModal(
           modalKey: 'modal-nfc-scanner',
           write: true,

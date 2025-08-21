@@ -429,6 +429,7 @@ class ScannerModalState extends State<ScannerModal>
     await showCupertinoModalPopup(
       useRootNavigator: false,
       context: context,
+      barrierColor: blackColor.withAlpha(160),
       builder: (modalContext) {
         return provideCardState(
           context,

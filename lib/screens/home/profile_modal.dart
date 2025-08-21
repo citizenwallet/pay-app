@@ -158,6 +158,7 @@ class _ProfileModalState extends State<ProfileModal> {
     final result = await showCupertinoModalPopup<(String, String?)?>(
       context: context,
       barrierDismissible: true,
+      barrierColor: blackColor.withAlpha(160),
       builder: (_) => const NFCModal(
         modalKey: 'modal-nfc-scanner',
       ),
@@ -169,7 +170,8 @@ class _ProfileModalState extends State<ProfileModal> {
 
     final (uid, uri) = result;
 
-    final (token, error) = await _cardsState.claim(uid, uri, profile?.name);
+    final (token, cardAddress, error) =
+        await _cardsState.claim(uid, uri, profile?.name);
 
     if (token != null) {
       print('token: $token');

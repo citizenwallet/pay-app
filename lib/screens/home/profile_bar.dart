@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/card.dart';
 import 'package:pay_app/screens/home/actions_modal.dart';
+import 'package:pay_app/screens/home/card_actions_modal.dart';
 import 'package:pay_app/screens/home/token_modal.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
@@ -30,7 +31,7 @@ class ProfileBar extends StatefulWidget {
   final String accountAddress;
   final Color backgroundColor;
   final Function(String) onTopUpTap;
-  final Function(String account) onAddCard;
+  final Function() onAddCard;
 
   const ProfileBar({
     super.key,
@@ -66,8 +67,38 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
     });
   }
 
-  Future<void> handleProfileTap() async {
-    // await widget.onProfileTap();
+  Future<void> handleCardPressed(
+    int lastPage,
+    bool isAppAccount,
+    String appAccount,
+    CardInfo card,
+  ) async {
+    final option = await showCupertinoModalPopup<String?>(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: blackColor.withAlpha(240),
+      builder: (_) => CardActionsModal(
+        card: card,
+        isAppAccount: isAppAccount,
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (option == 'release') {
+      HapticFeedback.heavyImpact();
+      await _cardsState.release(card.uid);
+
+      widget.onCardChanged(appAccount);
+
+      widget.pageController.animateToPage(
+        0,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   Future<void> handleBalanceTap(
@@ -75,6 +106,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
     final selectedToken = await showCupertinoModalPopup<String?>(
       context: context,
       barrierDismissible: true,
+      barrierColor: blackColor.withAlpha(160),
       builder: (_) => provideWalletState(
         context,
         config,
@@ -112,7 +144,7 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
     widget.onCardChanged(account);
   }
 
-  void handleSettings(int lastPage) async {
+  void handleSettings(int lastPage, String account) async {
     setState(() {
       _isActionButtons = true;
     });
@@ -120,13 +152,12 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
     final option = await showCupertinoModalPopup<String?>(
       context: context,
       barrierDismissible: true,
+      barrierColor: blackColor.withAlpha(240),
       builder: (_) => ActionsModal(),
     );
 
-    widget.pageController.animateToPage(
+    widget.pageController.jumpToPage(
       lastPage,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeInOut,
     );
 
     await delay(const Duration(milliseconds: 300));
@@ -144,7 +175,26 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
     }
 
     if (option == 'add-card') {
-      widget.onAddCard(widget.accountAddress);
+      HapticFeedback.heavyImpact();
+      await widget.onAddCard();
+
+      // widget.onCardChanged(account);
+
+      // if (!mounted) {
+      //   return;
+      // }
+
+      // final cards = context.read<CardsState>().cards;
+
+      // final remainingPage = cards.indexWhere(
+      //   (card) => card.account == account,
+      // );
+
+      // widget.pageController.animateToPage(
+      //   remainingPage + 1,
+      //   duration: const Duration(milliseconds: 200),
+      //   curve: Curves.easeInOut,
+      // );
     }
   }
 
@@ -248,7 +298,10 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
                   controller: widget.pageController,
                   onPageChanged: (index) {
                     if (index == cardInfoList.length) {
-                      handleSettings(cardInfoList.length - 1);
+                      handleSettings(
+                        cardInfoList.length - 1,
+                        cardInfoList.last.account,
+                      );
                       return;
                     }
 
@@ -309,7 +362,12 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
                                     : null,
                             onCardNameTapped:
                                 isAppAccount ? handleEditProfile : null,
-                            onCardPressed: (_) => handleProfileTap(),
+                            onCardPressed: (_) => handleCardPressed(
+                              index,
+                              isAppAccount,
+                              appProfile.account,
+                              card,
+                            ),
                             onCardBalanceTapped: config != null
                                 ? () => handleBalanceTap(
                                       context,
