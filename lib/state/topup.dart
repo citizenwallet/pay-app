@@ -1,11 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/sigauth/sigauth.dart';
 
 class TopupState extends ChangeNotifier {
   // instantiate services here
   final SecureService _secureService = SecureService();
+  final PreferencesService _preferencesService = PreferencesService();
 
   // private variables here
 
@@ -29,24 +31,35 @@ class TopupState extends ChangeNotifier {
   // state methods here
   Future<void> generateTopupUrl(String baseUrl) async {
     try {
-      final credentials = _secureService.getCredentials();
-      if (credentials == null) {
-        return;
+      final lastAccount = _preferencesService.lastAccount;
+      final token = _preferencesService.tokenAddress;
+
+      String topupUrl = baseUrl;
+      if (lastAccount != null) {
+        topupUrl = '$baseUrl?account=$lastAccount';
+        if (token != null) {
+          topupUrl += '&token=$token';
+        }
+      } else {
+        final credentials = _secureService.getCredentials();
+        if (credentials == null) {
+          return;
+        }
+
+        final (account, key) = credentials;
+
+        final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
+
+        final sigAuthService = SigAuthService(
+          credentials: key,
+          address: account,
+          redirect: redirectDomain != null ? 'https://$redirectDomain' : '',
+        );
+
+        final sigAuthConnection = sigAuthService.connect();
+
+        topupUrl = '$baseUrl?${sigAuthConnection.queryParams}';
       }
-
-      final (account, key) = credentials;
-
-      final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
-
-      final sigAuthService = SigAuthService(
-        credentials: key,
-        address: account,
-        redirect: redirectDomain != null ? 'https://$redirectDomain' : '',
-      );
-
-      final sigAuthConnection = sigAuthService.connect();
-
-      final topupUrl = '$baseUrl?${sigAuthConnection.queryParams}';
 
       this.topupUrl = topupUrl;
 

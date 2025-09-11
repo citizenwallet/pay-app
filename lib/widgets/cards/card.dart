@@ -5,6 +5,7 @@ import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/profile_circle.dart';
 import 'package:pay_app/widgets/text_input_modal.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 
 enum TapDepth {
   none,
@@ -16,8 +17,11 @@ class Card extends StatefulWidget {
   final String uid;
   final double width;
   final Color color;
+  final Color? textColor;
+  final Color? borderColor;
   final EdgeInsets? margin;
   final ProfileV1? profile;
+  final String usernamePrefix;
   final String? logo;
   final String? balance;
   final IconData? icon;
@@ -32,8 +36,11 @@ class Card extends StatefulWidget {
     required this.uid,
     this.width = 200,
     required this.color,
+    this.textColor,
+    this.borderColor,
     this.margin,
     this.profile,
+    this.usernamePrefix = '@',
     this.logo,
     this.balance,
     this.icon,
@@ -71,8 +78,10 @@ class _CardState extends State<Card> {
       return;
     }
 
+    HapticFeedback.heavyImpact();
+
     setState(() {
-      tapDepth = TapDepth.tapping;
+      tapDepth = TapDepth.active;
     });
   }
 
@@ -81,8 +90,10 @@ class _CardState extends State<Card> {
       return;
     }
 
+    HapticFeedback.lightImpact();
+
     setState(() {
-      tapDepth = TapDepth.active;
+      tapDepth = TapDepth.tapping;
     });
   }
 
@@ -103,9 +114,10 @@ class _CardState extends State<Card> {
     final newName = await showCupertinoModalPopup<String?>(
       context: context,
       barrierDismissible: true,
+      barrierColor: blackColor.withAlpha(160),
       builder: (modalContext) => TextInputModal(
-        title: 'Edit card name',
-        placeholder: 'Enter account name',
+        title: AppLocalizations.of(context)!.edit,
+        placeholder: AppLocalizations.of(context)!.enterText,
         initialValue: widget.profile?.name ?? '',
       ),
     );
@@ -136,227 +148,271 @@ class _CardState extends State<Card> {
   @override
   Widget build(BuildContext context) {
     // Standard credit card proportions: 1.586 (width:height ratio)
-    double cardWidth = switch (tapDepth) {
-      TapDepth.tapping => widget.width * 1.1,
-      TapDepth.active => widget.width * 1.05,
-      _ => widget.width,
+    double scale = switch (tapDepth) {
+      TapDepth.tapping => 1.05,
+      TapDepth.active => 1.025,
+      _ => 1,
     };
 
-    double cardHeight = cardWidth / 1.586;
+    Color color = switch (tapDepth) {
+      TapDepth.tapping => widget.color.withAlpha(220),
+      TapDepth.active => widget.color.withAlpha(240),
+      _ => widget.color,
+    };
+
+    Color borderColor = switch (tapDepth) {
+      TapDepth.tapping => widget.borderColor ?? whiteColor.withAlpha(220),
+      TapDepth.active => widget.borderColor ?? whiteColor.withAlpha(240),
+      _ => widget.borderColor ?? whiteColor.withAlpha(220),
+    };
+
+    double borderWidth = switch (tapDepth) {
+      TapDepth.tapping => 2,
+      TapDepth.active => 2,
+      _ => 1,
+    };
+
+    double cardWidth = widget.width;
+    double cardHeight = widget.width / 1.586;
 
     final balanceTappable = widget.onCardBalanceTapped != null;
 
-    final container = AnimatedContainer(
-      duration: const Duration(milliseconds: 100),
+    final container = AnimatedScale(
+      scale: scale,
+      duration: const Duration(milliseconds: 150),
       curve: Curves.easeInOut,
-      width: cardWidth,
-      height: cardHeight,
-      margin: widget.margin,
-      decoration: BoxDecoration(
-        color: widget.color,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: CupertinoColors.white.withAlpha(160)),
-        boxShadow: [
-          BoxShadow(
-            color: blackColor.withAlpha(60),
-            blurRadius: 10,
-            offset: const Offset(0, 6),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        width: cardWidth,
+        height: cardHeight,
+        margin: widget.margin,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: borderColor,
+            width: borderWidth,
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          ProfileCircle(
-                            size: 24,
-                            imageUrl: widget.profile?.imageSmall,
-                            borderColor: whiteColor,
-                            borderWidth: 2,
-                          ),
-                          const SizedBox(width: 4),
-                          (widget.onCardNameUpdated != null ||
-                                  widget.onCardNameTapped != null)
-                              ? GestureDetector(
-                                  onTap: handleNameTap,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: whiteColor.withAlpha(10),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: whiteColor.withAlpha(100),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          widget.profile != null
-                                              ? widget.profile!.name
-                                              : 'anonymous',
-                                          style: const TextStyle(
-                                            color: CupertinoColors.white,
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Icon(
-                                          CupertinoIcons.pen,
-                                          color: whiteColor,
-                                          size: 20,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                )
-                              : Text(
-                                  widget.profile != null
-                                      ? widget.profile!.name
-                                      : 'anonymous',
-                                  style: const TextStyle(
-                                    color: CupertinoColors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                        ],
-                      ),
-                      if (widget.profile != null) const SizedBox(height: 4),
-                      if (widget.profile != null)
-                        Text(
-                          '@${widget.profile!.username}',
-                          style: const TextStyle(
-                            color: CupertinoColors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                widget.icon != null
-                    ? Icon(
-                        widget.icon,
-                        color: CupertinoColors.white,
-                        size: 24,
-                      )
-                    : Image.asset(
-                        'assets/icons/nfc.png',
-                        color: CupertinoColors.white,
-                        width: 24,
-                        height: 24,
-                      ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (widget.onTopUpPressed != null)
-                  CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    color: whiteColor,
-                    borderRadius: BorderRadius.circular(8),
-                    minimumSize: Size.zero,
-                    onPressed: widget.onTopUpPressed,
-                    child: SizedBox(
-                      width: 100,
-                      height: 28,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(
-                            CupertinoIcons.plus,
-                            color: widget.color,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'add funds',
-                            style: TextStyle(
-                              color: widget.color,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                if (widget.balance != null)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      GestureDetector(
-                        onTap: balanceTappable ? handleBalanceTap : null,
-                        child: Container(
-                          decoration: balanceTappable
-                              ? BoxDecoration(
-                                  color: whiteColor.withAlpha(10),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: whiteColor.withAlpha(100),
-                                    width: 1,
-                                  ),
-                                )
-                              : null,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              CoinLogo(size: 20, logo: widget.logo),
-                              const SizedBox(width: 4),
-                              Text(
-                                widget.balance!,
-                                style: TextStyle(
-                                  color: CupertinoColors.white,
-                                  fontSize: 20,
-                                  letterSpacing: 1,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              if (balanceTappable) const SizedBox(width: 4),
-                              if (balanceTappable)
-                                Icon(
-                                  CupertinoIcons.chevron_down,
-                                  color: CupertinoColors.white,
-                                  size: 14,
-                                ),
-                            ],
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-              ],
+          boxShadow: [
+            BoxShadow(
+              color: blackColor.withAlpha(60),
+              blurRadius: 10,
+              offset: const Offset(0, 6),
             ),
           ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            ProfileCircle(
+                              size: 24,
+                              imageUrl: widget.profile?.imageSmall,
+                              borderColor: whiteColor,
+                              borderWidth: 2,
+                            ),
+                            const SizedBox(width: 4),
+                            (widget.onCardNameUpdated != null ||
+                                    widget.onCardNameTapped != null)
+                                ? GestureDetector(
+                                    onTap: handleNameTap,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: whiteColor.withAlpha(10),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: whiteColor.withAlpha(100),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            widget.profile != null
+                                                ? widget.profile!.name
+                                                : 'anonymous',
+                                            style: TextStyle(
+                                              color: widget.textColor ??
+                                                  whiteColor,
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Icon(
+                                            CupertinoIcons.pen,
+                                            color:
+                                                widget.textColor ?? whiteColor,
+                                            size: 20,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    widget.profile != null
+                                        ? widget.profile!.name
+                                        : 'anonymous',
+                                    style: TextStyle(
+                                      color: widget.textColor ?? whiteColor,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                          ],
+                        ),
+                        if (widget.profile != null) const SizedBox(height: 6),
+                        if (widget.profile != null)
+                          Row(
+                            children: [
+                              Text(
+                                widget.usernamePrefix,
+                                style: TextStyle(
+                                  color: (widget.textColor ?? whiteColor)
+                                      .withAlpha(200),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                widget.profile!.username,
+                                style: TextStyle(
+                                  color: (widget.textColor ?? whiteColor)
+                                      .withAlpha(200),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  widget.icon != null
+                      ? Icon(
+                          widget.icon,
+                          color: widget.textColor ?? whiteColor,
+                          size: 24,
+                        )
+                      : Image.asset(
+                          'assets/icons/nfc.png',
+                          color: widget.textColor ?? whiteColor,
+                          width: 24,
+                          height: 24,
+                        ),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (widget.onTopUpPressed != null)
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      color: whiteColor,
+                      borderRadius: BorderRadius.circular(8),
+                      minimumSize: Size.zero,
+                      onPressed: widget.onTopUpPressed,
+                      child: SizedBox(
+                        width: 80,
+                        height: 28,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Icon(
+                              CupertinoIcons.plus,
+                              color: widget.color,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              AppLocalizations.of(context)!.addFunds,
+                              style: TextStyle(
+                                color: widget.color,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (widget.balance != null)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        GestureDetector(
+                          onTap: balanceTappable ? handleBalanceTap : null,
+                          child: Container(
+                            decoration: balanceTappable
+                                ? BoxDecoration(
+                                    color: whiteColor.withAlpha(10),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: whiteColor.withAlpha(100),
+                                      width: 1,
+                                    ),
+                                  )
+                                : null,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                CoinLogo(size: 20, logo: widget.logo),
+                                const SizedBox(width: 4),
+                                Text(
+                                  widget.balance!,
+                                  style: TextStyle(
+                                    color: widget.textColor ?? whiteColor,
+                                    fontSize: 20,
+                                    letterSpacing: 1,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                if (balanceTappable) const SizedBox(width: 4),
+                                if (balanceTappable)
+                                  Icon(
+                                    CupertinoIcons.chevron_down,
+                                    color: widget.textColor ?? whiteColor,
+                                    size: 14,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

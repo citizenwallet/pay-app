@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/services/db/db.dart';
-import 'package:pay_app/theme/card_colors.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DBCard {
@@ -28,10 +27,6 @@ class DBCard {
       'project': project,
       'account': account,
     };
-  }
-
-  Color getColor() {
-    return projectCardColor(project);
   }
 }
 

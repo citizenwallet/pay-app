@@ -40,7 +40,8 @@
       "decimals": 6,
       "chain_id": 100,
       "logo": "https://assets.citizenwallet.xyz/wallet-config/_images/wallet.pay.brussels.png",
-      "color": "#3431c4"
+      "color": "#3431c4",
+      "project": "main"
     },
     "100:0x601D2Dc12bE367d1653d803827875c2Bcaeb4A20": {
       "standard": "erc20",
@@ -50,7 +51,8 @@
       "decimals": 6,
       "chain_id": 100,
       "logo": "https://assets.citizenwallet.xyz/wallet-config/_images/class.png",
-      "color": "#ec6825"
+      "color": "#ec6825",
+      "project": "class"
     }
   },
   "scan": {
@@ -122,14 +124,14 @@
       "token_address": "0x601D2Dc12bE367d1653d803827875c2Bcaeb4A20"
     },
     {
-      "name": "Participer",
+      "name": "Cotiser",
       "icon": "https://assets.citizenwallet.xyz/wallet-config/_images/class.png",
-      "url": "https://class.collectif-ssa.be/en-pratique/",
+      "url": "https://checkout.pay.brussels/class-cotisation",
       "action": "topup",
       "signature": true,
       "token_address": "0x601D2Dc12bE367d1653d803827875c2Bcaeb4A20"
     }
   ],
   "config_location": "https://wallet.pay.brussels/config/community.json",
-  "version": 4
+  "version": 5
 }
