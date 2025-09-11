@@ -16,8 +16,10 @@ import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/scanner.dart';
 import 'package:pay_app/state/sending.dart';
 import 'package:pay_app/state/topup.dart';
+import 'package:pay_app/state/transactions/transactions.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
+import 'package:pay_app/state/locale_state.dart';
 import 'package:provider/provider.dart';
 
 Widget provideAppState(
@@ -28,19 +30,35 @@ Widget provideAppState(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => AppState(),
+          create: (_) => AppState(config),
         ),
         ChangeNotifierProvider(
           create: (_) => CommunityState(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => WalletState(config),
         ),
         ChangeNotifierProvider(
           create: (_) => OnboardingState(config),
         ),
         ChangeNotifierProvider(
           create: (_) => ScanState(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => LocaleState(),
+        ),
+        ChangeNotifierProvider(
+          key: Key('topup'),
+          create: (_) => TopupState(),
+        ),
+        ChangeNotifierProvider(
+          key: Key('profile'),
+          create: (_) => ProfileState(config),
+        ),
+        ChangeNotifierProvider(
+          key: Key('cards'),
+          create: (_) => CardsState(config),
+        ),
+        ChangeNotifierProvider(
+          key: Key('wallet'),
+          create: (_) => WalletState(config),
         ),
       ],
       builder: builder,
@@ -54,39 +72,50 @@ Widget provideAccountState(
   Widget child,
 ) {
   final account = state.pathParameters['account']!;
+  final token = state.uri.queryParameters['token'];
 
   return MultiProvider(
-    key: Key('account-$account'),
+    key: Key('account-$account-$token'),
     providers: [
       ChangeNotifierProvider(
-        key: Key('interactions-$account'),
+        key: Key('interactions-$account-$token'),
         create: (_) => InteractionState(
-          account: account,
+          account,
         ),
       ),
       ChangeNotifierProvider(
-        key: Key('places-$account'),
+        key: Key('places-$account-$token'),
         create: (_) => PlacesState(),
-      ),
-      ChangeNotifierProvider(
-        key: Key('profile-$account'),
-        create: (_) => ProfileState(account, config),
       ),
       ChangeNotifierProvider(
         key: Key('contacts'),
         create: (_) => ContactsState(config),
       ),
       ChangeNotifierProvider(
-        key: Key('topup'),
-        create: (_) => TopupState(),
-      ),
-      ChangeNotifierProvider(
         key: Key('account-$account'),
         create: (_) => AccountState(config),
       ),
       ChangeNotifierProvider(
-        key: Key('cards-$account'),
-        create: (_) => CardsState(config),
+        key: Key('transactions-$account-$token'),
+        create: (_) => TransactionsState(accountAddress: account),
+      ),
+    ],
+    child: child,
+  );
+}
+
+Widget provideWalletState(
+  BuildContext context,
+  Config config,
+  String account,
+  Widget child,
+) {
+  return MultiProvider(
+    key: Key('account-$account'),
+    providers: [
+      ChangeNotifierProvider(
+        key: Key('wallet-$account'),
+        create: (_) => WalletState(config),
       ),
     ],
     child: child,
@@ -95,13 +124,11 @@ Widget provideAccountState(
 
 Widget providePlaceState(
   BuildContext context,
-  GoRouterState state,
   Config config,
+  String slug,
+  String account,
   Widget child,
 ) {
-  final slug = state.pathParameters['slug']!;
-  final account = state.pathParameters['account']!;
-
   return MultiProvider(
     key: Key('place-$account-$slug'),
     providers: [
@@ -110,7 +137,7 @@ Widget providePlaceState(
         create: (_) => OrdersWithPlaceState(
           config,
           slug: slug,
-          myAddress: account,
+          account: account,
         ),
       ),
       ChangeNotifierProvider(
@@ -155,17 +182,21 @@ Widget provideCardState(
 Widget provideSendingState(
   BuildContext context,
   Config config,
-  String myAddress,
+  String initialAddress,
   Widget child,
 ) {
   return MultiProvider(
-    key: Key('sending-$myAddress'),
+    key: Key('sending-$initialAddress'),
     providers: [
       ChangeNotifierProvider(
-        key: Key('sending-$myAddress'),
+        key: Key('wallet-$initialAddress'),
+        create: (_) => WalletState(config),
+      ),
+      ChangeNotifierProvider(
+        key: Key('sending-$initialAddress'),
         create: (_) => SendingState(
           config: config,
-          myAddress: myAddress,
+          initialAddress: initialAddress,
         ),
       ),
     ],

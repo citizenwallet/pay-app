@@ -16,7 +16,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.8+41
+version: 1.0.9+52
 
 environment:
   sdk: ^3.6.0
@@ -34,6 +34,9 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
   go_router: ^14.6.0
   provider: ^6.1.2
   sqflite_common: ^2.5.4+5
@@ -81,6 +84,7 @@ dependencies:
   toastification: ^3.0.2
   nfc_manager: ^4.0.2
   nfc_manager_ndef: ^1.0.1
+  audio_in_app: ^2.1.1
 
 dev_dependencies:
   flutter_test:
@@ -109,6 +113,8 @@ flutter:
     - assets/logo.svg
     - assets/logo.png
     - assets/logo.jpg
+    - assets/audio/tx_notification.wav
+    - assets/icons/sound.svg
     - assets/icons/profile.svg
     - assets/icons/profile.png
     - assets/icons/profile.jpg
@@ -172,3 +178,6 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+  # Localization
+  generate: true

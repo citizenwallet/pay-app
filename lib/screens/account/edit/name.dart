@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/utils/formatters.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:pay_app/widgets/text_field.dart';
 import 'package:provider/provider.dart';
 
@@ -55,7 +56,7 @@ class _NameState extends State<Name> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Name',
+          AppLocalizations.of(context)!.name,
           style: TextStyle(
             fontSize: 27,
             fontWeight: FontWeight.w600,
@@ -67,7 +68,7 @@ class _NameState extends State<Name> {
           controller: _nameController,
           textInputAction: TextInputAction.next,
           inputFormatters: [nameFormatter],
-          placeholder: 'Enter your name',
+          placeholder: AppLocalizations.of(context)!.enterYourName,
           onChanged: handleNameChange,
         ),
       ],

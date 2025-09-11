@@ -108,6 +108,11 @@ class OnboardingState with ChangeNotifier {
   }
 
   EthereumAddress? getAccountAddress() {
+    final lastAccount = _preferencesService.lastAccount;
+    if (lastAccount != null) {
+      return EthereumAddress.fromHex(lastAccount);
+    }
+
     final credentials = _secureService.getCredentials();
     if (credentials == null) {
       return null;

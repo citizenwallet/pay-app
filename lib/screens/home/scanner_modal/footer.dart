@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:pay_app/services/config/config.dart';
+import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/transaction_input_row.dart';
@@ -78,7 +79,7 @@ class _FooterState extends State<Footer> {
     final config = context.select<WalletState, Config>(
       (state) => state.config,
     );
-    final tokenConfig = context.select<WalletState, TokenConfig>(
+    final tokenConfig = context.select<AppState, TokenConfig>(
       (state) => state.currentTokenConfig,
     );
 
@@ -90,7 +91,7 @@ class _FooterState extends State<Footer> {
       tokenAddress: tokenConfig.address,
     );
 
-    final primaryColor = context.select<WalletState, Color>(
+    final primaryColor = context.select<AppState, Color>(
       (state) => state.tokenPrimaryColor,
     );
 

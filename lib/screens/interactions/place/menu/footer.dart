@@ -1,10 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/services/config/config.dart';
+import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/wide_button.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class Footer extends StatelessWidget {
@@ -24,7 +26,7 @@ class Footer extends StatelessWidget {
     final config = context.select<WalletState, Config?>(
       (state) => state.config,
     );
-    final tokenConfig = context.select<WalletState, TokenConfig>(
+    final tokenConfig = context.select<AppState, TokenConfig>(
       (state) => state.currentTokenConfig,
     );
 
@@ -65,7 +67,7 @@ class Footer extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Pay',
+                  AppLocalizations.of(context)!.pay,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -97,7 +99,7 @@ class Footer extends StatelessWidget {
             WideButton(
               onPressed: () => onTopUp(topUpPlugin.url),
               child: Text(
-                'Top up',
+                AppLocalizations.of(context)!.topUp,
                 style: TextStyle(
                   color: CupertinoColors.white,
                   fontSize: 16,

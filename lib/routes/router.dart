@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/order.dart';
+import 'package:pay_app/routes/home_shell.dart';
 import 'package:pay_app/screens/account/settings/screen.dart';
+import 'package:pay_app/screens/account/settings/language_screen.dart';
 import 'package:pay_app/screens/interactions/place/order/screen.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/state/onboarding.dart';
@@ -89,19 +91,27 @@ GoRouter createRouter(
         ),
         ShellRoute(
           navigatorKey: appShellNavigatorKey,
-          builder: (context, state, child) =>
-              provideAccountState(context, state, config, child),
+          builder: (context, state, child) => HomeShell(
+            key: Key('home-shell'),
+            state: state,
+            config: config,
+            child: provideAccountState(
+              context,
+              state,
+              config,
+              child,
+            ),
+          ),
           routes: [
             GoRoute(
               name: 'Home',
               path: '/:account',
               builder: (context, state) {
                 final accountAddress = state.pathParameters['account']!;
-                final deepLink = state.uri.queryParameters['deepLink'];
 
                 return HomeScreen(
+                  key: Key(accountAddress),
                   accountAddress: accountAddress,
-                  deepLink: deepLink,
                 );
               },
             ),
@@ -113,20 +123,32 @@ GoRouter createRouter(
 
                 return MyAccountSettings(accountAddress: accountAddress);
               },
+              routes: [
+                GoRoute(
+                  name: 'LanguageSettings',
+                  path: '/language',
+                  builder: (context, state) {
+                    return const LanguageScreen();
+                  },
+                ),
+              ],
             ),
             GoRoute(
               name: 'EditMyAccount',
               path: '/:account/my-account/edit',
               builder: (context, state) {
-                final accountAddress = state.pathParameters['account']!;
-
                 return const EditAccountScreen();
               },
             ),
             ShellRoute(
               navigatorKey: placeShellNavigatorKey,
-              builder: (context, state, child) =>
-                  providePlaceState(context, state, config, child),
+              builder: (context, state, child) => providePlaceState(
+                context,
+                config,
+                state.pathParameters['slug']!,
+                state.pathParameters['account']!,
+                child,
+              ),
               routes: [
                 GoRoute(
                   name: 'InteractionWithPlace',
@@ -134,15 +156,10 @@ GoRouter createRouter(
                   builder: (context, state) {
                     final myAddress = state.pathParameters['account']!;
                     final slug = state.pathParameters['slug']!;
-                    final extra = state.extra as Map<String, dynamic>;
-                    final openMenu = extra['openMenu'] as bool? ?? false;
-                    final orderId = extra['orderId'] as String?;
 
                     return InteractionWithPlaceScreen(
                       slug: slug,
                       myAddress: myAddress,
-                      openMenu: openMenu,
-                      orderId: orderId,
                     );
                   },
                   routes: [

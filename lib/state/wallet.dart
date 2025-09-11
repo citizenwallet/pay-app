@@ -5,7 +5,6 @@ import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
-import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/currency.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -16,7 +15,7 @@ class WalletState with ChangeNotifier {
   final Config _config;
   Config get config => _config;
 
-  EthereumAddress? _address;
+  late EthereumAddress? _address;
   EthereumAddress? get address => _address;
 
   // Token balances management
@@ -27,15 +26,10 @@ class WalletState with ChangeNotifier {
   bool _loadingTokenBalances = false;
   bool get loadingTokenBalances => _loadingTokenBalances;
 
-  String currentTokenAddress;
-  TokenConfig currentTokenConfig;
-
-  Color get tokenPrimaryColor => currentTokenConfig.color != null
-      ? Color(int.parse(currentTokenConfig.color!.replaceAll('#', '0xFF')))
-      : primaryColor;
-
   bool loading = false;
   bool error = false;
+
+  bool credentialsExpired = false;
 
   Timer? _pollingTimer;
   bool _mounted = true;
@@ -51,22 +45,21 @@ class WalletState with ChangeNotifier {
     super.dispose();
   }
 
-  WalletState(this._config)
-      : currentTokenAddress = _config.getPrimaryToken().address,
-        currentTokenConfig = _config.getPrimaryToken();
+  WalletState(this._config) {
+    _address = _preferencesService.lastAccount != null
+        ? EthereumAddress.fromHex(_preferencesService.lastAccount!)
+        : null;
+    init();
+  }
 
-  Future<bool?> init() async {
+  Future<void> init() async {
     try {
       loading = true;
       safeNotifyListeners();
 
-      final tokenConfig = config.getToken(
-        _preferencesService.tokenAddress ?? config.getPrimaryToken().address,
-      );
-
-      currentTokenAddress =
-          _preferencesService.tokenAddress ?? tokenConfig.address;
-      currentTokenConfig = tokenConfig;
+      tokenBalances = _preferencesService.tokenBalances(_address!.hexEip55);
+      updateBalance();
+      loadTokenBalances();
 
       safeNotifyListeners();
 
@@ -78,11 +71,6 @@ class WalletState with ChangeNotifier {
 
       final (account, key) = credentials;
 
-      _address = account;
-
-      tokenBalances = _preferencesService.tokenBalances(_address!.hexEip55);
-      safeNotifyListeners();
-
       final expired = await _config.sessionManagerModuleContract.isExpired(
         account,
         key.address,
@@ -91,24 +79,27 @@ class WalletState with ChangeNotifier {
       if (expired) {
         await _secureService.clearCredentials();
         loading = false;
+        credentialsExpired = true;
         safeNotifyListeners();
-        return false;
+        return;
       }
-
-      await updateBalance();
 
       loading = false;
       safeNotifyListeners();
 
-      return true;
+      return;
     } catch (e, s) {
       debugPrint('error: $e');
       debugPrint('stack trace: $s');
       error = true;
       safeNotifyListeners();
     }
+  }
 
-    return null;
+  void switchAccount(String account) {
+    _address = EthereumAddress.fromHex(account);
+    _preferencesService.setLastAccount(account);
+    init();
   }
 
   Future<void> startBalancePolling() async {
@@ -132,15 +123,19 @@ class WalletState with ChangeNotifier {
     tokenBalances = _preferencesService.tokenBalances(_address!.hexEip55);
     safeNotifyListeners();
 
+    final tokenConfig = config.getToken(
+      _preferencesService.tokenAddress ?? config.getPrimaryToken().address,
+    );
+
     final balance = await getBalance(
       _config,
       _address!,
-      tokenAddress: currentTokenAddress,
+      tokenAddress: tokenConfig.address,
     );
 
-    final token = _config.getToken(currentTokenAddress);
+    final token = _config.getToken(tokenConfig.address);
 
-    tokenBalances[currentTokenAddress] =
+    tokenBalances[tokenConfig.address] =
         formatCurrency(balance, token.decimals);
     safeNotifyListeners();
 
@@ -250,14 +245,8 @@ class WalletState with ChangeNotifier {
     return tokenLoadingStates[tokenAddress] ?? false;
   }
 
-  void setCurrentToken(String tokenAddress) {
-    currentTokenAddress = tokenAddress;
-    currentTokenConfig = _config.getToken(tokenAddress);
-
-    _preferencesService.setToken(tokenAddress);
-    safeNotifyListeners();
-
-    updateBalance();
+  void setLastAccount(String account) {
+    _preferencesService.setLastAccount(account);
   }
 
   void clear() {
