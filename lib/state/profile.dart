@@ -13,7 +13,6 @@ import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/utils/random.dart';
 import 'package:pay_app/utils/uint8.dart';
-import 'package:web3dart/web3dart.dart';
 
 enum ProfileUpdateState {
   idle,
@@ -38,20 +37,17 @@ enum ProfileUpdateState {
 class ProfileState with ChangeNotifier {
   // instantiate services here
   final ContactsTable _contacts = AppDBService().contacts;
-  final PreferencesService _preferencesService = PreferencesService();
   final SecureService _secureService = SecureService();
   final PhotosService _photosService = PhotosService();
 
   // private variables here
   bool _pauseProfileCreation = false;
-  late String _account;
+  final String _account;
 
   final Config _config;
 
   // constructor here
-  ProfileState(this._config) {
-    init();
-  }
+  ProfileState(this._account, this._config);
 
   bool _mounted = true;
   void safeNotifyListeners() {
@@ -66,28 +62,7 @@ class ProfileState with ChangeNotifier {
     super.dispose();
   }
 
-  void init() async {
-    final credentials = _secureService.getCredentials();
-    if (credentials == null) {
-      return;
-    }
-
-    final (account, key) = credentials;
-
-    appAccount = account;
-    appProfile = await getProfile(_config, account.hexEip55) ?? ProfileV1();
-
-    _account = _preferencesService.lastAccount ?? account.hexEip55;
-
-    await fetchProfile();
-
-    giveProfileUsername();
-  }
-
   // state variables here
-  late EthereumAddress appAccount;
-  ProfileV1 appProfile = ProfileV1();
-
   bool loading = true;
   bool error = false;
   ProfileV1? _profile;
@@ -104,11 +79,6 @@ class ProfileState with ChangeNotifier {
   Uint8List? editingImage;
   String? editingImageExt;
 
-  Future<void> setAccount(String account) async {
-    _account = account;
-    await fetchProfile();
-  }
-
   Future<void> fetchProfile() async {
     final contact = await _contacts.getByAccount(_account);
     final cachedProfile = contact?.getProfile();
@@ -117,28 +87,7 @@ class ProfileState with ChangeNotifier {
 
       loading = false;
       safeNotifyListeners();
-
-      getProfile(_config, _account).then((remoteProfile) {
-        if (remoteProfile != null) {
-          _profile = remoteProfile;
-          safeNotifyListeners();
-
-          _contacts.upsert(DBContact.fromProfile(remoteProfile));
-        }
-      });
-      return;
     }
-
-    final remoteProfile = await getProfile(_config, _account);
-    if (remoteProfile == null) {
-      return;
-    }
-
-    _profile = remoteProfile;
-    loading = false;
-    safeNotifyListeners();
-
-    _contacts.upsert(DBContact.fromProfile(remoteProfile));
   }
 
   // state methods here
@@ -168,18 +117,22 @@ class ProfileState with ChangeNotifier {
     debugPrint('handleNewProfile');
 
     try {
-      final profileAccount = appAccount.hexEip55;
-
-      final contact = await _contacts.getByAccount(profileAccount);
+      final contact = await _contacts.getByAccount(_account);
       final cachedProfile = contact?.getProfile();
+      if (cachedProfile != null) {
+        _profile = cachedProfile;
+        safeNotifyListeners();
+      }
 
-      final existingProfile = await getProfile(_config, profileAccount);
+      final existingProfile = await getProfile(_config, _account);
 
       if (existingProfile != null) {
         _contacts.upsert(DBContact.fromProfile(existingProfile));
       }
 
       if (existingProfile != null && !existingProfile.isAnonymous) {
+        _profile = existingProfile;
+
         error = false;
         loading = false;
         safeNotifyListeners();

@@ -10,7 +10,6 @@ import 'package:pay_app/widgets/wide_button.dart';
 import 'package:pay_app/widgets/text_field.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:pay_app/l10n/app_localizations.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -183,8 +182,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
                       // Title
                       Text(
-                        community?.community.name ??
-                            AppLocalizations.of(context)!.loading,
+                        community?.community.name ?? 'Loading...',
                         style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -195,8 +193,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
                       // Subtitle
                       Text(
-                        community?.community.description ??
-                            AppLocalizations.of(context)!.loading,
+                        community?.community.description ?? 'Loading...',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -218,7 +215,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            AppLocalizations.of(context)!.bySigningIn,
+                            'By signing in, you agree to the ',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -228,7 +225,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           GestureDetector(
                             onTap: handleTermsAndConditions,
                             child: Text(
-                              AppLocalizations.of(context)!.termsAndConditions,
+                              'terms and conditions',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -255,8 +252,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           sessionRequestStatus == SessionRequestStatus.failed)
                         CustomTextField(
                           controller: phoneNumberController,
-                          placeholder: AppLocalizations.of(context)!
-                              .phoneNumberPlaceholder,
+                          placeholder: '+32475123456',
                           focusNode: _focusNode, // Use the focus node
                           autofocus:
                               false, // We'll focus manually after animation
@@ -323,8 +319,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                               SessionRequestStatus.confirmFailed)
                         CustomTextField(
                           controller: challengeController,
-                          placeholder:
-                              AppLocalizations.of(context)!.enterLoginCode,
+                          placeholder: 'Enter login code',
                           focusNode: _challengeFocusNode, // Use the focus node
                           autofocus:
                               false, // We'll focus manually after animation
@@ -371,7 +366,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       if (sessionRequestStatus ==
                           SessionRequestStatus.confirmFailed)
                         Text(
-                          AppLocalizations.of(context)!.invalidCode,
+                          'Invalid code',
                           style: TextStyle(
                             color: dangerColor,
                           ),
@@ -402,9 +397,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                               Text(
                                 sessionRequestStatus ==
                                         SessionRequestStatus.pending
-                                    ? AppLocalizations.of(context)!
-                                        .sendingSmsCode
-                                    : AppLocalizations.of(context)!.confirm,
+                                    ? 'Sending SMS Code...'
+                                    : 'Confirm',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
@@ -447,13 +441,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                               Text(
                                 sessionRequestStatus ==
                                         SessionRequestStatus.confirming
-                                    ? AppLocalizations.of(context)!.loggingIn
+                                    ? 'Logging in...'
                                     : sessionRequestStatus ==
                                             SessionRequestStatus.confirmFailed
-                                        ? AppLocalizations.of(context)!
-                                            .confirmCodeAgain
-                                        : AppLocalizations.of(context)!
-                                            .confirmCode,
+                                        ? 'Confirm code again'
+                                        : 'Confirm code',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
@@ -485,7 +477,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                AppLocalizations.of(context)!.sendNewCode,
+                                'Send new code',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,

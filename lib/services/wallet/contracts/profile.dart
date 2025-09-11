@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/utils/uint8.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:smartcontracts/contracts/apps/Profile.g.dart';
@@ -68,7 +67,6 @@ class ProfileV1 {
   String image;
   String imageMedium;
   String imageSmall;
-  String? parent;
 
   ProfileV1({
     this.account = '',
@@ -78,26 +76,7 @@ class ProfileV1 {
     this.image = 'assets/icons/profile.png',
     this.imageMedium = 'assets/icons/profile.png',
     this.imageSmall = 'assets/icons/profile.png',
-    this.parent,
   });
-
-  // card profile
-  ProfileV1.cardProfile(this.account, this.username)
-      : name = 'Card',
-        description = '',
-        image = 'assets/icons/card.png',
-        imageMedium = 'assets/icons/card.png',
-        imageSmall = 'assets/icons/card.png';
-
-  // treasury profile
-  ProfileV1.treasuryProfile(TokenConfig? tokenConfig)
-      : account = '0x0000000000000000000000000000000000000000',
-        username = tokenConfig?.symbol ?? 'treasury',
-        name = tokenConfig?.name ?? 'Treasury',
-        description = '',
-        image = tokenConfig?.logo ?? 'assets/icons/profile.png',
-        imageMedium = tokenConfig?.logo ?? 'assets/icons/profile.png',
-        imageSmall = tokenConfig?.logo ?? 'assets/icons/profile.png';
 
   // from json
   ProfileV1.fromJson(Map<String, dynamic> json)
@@ -110,8 +89,7 @@ class ProfileV1 {
         imageMedium =
             json['image_medium'] ?? json['image'] ?? 'assets/icons/profile.png',
         imageSmall =
-            json['image_small'] ?? json['image'] ?? 'assets/icons/profile.png',
-        parent = json['parent'];
+            json['image_small'] ?? json['image'] ?? 'assets/icons/profile.png';
 
   // from map
   ProfileV1.fromMap(Map<String, dynamic> json)
@@ -121,8 +99,7 @@ class ProfileV1 {
         description = json['description'] ?? '',
         image = json['image'] ?? 'assets/icons/profile.png',
         imageMedium = json['image_medium'] ?? 'assets/icons/profile.png',
-        imageSmall = json['image_small'] ?? 'assets/icons/profile.png',
-        parent = json['parent'];
+        imageSmall = json['image_small'] ?? 'assets/icons/profile.png';
 
   // to json
   Map<String, dynamic> toJson() => {
@@ -133,7 +110,6 @@ class ProfileV1 {
         'image': image,
         'image_medium': imageMedium,
         'image_small': imageSmall,
-        if (parent != null) 'parent': parent,
       };
 
   // with copy
@@ -145,7 +121,6 @@ class ProfileV1 {
     String? image,
     String? imageMedium,
     String? imageSmall,
-    String? parent,
   }) {
     return ProfileV1(
       account: account ?? this.account,
@@ -155,7 +130,6 @@ class ProfileV1 {
       image: image ?? this.image,
       imageMedium: imageMedium ?? this.imageMedium,
       imageSmall: imageSmall ?? this.imageSmall,
-      parent: parent ?? this.parent,
     );
   }
 
@@ -180,8 +154,7 @@ class ProfileV1 {
           description == other.description &&
           image == other.image &&
           imageMedium == other.imageMedium &&
-          imageSmall == other.imageSmall &&
-          parent == other.parent;
+          imageSmall == other.imageSmall;
 
   @override
   int get hashCode => super.hashCode;

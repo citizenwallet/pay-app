@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:pay_app/l10n/app_localizations.dart';
+
 import 'package:pay_app/widgets/settings_row.dart';
 
 class Notifications extends StatelessWidget {
@@ -11,7 +11,7 @@ class Notifications extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          AppLocalizations.of(context)!.notifications,
+          'Notifications',
           style: TextStyle(
             fontSize: 27,
             fontWeight: FontWeight.w600,
@@ -20,7 +20,7 @@ class Notifications extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         SettingsRow(
-          label: AppLocalizations.of(context)!.pushNotifications,
+          label: 'Push notifications',
           icon: 'assets/icons/notification_bell.svg',
           trailing: CupertinoSwitch(
             value: true,

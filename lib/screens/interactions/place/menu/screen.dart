@@ -185,7 +185,6 @@ class _PlaceMenuScreenState extends State<PlaceMenuScreen> {
       context: context,
       barrierDismissible: true,
       useRootNavigator: false,
-      barrierColor: blackColor.withAlpha(160),
       builder: (modalContext) {
         final topupUrl =
             modalContext.select((TopupState state) => state.topupUrl);

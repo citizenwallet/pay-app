@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
-import 'package:pay_app/models/menu_item.dart';
 import 'package:pay_app/models/place.dart';
 import 'package:web3dart/web3dart.dart' show EthereumAddress;
 
@@ -32,13 +31,11 @@ class OrderPlace {
   final String slug;
   final Display display;
   final String account;
-  final List<MenuItem> items;
 
   OrderPlace({
     required this.slug,
     required this.display,
     required this.account,
-    required this.items,
   });
 
   factory OrderPlace.fromJson(Map<String, dynamic> json) {
@@ -51,11 +48,6 @@ class OrderPlace {
           Display.values.firstWhereOrNull((e) => e.name == json['display']) ??
               Display.amount,
       account: account,
-      items: json['items'] != null
-          ? (json['items'] as List)
-              .map((item) => MenuItem.fromJson(item))
-              .toList()
-          : [],
     );
   }
 
@@ -69,11 +61,6 @@ class OrderPlace {
           Display.values.firstWhereOrNull((e) => e.name == json['display']) ??
               Display.amount,
       account: account,
-      items: json['items'] != null
-          ? (json['items'] as List)
-              .map((item) => MenuItem.fromJson(item))
-              .toList()
-          : [],
     );
   }
 
@@ -102,7 +89,6 @@ class Order {
   final EthereumAddress? account;
   final double fees;
   final OrderPlace place;
-  final String token;
 
   Order({
     required this.id,
@@ -120,7 +106,6 @@ class Order {
     this.account,
     this.fees = 0,
     required this.place,
-    required this.token,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -147,7 +132,6 @@ class Order {
           : null,
       fees: (json['fees'] ?? 0).toDouble() / 100,
       place: place,
-      token: json['token'],
     );
   }
 
@@ -175,7 +159,6 @@ class Order {
           : null,
       fees: (json['fees'] ?? 0).toDouble() / 100,
       place: place,
-      token: json['token'],
     );
   }
 
@@ -196,14 +179,8 @@ class Order {
       'account': account?.hexEip55,
       'fees': (fees * 100).toInt(),
       'place': jsonEncode(place.toMap()),
-      'token': token,
     };
   }
-
-  bool get isFinalized =>
-      status == OrderStatus.paid ||
-      status == OrderStatus.refunded ||
-      status == OrderStatus.correction;
 
   static OrderStatus _parseOrderStatus(String status) {
     return OrderStatus.values.firstWhere(

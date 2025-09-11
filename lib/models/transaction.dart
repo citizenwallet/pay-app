@@ -1,5 +1,3 @@
-import 'package:pay_app/services/wallet/contracts/profile.dart';
-
 import './interaction.dart';
 
 enum TransactionStatus {
@@ -23,9 +21,6 @@ class Transaction {
   TransactionStatus status; // status of the transaction
   DateTime createdAt; // date of the transaction
 
-  ProfileV1? fromProfile;
-  ProfileV1? toProfile;
-
   Transaction({
     required this.id,
     required this.txHash,
@@ -36,8 +31,6 @@ class Transaction {
     required this.amount,
     required this.status,
     this.description,
-    this.fromProfile,
-    this.toProfile,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
@@ -51,12 +44,6 @@ class Transaction {
       amount: json['value'],
       description: json['description'] == '' ? null : json['description'],
       status: parseTransactionStatus(json['status']),
-      fromProfile: json['from_profile'] != null
-          ? ProfileV1.fromJson(json['from_profile'])
-          : null,
-      toProfile: json['to_profile'] != null
-          ? ProfileV1.fromJson(json['to_profile'])
-          : null,
     );
   }
 

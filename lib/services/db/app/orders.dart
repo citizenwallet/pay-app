@@ -26,8 +26,7 @@ class OrdersTable extends DBTable {
       type TEXT,
       account TEXT,
       fees INTEGER NOT NULL DEFAULT 0,
-      place TEXT NOT NULL,
-      token TEXT NOT NULL
+      place TEXT NOT NULL
     )
   ''';
 
@@ -101,18 +100,6 @@ class OrdersTable extends DBTable {
         'CREATE INDEX idx_${name}_account_created ON $name (account, created_at)',
         'CREATE INDEX idx_${name}_slug ON $name (slug)',
       ],
-      14: [
-        'DROP TABLE $name',
-        createQuery,
-        'CREATE INDEX idx_${name}_place_id ON $name (place_id)',
-        'CREATE INDEX idx_${name}_account ON $name (account)',
-        'CREATE INDEX idx_${name}_created_at ON $name (created_at)',
-        'CREATE INDEX idx_${name}_status ON $name (status)',
-        'CREATE INDEX idx_${name}_tx_hash ON $name (tx_hash)',
-        'CREATE INDEX idx_${name}_place_created ON $name (place_id, created_at)',
-        'CREATE INDEX idx_${name}_account_created ON $name (account, created_at)',
-        'CREATE INDEX idx_${name}_slug ON $name (slug)',
-      ],
     };
 
     for (var i = oldVersion + 1; i <= newVersion; i++) {
@@ -132,12 +119,8 @@ class OrdersTable extends DBTable {
   }
 
   // Fetch all orders
-  Future<List<app_order.Order>> getAll(String account) async {
-    final List<Map<String, dynamic>> maps = await db.query(
-      name,
-      where: 'account = ?',
-      whereArgs: [account],
-    );
+  Future<List<app_order.Order>> getAll() async {
+    final List<Map<String, dynamic>> maps = await db.query(name);
     return List.generate(maps.length, (i) => app_order.Order.fromMap(maps[i]));
   }
 
@@ -165,15 +148,14 @@ class OrdersTable extends DBTable {
 
   // Fetch orders by place_id, sorted by created_at date
   Future<List<app_order.Order>> getOrdersBySlug(
-    String account,
     String slug, {
     int? limit,
     int? offset,
   }) async {
     final List<Map<String, dynamic>> maps = await db.query(
       name,
-      where: 'account = ? AND slug = ?',
-      whereArgs: [account, slug],
+      where: 'slug = ?',
+      whereArgs: [slug],
       orderBy: 'created_at DESC',
       limit: limit,
       offset: offset,
@@ -200,15 +182,14 @@ class OrdersTable extends DBTable {
 
   // Fetch orders by status
   Future<List<app_order.Order>> getOrdersByStatus(
-    String account,
     app_order.OrderStatus status, {
     int? limit,
     int? offset,
   }) async {
     final List<Map<String, dynamic>> maps = await db.query(
       name,
-      where: 'account = ? AND status = ?',
-      whereArgs: [account, status.name],
+      where: 'status = ?',
+      whereArgs: [status.name],
       orderBy: 'created_at DESC',
       limit: limit,
       offset: offset,
