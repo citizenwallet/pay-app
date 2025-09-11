@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/text_field.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class Description extends StatefulWidget {
@@ -81,7 +82,7 @@ class _DescriptionState extends State<Description> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Description',
+          AppLocalizations.of(context)!.description,
           style: TextStyle(
             fontSize: 27,
             fontWeight: FontWeight.w600,
@@ -92,7 +93,7 @@ class _DescriptionState extends State<Description> {
         CustomTextField(
           controller: _descriptionController,
           textInputAction: TextInputAction.newline,
-          placeholder: 'Description',
+          placeholder: AppLocalizations.of(context)!.description,
           onChanged: handleDescriptionChange,
           focusNode: _focusNode,
           minLines: 4,

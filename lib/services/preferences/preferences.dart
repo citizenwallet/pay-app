@@ -16,6 +16,10 @@ class PreferencesService {
   Future clear() async {
     await _preferences.remove('balance');
     await _preferences.remove('profile');
+
+    await _preferences.remove('token_address');
+    await _preferences.remove('audio_muted');
+    await _preferences.remove('last_account');
   }
 
   Future setTwoFAAddress(String salt, String address) async {
@@ -61,5 +65,21 @@ class PreferencesService {
     } else {
       await _preferences.setString('token_address', tokenAddress);
     }
+  }
+
+  Future setAudioMuted(bool muted) async {
+    await _preferences.setBool('audio_muted', muted);
+  }
+
+  bool get audioMuted {
+    return _preferences.getBool('audio_muted') ?? false;
+  }
+
+  Future setLastAccount(String account) async {
+    await _preferences.setString('last_account', account);
+  }
+
+  String? get lastAccount {
+    return _preferences.getString('last_account');
   }
 }

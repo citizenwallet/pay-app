@@ -33,6 +33,9 @@ class TransactionsTable extends DBTable {
       CREATE INDEX idx_${name}_tx_hash ON $name (tx_hash)
     ''');
     await db.execute('''
+      CREATE INDEX idx_${name}_contract ON $name (contract)
+    ''');
+    await db.execute('''
       CREATE INDEX idx_${name}_from_account ON $name (from_account)
     ''');
     await db.execute('''
@@ -64,6 +67,9 @@ class TransactionsTable extends DBTable {
       ],
       5: [
         'ALTER TABLE $name DROP COLUMN exchange_direction',
+      ],
+      13: [
+        'CREATE INDEX idx_${name}_contract ON $name (contract)',
       ]
     };
 
@@ -137,11 +143,19 @@ class TransactionsTable extends DBTable {
     String account, {
     int? limit,
     int? offset,
+    String? token,
   }) async {
+    String whereClause = 'from_account = ? OR to_account = ?';
+    List<dynamic> whereArgs = [account, account];
+    if (token != null) {
+      whereClause += ' AND contract = ?';
+      whereArgs.add(token);
+    }
+
     final List<Map<String, dynamic>> maps = await db.query(
       name,
-      where: 'from_account = ? OR to_account = ?',
-      whereArgs: [account, account],
+      where: whereClause,
+      whereArgs: whereArgs,
       orderBy: 'created_at DESC',
       limit: limit,
       offset: offset,

@@ -7,11 +7,13 @@ import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/db/app/contacts.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/pay/cards.dart';
+import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/sigauth/sigauth.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/utils/currency.dart';
+import 'package:pay_app/utils/projects.dart';
 import 'package:web3dart/credentials.dart';
 
 enum AddCardError {
@@ -30,6 +32,8 @@ class CardsState with ChangeNotifier {
   final SecureService _secureService = SecureService();
   final CardsService _cardsService = CardsService();
 
+  final PreferencesService _preferencesService = PreferencesService();
+
   // private variables here
   final Config _config;
 
@@ -39,7 +43,8 @@ class CardsState with ChangeNotifier {
   }
 
   void init() async {
-    safeNotifyListeners();
+    final token = _preferencesService.tokenAddress;
+    fetchCards(tokenAddress: token);
   }
 
   bool _mounted = true;
@@ -123,8 +128,6 @@ class CardsState with ChangeNotifier {
           _config.getToken(tokenAddress ?? _config.getPrimaryToken().address);
 
       for (final card in cards) {
-        await fetchProfile(card.account);
-
         final balance = await getBalance(
           _config,
           EthereumAddress.fromHex(card.account),
@@ -193,6 +196,7 @@ class CardsState with ChangeNotifier {
       if (updatedProfile != null) {
         updatingCardName = false;
         profiles[uid] = updatedProfile;
+
         safeNotifyListeners();
       }
     } catch (e) {
@@ -252,12 +256,14 @@ class CardsState with ChangeNotifier {
     }
   }
 
-  Future<AddCardError?> claim(
+  Future<(String?, String?, AddCardError?)> claim(
     String uid,
     String? uri,
     String? name, {
     String? project,
   }) async {
+    String? tokenAddress;
+    EthereumAddress? cardAddress;
     try {
       updatingCardNameUid = uid;
       claimingCard = true;
@@ -268,7 +274,7 @@ class CardsState with ChangeNotifier {
         claimingCard = false;
         safeNotifyListeners();
 
-        return AddCardError.unknownError;
+        return (tokenAddress, null, AddCardError.unknownError);
       }
 
       final (account, key) = credentials;
@@ -283,19 +289,13 @@ class CardsState with ChangeNotifier {
 
       final sigAuthConnection = sigAuthService.connect();
 
-      String? parsedProject = project;
-      if (uri != null) {
-        final parsedUri = Uri.parse(uri);
+      String? parsedProject = project ?? parseProject(uri);
 
-        if (parsedUri.queryParameters.containsKey('project')) {
-          parsedProject = parsedUri.queryParameters['project']!;
-        }
+      final tokenConfig = _config.getTokenByProject(parsedProject ?? 'main');
 
-        // error when ordering cards, it should be project
-        if (parsedUri.queryParameters.containsKey('community')) {
-          parsedProject = parsedUri.queryParameters['community']!;
-        }
-      }
+      tokenAddress = tokenConfig.address;
+
+      _preferencesService.setToken(tokenConfig.address);
 
       await _cardsService.claim(
         sigAuthConnection,
@@ -303,7 +303,7 @@ class CardsState with ChangeNotifier {
         project: parsedProject,
       );
 
-      final cardAddress = await _config.cardManagerContract!.getCardAddress(
+      cardAddress = await _config.cardManagerContract!.getCardAddress(
         uid,
       );
 
@@ -312,7 +312,11 @@ class CardsState with ChangeNotifier {
         claimingCard = false;
         safeNotifyListeners();
 
-        return AddCardError.cardAlreadyExists;
+        return (
+          tokenAddress,
+          existingCard.account,
+          AddCardError.cardAlreadyExists
+        );
       }
 
       final card = DBCard(
@@ -339,7 +343,11 @@ class CardsState with ChangeNotifier {
         claimingCard = false;
         safeNotifyListeners();
         // this is not an error, it just means the card is not configured
-        return AddCardError.cardNotConfigured;
+        return (
+          tokenAddress,
+          cardAddress.hexEip55,
+          AddCardError.cardNotConfigured
+        );
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -348,13 +356,13 @@ class CardsState with ChangeNotifier {
       claimingCard = false;
       safeNotifyListeners();
 
-      return AddCardError.unknownError;
+      return (tokenAddress, cardAddress?.hexEip55, AddCardError.unknownError);
     }
 
     updatingCardNameUid = null;
     claimingCard = false;
     safeNotifyListeners();
 
-    return null;
+    return (tokenAddress, cardAddress.hexEip55, null);
   }
 }

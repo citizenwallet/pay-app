@@ -1,0 +1,428 @@
+{
+    "@@locale": "en",
+    "appTitle": "Brussels Pay",
+    "loading": "Loading...",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "ok": "OK",
+    "done": "Done",
+    "next": "Next",
+    "back": "Back",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "refresh": "Refresh",
+    "retry": "Retry",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Information",
+    "logOut": "Log out",
+    "logOutConfirm": "Are you sure you want to log out?",
+    "deleteData": "Delete data & log out",
+    "deleteDataConfirm": "Your profile will be cleared and you will be logged out.",
+    "cardAdded": "Card added",
+    "cardAlreadyAdded": "Card already added",
+    "cardNotConfigured": "Card not configured",
+    "configure": "Configure",
+    "cardConfigured": "Card configured",
+    "nfcNotAvailable": "NFC is not available on this device",
+    "topupOnWay": "Your topup is on the way",
+    "noResultsFound": "No results found",
+    "releaseCard": "Release Card",
+    "release": "Release",
+    "noOrdersFound": "No orders found",
+    "transactionFailed": "Transaction failed",
+    "items": "Items",
+    "tokens": "Tokens",
+    "orderNumber": "Order #{orderId}",
+    "qrCode": "QR code",
+    "terminal": "terminal",
+    "app": "app",
+    "sending": "sending...",
+    "manualEntry": "Manual Entry",
+    "submit": "Submit",
+    "enterText": "Enter text",
+    "bySigningIn": "By signing in, you agree to the ",
+    "termsAndConditions": "terms and conditions",
+    "phoneNumberPlaceholder": "+32475123456",
+    "language": "Language",
+    "selectLanguage": "Select Language",
+    "languageChangedSuccessfully": "Language changed successfully!",
+    "enterLoginCode": "Enter login code",
+    "invalidCode": "Invalid code",
+    "sendingSmsCode": "Sending SMS Code...",
+    "loggingIn": "Logging in...",
+    "confirmCodeAgain": "Confirm code again",
+    "confirmCode": "Confirm code",
+    "sendNewCode": "Send new code",
+    "displayContacts": "Display contacts",
+    "skip": "Skip",
+    "allow": "Allow",
+    "settings": "Settings",
+    "account": "Account",
+    "fetchingExistingProfile": "Fetching existing profile",
+    "uploadingNewProfile": "Uploading new profile",
+    "almostDone": "Almost done",
+    "saving": "Saving",
+    "name": "Name",
+    "enterYourName": "Enter your name",
+    "description": "Description",
+    "username": "Username",
+    "enterYourUsername": "Enter your username",
+    "usernameAlreadyTaken": "Username already taken",
+    "orderNotFound": "Order not found",
+    "confirmOrder": "Confirm Order",
+    "noItems": "No items",
+    "subtotal": "Subtotal",
+    "vat": "VAT",
+    "total": "Total",
+    "pay": "Pay",
+    "menu": "Menu",
+    "enterAmount": "Enter amount",
+    "addMessage": "Add a message",
+    "topUp": "Top up",
+    "shareInviteLink": "Share invite link",
+    "orderDetails": "Order Details",
+    "addCard": "Add Card",
+    "appSettings": "App Settings",
+    "newCard": "New Card",
+    "myCard": "My Card",
+    "claimCard": "Claim Card",
+    "alreadyClaimed": "Already claimed",
+    "viewMenu": "View Menu",
+    "inspectCard": "Inspect Card",
+    "notifications": "Notifications",
+    "pushNotifications": "Push notifications",
+    "searchForPeopleOrPlaces": "Search for people or places",
+    "about": "About",
+    "general": "General",
+    "audio": "Audio",
+    "privacyPolicy": "Privacy policy",
+    "brusselsPay": "Brussels Pay",
+    "addFunds": "top up",
+    "@appTitle": {
+        "description": "The title of the application"
+    },
+    "@loading": {
+        "description": "Loading text"
+    },
+    "@cancel": {
+        "description": "Cancel button text"
+    },
+    "@confirm": {
+        "description": "Confirm button text"
+    },
+    "@ok": {
+        "description": "OK button text"
+    },
+    "@done": {
+        "description": "Done button text"
+    },
+    "@next": {
+        "description": "Next button text"
+    },
+    "@back": {
+        "description": "Back button text"
+    },
+    "@save": {
+        "description": "Save button text"
+    },
+    "@edit": {
+        "description": "Edit button text"
+    },
+    "@delete": {
+        "description": "Delete button text"
+    },
+    "@close": {
+        "description": "Close button text"
+    },
+    "@search": {
+        "description": "Search text"
+    },
+    "@filter": {
+        "description": "Filter text"
+    },
+    "@sort": {
+        "description": "Sort text"
+    },
+    "@refresh": {
+        "description": "Refresh text"
+    },
+    "@retry": {
+        "description": "Retry text"
+    },
+    "@error": {
+        "description": "Error text"
+    },
+    "@success": {
+        "description": "Success text"
+    },
+    "@warning": {
+        "description": "Warning text"
+    },
+    "@info": {
+        "description": "Information text"
+    },
+    "@logOut": {
+        "description": "Log out text"
+    },
+    "@logOutConfirm": {
+        "description": "Log out confirmation message"
+    },
+    "@deleteData": {
+        "description": "Delete data text"
+    },
+    "@deleteDataConfirm": {
+        "description": "Delete data confirmation message"
+    },
+    "@cardAdded": {
+        "description": "Card added message"
+    },
+    "@cardAlreadyAdded": {
+        "description": "Card already added message"
+    },
+    "@cardNotConfigured": {
+        "description": "Card not configured message"
+    },
+    "@configure": {
+        "description": "Configure button text"
+    },
+    "@cardConfigured": {
+        "description": "Card configured message"
+    },
+    "@nfcNotAvailable": {
+        "description": "NFC not available message"
+    },
+    "@topupOnWay": {
+        "description": "Topup on the way message"
+    },
+    "@noResultsFound": {
+        "description": "No results found message"
+    },
+    "@releaseCard": {
+        "description": "Release card text"
+    },
+    "@release": {
+        "description": "Release button text"
+    },
+    "@noOrdersFound": {
+        "description": "No orders found message"
+    },
+    "@transactionFailed": {
+        "description": "Transaction failed message"
+    },
+    "@items": {
+        "description": "Items text"
+    },
+    "@tokens": {
+        "description": "Tokens text"
+    },
+    "@orderNumber": {
+        "description": "Order number text",
+        "placeholders": {
+            "orderId": {
+                "type": "String"
+            }
+        }
+    },
+    "@qrCode": {
+        "description": "QR code text"
+    },
+    "@terminal": {
+        "description": "Terminal text"
+    },
+    "@app": {
+        "description": "App text"
+    },
+    "@sending": {
+        "description": "Sending text"
+    },
+    "@manualEntry": {
+        "description": "Manual entry text"
+    },
+    "@submit": {
+        "description": "Submit button text"
+    },
+    "@enterText": {
+        "description": "Enter text placeholder"
+    },
+    "@bySigningIn": {
+        "description": "By signing in text"
+    },
+    "@termsAndConditions": {
+        "description": "Terms and conditions text"
+    },
+    "@phoneNumberPlaceholder": {
+        "description": "Phone number placeholder"
+    },
+    "@language": {
+        "description": "Language text"
+    },
+    "@selectLanguage": {
+        "description": "Select language text"
+    },
+    "@languageChangedSuccessfully": {
+        "description": "Language changed successfully message"
+    },
+    "@enterLoginCode": {
+        "description": "Enter login code placeholder"
+    },
+    "@invalidCode": {
+        "description": "Invalid code error message"
+    },
+    "@sendingSmsCode": {
+        "description": "Sending SMS code message"
+    },
+    "@loggingIn": {
+        "description": "Logging in message"
+    },
+    "@confirmCodeAgain": {
+        "description": "Confirm code again button text"
+    },
+    "@confirmCode": {
+        "description": "Confirm code button text"
+    },
+    "@sendNewCode": {
+        "description": "Send new code button text"
+    },
+    "@displayContacts": {
+        "description": "Display contacts permission text"
+    },
+    "@skip": {
+        "description": "Skip button text"
+    },
+    "@allow": {
+        "description": "Allow button text"
+    },
+    "@settings": {
+        "description": "Settings text"
+    },
+    "@account": {
+        "description": "Account text"
+    },
+    "@fetchingExistingProfile": {
+        "description": "Fetching existing profile message"
+    },
+    "@uploadingNewProfile": {
+        "description": "Uploading new profile message"
+    },
+    "@almostDone": {
+        "description": "Almost done message"
+    },
+    "@saving": {
+        "description": "Saving message"
+    },
+    "@name": {
+        "description": "Name text"
+    },
+    "@enterYourName": {
+        "description": "Enter your name placeholder"
+    },
+    "@description": {
+        "description": "Description text"
+    },
+    "@username": {
+        "description": "Username text"
+    },
+    "@enterYourUsername": {
+        "description": "Enter your username placeholder"
+    },
+    "@usernameAlreadyTaken": {
+        "description": "Username already taken error message"
+    },
+    "@orderNotFound": {
+        "description": "Order not found message"
+    },
+    "@confirmOrder": {
+        "description": "Confirm order button text"
+    },
+    "@noItems": {
+        "description": "No items message"
+    },
+    "@subtotal": {
+        "description": "Subtotal text"
+    },
+    "@vat": {
+        "description": "VAT text"
+    },
+    "@total": {
+        "description": "Total text"
+    },
+    "@pay": {
+        "description": "Pay button text"
+    },
+    "@menu": {
+        "description": "Menu text"
+    },
+    "@enterAmount": {
+        "description": "Enter amount placeholder"
+    },
+    "@addMessage": {
+        "description": "Add message placeholder"
+    },
+    "@topUp": {
+        "description": "Top up button text"
+    },
+    "@shareInviteLink": {
+        "description": "Share invite link button text"
+    },
+    "@orderDetails": {
+        "description": "Order details text"
+    },
+    "@addCard": {
+        "description": "Add card button text"
+    },
+    "@appSettings": {
+        "description": "App settings text"
+    },
+    "@newCard": {
+        "description": "New card text"
+    },
+    "@myCard": {
+        "description": "My card text"
+    },
+    "@claimCard": {
+        "description": "Claim card button text"
+    },
+    "@alreadyClaimed": {
+        "description": "Already claimed message"
+    },
+    "@viewMenu": {
+        "description": "View menu button text"
+    },
+    "@inspectCard": {
+        "description": "Inspect card button text"
+    },
+    "@notifications": {
+        "description": "Notifications text"
+    },
+    "@pushNotifications": {
+        "description": "Push notifications text"
+    },
+    "@searchForPeopleOrPlaces": {
+        "description": "Search for people or places placeholder"
+    },
+    "@about": {
+        "description": "About text"
+    },
+    "@termsAndConditions": {
+        "description": "Terms and conditions text"
+    },
+    "@privacyPolicy": {
+        "description": "Privacy policy text"
+    },
+    "@brusselsPay": {
+        "description": "Brussels Pay text"
+    },
+    "@addFunds": {
+        "description": "Add funds button text"
+    },
+    "@audio": {
+        "description": "Audio text"
+    }
+}

@@ -3,15 +3,13 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pay_app/screens/home/card_modal/card_modal.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
+import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/cards.dart';
 import 'package:pay_app/state/profile.dart';
-import 'package:pay_app/state/state.dart';
 import 'package:pay_app/state/wallet.dart';
-import 'package:pay_app/theme/card_colors.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/widgets/button.dart';
@@ -20,6 +18,7 @@ import 'package:pay_app/widgets/cards/card_skeleton.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
 import 'package:pay_app/widgets/modals/nfc_modal.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
 import 'package:web3dart/web3dart.dart';
@@ -78,6 +77,11 @@ class _ProfileModalState extends State<ProfileModal> {
     });
 
     await _cardsState.fetchCards(tokenAddress: widget.tokenAddress);
+
+    // Fetch profile for the selected account if not already loaded
+    if (!_cardsState.profiles.containsKey(widget.accountAddress)) {
+      await _cardsState.fetchProfile(widget.accountAddress);
+    }
   }
 
   void handleScrollToTop() {
@@ -88,13 +92,6 @@ class _ProfileModalState extends State<ProfileModal> {
     );
   }
 
-  Future<void> handleEditProfile() async {
-    final navigator = GoRouter.of(context);
-    HapticFeedback.heavyImpact();
-
-    navigator.push('/${widget.accountAddress}/my-account/edit');
-  }
-
   void handleAppSettings() {
     final navigator = GoRouter.of(context);
     HapticFeedback.heavyImpact();
@@ -102,10 +99,10 @@ class _ProfileModalState extends State<ProfileModal> {
     navigator.push('/${widget.accountAddress}/my-account/settings');
   }
 
-  void handleClose(BuildContext context) {
+  void handleClose(BuildContext context, {EthereumAddress? account}) {
     final navigator = GoRouter.of(context);
     HapticFeedback.heavyImpact();
-    navigator.pop();
+    navigator.pop(account);
   }
 
   Future<void> handleCardSelect(
@@ -130,27 +127,29 @@ class _ProfileModalState extends State<ProfileModal> {
       return;
     }
 
-    HapticFeedback.heavyImpact();
+    handleClose(context, account: cardAddress);
 
-    await showCupertinoModalPopup(
-      useRootNavigator: false,
-      context: context,
-      builder: (modalContext) {
-        return provideCardState(
-          context,
-          config,
-          cardId ?? myAddress,
-          cardAddress.hexEip55,
-          myAddress,
-          CardModal(
-            uid: cardId,
-            address: cardId == null ? myAddress : null,
-            project: project,
-            tokenAddress: tokenAddress,
-          ),
-        );
-      },
-    );
+    // HapticFeedback.heavyImpact();
+
+    // await showCupertinoModalPopup(
+    //   useRootNavigator: false,
+    //   context: context,
+    //   builder: (modalContext) {
+    //     return provideCardState(
+    //       context,
+    //       config,
+    //       cardId ?? myAddress,
+    //       cardAddress.hexEip55,
+    //       myAddress,
+    //       CardModal(
+    //         uid: cardId,
+    //         address: cardId == null ? myAddress : null,
+    //         project: project,
+    //         tokenAddress: tokenAddress,
+    //       ),
+    //     );
+    //   },
+    // );
   }
 
   Future<void> handleAddCard(ProfileV1? profile) async {
@@ -159,6 +158,7 @@ class _ProfileModalState extends State<ProfileModal> {
     final result = await showCupertinoModalPopup<(String, String?)?>(
       context: context,
       barrierDismissible: true,
+      barrierColor: blackColor.withAlpha(160),
       builder: (_) => const NFCModal(
         modalKey: 'modal-nfc-scanner',
       ),
@@ -170,7 +170,12 @@ class _ProfileModalState extends State<ProfileModal> {
 
     final (uid, uri) = result;
 
-    final error = await _cardsState.claim(uid, uri, profile?.name);
+    final (token, cardAddress, error) =
+        await _cardsState.claim(uid, uri, profile?.name);
+
+    if (token != null) {
+      print('token: $token');
+    }
 
     if (error == null) {
       if (!mounted) {
@@ -183,7 +188,7 @@ class _ProfileModalState extends State<ProfileModal> {
         alignment: Alignment.bottomCenter,
         builder: (context, toast) => Toast(
           icon: const Text('✅'),
-          title: const Text('Card added'),
+          title: Text(AppLocalizations.of(context)!.cardAdded),
         ),
       );
 
@@ -207,7 +212,7 @@ class _ProfileModalState extends State<ProfileModal> {
         alignment: Alignment.bottomCenter,
         builder: (context, toast) => Toast(
           icon: const Text('✅'),
-          title: const Text('Card already added'),
+          title: Text(AppLocalizations.of(context)!.cardAlreadyAdded),
         ),
       );
     }
@@ -223,18 +228,18 @@ class _ProfileModalState extends State<ProfileModal> {
         context: context,
         barrierDismissible: false,
         builder: (context) => CupertinoAlertDialog(
-          title: Text('Card not configured'),
+          title: Text(AppLocalizations.of(context)!.cardNotConfigured),
           content: Text(
               'This card is not configured. Would you like to configure it?'),
           actions: [
             CupertinoDialogAction(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             CupertinoDialogAction(
               isDefaultAction: true,
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text('Configure'),
+              child: Text(AppLocalizations.of(context)!.configure),
             ),
           ],
         ),
@@ -281,7 +286,7 @@ class _ProfileModalState extends State<ProfileModal> {
         alignment: Alignment.bottomCenter,
         builder: (context, toast) => Toast(
           icon: const Text('✅'),
-          title: const Text('Card configured'),
+          title: Text(AppLocalizations.of(context)!.cardConfigured),
         ),
       );
 
@@ -300,7 +305,7 @@ class _ProfileModalState extends State<ProfileModal> {
         alignment: Alignment.bottomCenter,
         builder: (context, toast) => Toast(
           icon: const Text('❌'),
-          title: const Text('NFC is not available on this device'),
+          title: Text(AppLocalizations.of(context)!.nfcNotAvailable),
         ),
       );
     }
@@ -311,9 +316,11 @@ class _ProfileModalState extends State<ProfileModal> {
     final height = MediaQuery.of(context).size.height;
 
     final cards = context.watch<CardsState>().cards;
-    final cardBalances = context.watch<CardsState>().cardBalances;
+    final profiles = context.watch<CardsState>().profiles;
 
-    final profile = context.select((ProfileState p) => p.profile);
+    // Get the profile for the selected account, fallback to app profile if not found
+    final selectedProfile = profiles[widget.accountAddress] ??
+        context.select((ProfileState p) => p.appProfile);
     final alias = context.select((ProfileState p) => p.alias);
 
     return DismissibleModalPopup(
@@ -326,15 +333,14 @@ class _ProfileModalState extends State<ProfileModal> {
       onDismissed: (dir) {
         handleClose(context);
       },
-      child: _buildContent(context, cards, cardBalances, profile, alias),
+      child: _buildContent(context, cards, selectedProfile, alias),
     );
   }
 
   Widget _buildContent(
     BuildContext context,
     List<DBCard> cards,
-    Map<String, String> cardBalances,
-    ProfileV1 profile,
+    ProfileV1? profile,
     String alias,
   ) {
     final width = MediaQuery.of(context).size.width;
@@ -343,14 +349,14 @@ class _ProfileModalState extends State<ProfileModal> {
 
     final balance = context.watch<WalletState>().tokenBalances[
             widget.tokenAddress ??
-                context.read<WalletState>().currentTokenAddress] ??
+                context.read<AppState>().currentTokenAddress] ??
         '0.0';
 
-    final tokenConfig = context.select<WalletState, TokenConfig?>(
+    final tokenConfig = context.select<AppState, TokenConfig?>(
       (state) => state.currentTokenConfig,
     );
 
-    final primaryColor = context.select<WalletState, Color>(
+    final primaryColor = context.select<AppState, Color>(
       (state) => state.tokenPrimaryColor,
     );
 
@@ -383,7 +389,6 @@ class _ProfileModalState extends State<ProfileModal> {
                       ..._buildCardsList(
                         context,
                         cards,
-                        cardBalances,
                         tokenConfig,
                         primaryColor,
                       ),
@@ -401,7 +406,7 @@ class _ProfileModalState extends State<ProfileModal> {
               child: _buildAccountCard(
                 ValueKey('account_card'),
                 width,
-                profile,
+                profile ?? ProfileV1(account: widget.accountAddress),
                 alias,
                 balance,
                 tokenConfig,
@@ -427,7 +432,7 @@ class _ProfileModalState extends State<ProfileModal> {
             bottom: safeArea.bottom,
             child: _buildActionButtons(
               context,
-              profile,
+              profile ?? ProfileV1(account: widget.accountAddress),
               alias,
               primaryColor,
             ),
@@ -453,18 +458,17 @@ class _ProfileModalState extends State<ProfileModal> {
           children: [
             Card(
               width: width * 0.8,
-              uid: profile.account,
+              uid: widget.accountAddress,
               color: primaryColor,
               profile: profile,
               icon: CupertinoIcons.device_phone_portrait,
               onCardPressed: (_) => handleCardSelect(
-                profile.account,
+                widget.accountAddress,
                 null,
                 'main',
                 widget.tokenAddress,
               ),
               logo: tokenConfig?.logo,
-              balance: balance,
             ),
           ],
         )
@@ -483,9 +487,10 @@ class _ProfileModalState extends State<ProfileModal> {
       children: [
         Button(
           onPressed: claimingCard ? null : () => handleAddCard(profile),
-          text: 'Add Card',
+          text: AppLocalizations.of(context)!.addCard,
           labelColor: whiteColor,
           color: primaryColor,
+          maxWidth: 300,
           suffix: claimingCard
               ? const CupertinoActivityIndicator()
               : Padding(
@@ -500,9 +505,10 @@ class _ProfileModalState extends State<ProfileModal> {
         const SizedBox(height: 12),
         Button(
           onPressed: handleAppSettings,
-          text: 'App Settings',
+          text: AppLocalizations.of(context)!.appSettings,
           labelColor: textColor,
           color: surfaceColor,
+          maxWidth: 300,
           prefix: Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Icon(
@@ -520,7 +526,6 @@ class _ProfileModalState extends State<ProfileModal> {
   List<Widget> _buildCardsList(
     BuildContext context,
     List<DBCard> cards,
-    Map<String, String> cardBalances,
     TokenConfig? tokenConfig,
     Color primaryColor,
   ) {
@@ -530,18 +535,54 @@ class _ProfileModalState extends State<ProfileModal> {
 
     final profiles = context.watch<CardsState>().profiles;
 
+    final config = context.read<WalletState>().config;
+
+    // Get the app profile for the app account card
+    final appProfile = context.select((ProfileState p) => p.appProfile);
+
+    // Only show app account card if it's different from the currently selected account
+    final shouldShowAppAccountCard =
+        appProfile.account != widget.accountAddress;
+
+    final filteredCards =
+        cards.where((card) => card.account != widget.accountAddress).toList();
+
     return [
-      if (cards.isNotEmpty)
+      if (filteredCards.isNotEmpty || shouldShowAppAccountCard)
         SliverToBoxAdapter(
           child: const SizedBox(height: 20),
         ),
+      if (shouldShowAppAccountCard)
+        SliverToBoxAdapter(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Card(
+                width: width * 0.75,
+                uid: appProfile.account,
+                color: primaryColor,
+                margin: const EdgeInsets.only(bottom: 12),
+                profile: appProfile,
+                onCardPressed: (uid) => handleCardSelect(
+                  appProfile.account,
+                  null,
+                  'main',
+                  widget.tokenAddress,
+                ),
+                logo: tokenConfig?.logo,
+              ),
+            ],
+          ),
+        ),
       SliverList(
         delegate: SliverChildBuilderDelegate(
-          childCount: cards.length,
+          childCount: filteredCards.length,
           (context, index) {
-            final card = cards[index];
+            final card = filteredCards[index];
 
-            final cardColor = projectCardColor(card.project);
+            final tokenConfig = config.getTokenByProject(card.project);
+
+            final cardColor = tokenConfig.color ?? primaryColor;
 
             return Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -565,7 +606,6 @@ class _ProfileModalState extends State<ProfileModal> {
                       widget.tokenAddress,
                     ),
                     logo: tokenConfig?.logo,
-                    balance: cardBalances[card.account],
                   ),
               ],
             );

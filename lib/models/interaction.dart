@@ -9,11 +9,11 @@ enum ExchangeDirection {
   received,
 }
 
-// TODO: interaction with place, has menu item
 class Interaction {
   final String id; // id from supabase
   final ExchangeDirection exchangeDirection;
 
+  final String account;
   final String withAccount; // an account address
   final String? imageUrl;
   final String name;
@@ -35,6 +35,7 @@ class Interaction {
   Interaction({
     required this.id,
     required this.exchangeDirection,
+    required this.account,
     required this.withAccount,
     required this.imageUrl,
     required this.name,
@@ -52,7 +53,7 @@ class Interaction {
   });
 
   factory Interaction.fromJson(Map<String, dynamic> json) {
-    final transaction = json['transaction'] as Map<String, dynamic>;
+    final transaction = json['transaction'] as Map<String, dynamic>?;
     final withProfile = json['with_profile'] as Map<String, dynamic>;
     final withPlace = json['with_place'] as Map<String, dynamic>?;
 
@@ -61,17 +62,18 @@ class Interaction {
       exchangeDirection: ExchangeDirection.values.firstWhere(
           (e) => e.name == json['exchange_direction'],
           orElse: () => ExchangeDirection.sent),
+      account: json['account'],
       withAccount: withProfile['account'],
       imageUrl: withPlace != null ? withPlace['image'] : withProfile['image'],
       name: withPlace != null ? withPlace['name'] : withProfile['name'],
-      contract: transaction['contract'],
-      amount: double.tryParse(transaction['value']) ?? 0,
-      description: transaction['description'],
+      contract: transaction?['contract'] ?? '',
+      amount: double.tryParse(transaction?['value'] ?? '0') ?? 0,
+      description: transaction?['description'] ?? '',
       isPlace: withPlace != null,
       isTreasury: withProfile['account'] == zeroAddress,
       placeId: withPlace?['id'],
       hasUnreadMessages: json['new_interaction'],
-      lastMessageAt: DateTime.parse(transaction['created_at']),
+      lastMessageAt: DateTime.parse(json['created_at']),
       hasMenuItem: false,
       place: withPlace != null ? PlaceWithMenu.fromJson(withPlace) : null,
       profile: ProfileV1.fromJson(withProfile),
@@ -84,6 +86,7 @@ class Interaction {
       exchangeDirection: ExchangeDirection.values.firstWhere(
           (e) => e.name == json['direction'],
           orElse: () => ExchangeDirection.sent),
+      account: json['account'],
       withAccount: json['with_account'],
       imageUrl: json['image_url'],
       name: json['name'],
@@ -107,6 +110,7 @@ class Interaction {
     return {
       'id': id,
       'direction': exchangeDirection.name, // converts enum to string
+      'account': account,
       'with_account': withAccount,
       'name': name,
       'image_url': imageUrl,
@@ -141,6 +145,7 @@ class Interaction {
     return Interaction(
       id: id,
       exchangeDirection: exchangeDirection ?? this.exchangeDirection,
+      account: account,
       withAccount: withAccount,
       imageUrl: imageUrl ?? this.imageUrl,
       name: name ?? this.name,

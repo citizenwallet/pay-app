@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:pay_app/widgets/search_bar.dart';
 
 class SearchBar extends StatelessWidget {
@@ -28,7 +29,7 @@ class SearchBar extends StatelessWidget {
       child: CustomSearchBar(
         controller: controller,
         focusNode: focusNode,
-        placeholder: 'Search for people or places',
+        placeholder: AppLocalizations.of(context)!.searchForPeopleOrPlaces,
         onChanged: onSearch,
         isFocused: isFocused,
       ),

@@ -6,6 +6,7 @@ import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/widgets/modals/dismissible_modal_popup.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
+import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class ExternalOrderModal extends StatelessWidget {
@@ -37,7 +38,7 @@ class ExternalOrderModal extends StatelessWidget {
       child: loading
           ? _buildLoadingIndicator()
           : order == null
-              ? _buildErrorState()
+              ? _buildErrorState(context)
               : _buildContent(context, order, placeMenu),
     );
   }
@@ -62,12 +63,12 @@ class ExternalOrderModal extends StatelessWidget {
     );
   }
 
-  Widget _buildErrorState() {
+  Widget _buildErrorState(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Text(
-          'Order not found',
+          AppLocalizations.of(context)!.orderNotFound,
           style: TextStyle(
             fontSize: 16,
             color: textMutedColor,
@@ -85,11 +86,11 @@ class ExternalOrderModal extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildHeader(order),
+          _buildHeader(context, order),
           const SizedBox(height: 16),
-          _buildOrderDetails(order, placeMenu),
+          _buildOrderDetails(context, order, placeMenu),
           const SizedBox(height: 16),
-          _buildTotals(order),
+          _buildTotals(context, order),
           const SizedBox(height: 24),
           _buildActions(context, order),
         ],
@@ -97,12 +98,12 @@ class ExternalOrderModal extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(Order order) {
+  Widget _buildHeader(BuildContext context, Order order) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Confirm Order',
+          AppLocalizations.of(context)!.confirmOrder,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -121,14 +122,15 @@ class ExternalOrderModal extends StatelessWidget {
     );
   }
 
-  Widget _buildOrderDetails(Order order, PlaceMenu? placeMenu) {
+  Widget _buildOrderDetails(
+      BuildContext context, Order order, PlaceMenu? placeMenu) {
     final menuItemsById = placeMenu?.menuItemsById ?? {};
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Items',
+          AppLocalizations.of(context)!.items,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -139,7 +141,7 @@ class ExternalOrderModal extends StatelessWidget {
         if (order.items.isEmpty &&
             (order.description == null || order.description!.trim().isEmpty))
           Text(
-            'No items',
+            AppLocalizations.of(context)!.noItems,
             style: TextStyle(
               fontSize: 14,
               color: textMutedColor,
@@ -175,7 +177,7 @@ class ExternalOrderModal extends StatelessWidget {
     );
   }
 
-  Widget _buildTotals(Order order) {
+  Widget _buildTotals(BuildContext context, Order order) {
     // Calculate VAT (assuming 20% for this example)
     final vatRate = 0.20;
     final totalExcludingVat = order.total / (1 + vatRate);
@@ -183,11 +185,13 @@ class ExternalOrderModal extends StatelessWidget {
 
     return Column(
       children: [
-        _buildTotalRow('Subtotal', totalExcludingVat),
+        _buildTotalRow(
+            AppLocalizations.of(context)!.subtotal, totalExcludingVat),
         const SizedBox(height: 8),
-        _buildTotalRow('VAT', vatAmount),
+        _buildTotalRow(AppLocalizations.of(context)!.vat, vatAmount),
         const SizedBox(height: 8),
-        _buildTotalRow('Total', order.total, isBold: true),
+        _buildTotalRow(AppLocalizations.of(context)!.total, order.total,
+            isBold: true),
       ],
     );
   }
@@ -232,7 +236,7 @@ class ExternalOrderModal extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             onPressed: () => handleCancel(context),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context)!.cancel,
               style: TextStyle(
                 color: textColor,
                 fontWeight: FontWeight.w600,
@@ -251,7 +255,7 @@ class ExternalOrderModal extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Pay ',
+                  '${AppLocalizations.of(context)!.pay} ',
                   style: TextStyle(
                     color: CupertinoColors.white,
                     fontWeight: FontWeight.w600,
