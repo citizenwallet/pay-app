@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/photos/photos.dart';
-import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
@@ -12,7 +11,6 @@ class AccountState with ChangeNotifier {
   final AppDBService _appDBService = AppDBService();
   final SecureService _secureService = SecureService();
   final PhotosService _photosService = PhotosService();
-  final PreferencesService _preferencesService = PreferencesService();
 
   final Config _config;
 
@@ -39,21 +37,7 @@ class AccountState with ChangeNotifier {
   bool deletingData = false;
   bool error = false;
 
-  bool audioMuted = false;
-
   // state methods here
-  void checkAudioMuted() {
-    audioMuted = _preferencesService.audioMuted;
-
-    safeNotifyListeners();
-  }
-
-  void setAudioMuted(bool muted) {
-    _preferencesService.setAudioMuted(muted);
-    audioMuted = muted;
-    safeNotifyListeners();
-  }
-
   Future<bool> logout() async {
     try {
       loggingOut = true;

@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 
-class CustomBadge extends StatelessWidget {
+class CupertinoCustomBadge extends StatelessWidget {
   final String label;
   final Color? color;
 
-  const CustomBadge({
+  const CupertinoCustomBadge({
     super.key,
     required this.label,
     this.color,

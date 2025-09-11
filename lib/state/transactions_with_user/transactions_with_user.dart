@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/models/transaction.dart';
 import 'package:pay_app/models/user.dart';
-import 'package:pay_app/services/audio/audio.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/db/app/contacts.dart';
@@ -29,14 +28,12 @@ class TransactionsWithUserState with ChangeNotifier {
   final ContactsTable _contacts = AppDBService().contacts;
   final TransactionsTable _transactionsTable = AppDBService().transactions;
 
-  final AudioService _audioService = AudioService();
-
   final ConfigService _configService = ConfigService();
   final SecureService _secureService = SecureService();
   final InviteService _inviteService = InviteService();
   late ProfileService myProfileService;
   late ProfileService withUserProfileService;
-  late TransactionsWithUserService transactionsWithUserService;
+  late TransactionsService transactionsWithUserService;
 
   String withUserAddress;
   ProfileV1? withUser;
@@ -65,7 +62,7 @@ class TransactionsWithUserState with ChangeNotifier {
   }) {
     myProfileService = ProfileService(account: myAddress);
     withUserProfileService = ProfileService(account: withUserAddress);
-    transactionsWithUserService = TransactionsWithUserService(
+    transactionsWithUserService = TransactionsService(
         firstAccount: myAddress, secondAccount: withUserAddress);
 
     init();
@@ -219,8 +216,6 @@ class TransactionsWithUserState with ChangeNotifier {
       );
 
       if (txHash == null) return null;
-
-      _audioService.txNotification();
 
       final index = sendingQueue.indexWhere((tx) => tx.id == tempId);
       if (index != -1) {

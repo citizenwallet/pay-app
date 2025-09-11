@@ -5,22 +5,17 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pay_app/routes/router.dart';
-import 'package:pay_app/services/audio/audio.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/config/service.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
-import 'package:pay_app/services/localization/localization_service.dart';
-import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/onboarding.dart';
 import 'package:pay_app/state/state.dart';
 import 'package:pay_app/state/wallet.dart';
-import 'package:pay_app/state/locale_state.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:pay_app/l10n/app_localizations.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -48,12 +43,6 @@ void main() async {
   await AppDBService().openDB('main');
   await PreferencesService().init(await SharedPreferences.getInstance());
   await SecureService().init(await SharedPreferences.getInstance());
-
-  final audioService = AudioService();
-
-  final audioMuted = PreferencesService().audioMuted;
-
-  await audioService.init(muted: audioMuted);
 
   final ConfigService configService = ConfigService();
 
@@ -113,7 +102,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.select<AppState, CupertinoThemeData>(
+    final theme = context.select<WalletState, CupertinoThemeData>(
       (state) => CupertinoThemeData(
         primaryColor: state.tokenPrimaryColor,
         brightness: Brightness.light,
@@ -132,12 +121,8 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       routerConfig: router,
       theme: theme,
-      title: AppLocalizations.of(context)?.appTitle ?? 'Brussels Pay',
-      locale: context
-              .select<LocaleState, Locale?>((state) => state.currentLocale) ??
-          LocalizationService.defaultLocale,
-      supportedLocales: AppLocalizations.supportedLocales,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      title: 'Brussels Pay',
+      locale: const Locale('en'),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context)
             .copyWith(textScaler: const TextScaler.linear(1.0)),

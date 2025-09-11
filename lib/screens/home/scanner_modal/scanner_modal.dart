@@ -1,20 +1,14 @@
 import 'dart:async';
 
-import 'package:collection/collection.dart';
-import 'package:pay_app/models/card.dart';
 import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/place.dart';
 import 'package:pay_app/models/place_with_menu.dart';
 import 'package:pay_app/screens/home/card_modal/card_modal.dart';
 import 'package:pay_app/screens/home/scanner_modal/footer.dart';
-import 'package:pay_app/screens/interactions/place/menu/screen.dart';
 import 'package:pay_app/services/config/config.dart';
-import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/wallet/contracts/profile.dart';
-import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/cards.dart';
-import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/sending.dart';
 import 'package:pay_app/state/state.dart';
 import 'package:pay_app/state/wallet.dart';
@@ -26,17 +20,28 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:pay_app/utils/qr.dart';
 import 'package:pay_app/widgets/button.dart';
-import 'package:pay_app/widgets/cards/card.dart' as cardWidget;
+import 'package:pay_app/widgets/cards/card.dart';
 import 'package:pay_app/widgets/profile_card.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
-import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
-import 'package:web3dart/web3dart.dart';
+
+class CardInfo {
+  final String uid;
+  final ProfileV1 profile;
+  final String balance;
+  final String project;
+
+  CardInfo({
+    required this.uid,
+    required this.profile,
+    required this.balance,
+    required this.project,
+  });
+}
 
 class ScannerModal extends StatefulWidget {
   final String? modalKey;
-  final int initialIndex;
   final bool confirm;
   final String tokenAddress;
   final String? manualScanResult;
@@ -44,7 +49,6 @@ class ScannerModal extends StatefulWidget {
   const ScannerModal({
     super.key,
     this.modalKey,
-    this.initialIndex = 0,
     this.confirm = false,
     required this.tokenAddress,
     this.manualScanResult,
@@ -64,7 +68,6 @@ class ScannerModalState extends State<ScannerModal>
     facing: CameraFacing.back,
     torchEnabled: false,
     formats: <BarcodeFormat>[BarcodeFormat.qrCode],
-    returnImage: true,
   );
 
   final FocusNode _amountFocusNode = FocusNode();
@@ -72,27 +75,15 @@ class ScannerModalState extends State<ScannerModal>
 
   late SendingState _sendingState;
   late CardsState _cardsState;
-  late ProfileState _profileState;
-  late WalletState _walletState;
 
   double _opacity = 0;
 
-  final PageController _pageController = PageController(
-    viewportFraction: 0.85,
-    initialPage: 0,
-  );
-
   StreamSubscription<Object?>? _subscription;
-
-  bool _loading = true;
 
   bool _manualScan = false;
   bool _showCards = false;
   bool _showControls = false;
-
-  bool _isDismissing = false;
-
-  Uint8List? _image;
+  int _selectedCardIndex = 0;
 
   @override
   void initState() {
@@ -109,8 +100,6 @@ class ScannerModalState extends State<ScannerModal>
       // make initial requests here
       _sendingState = context.read<SendingState>();
       _cardsState = context.read<CardsState>();
-      _profileState = context.read<ProfileState>();
-      _walletState = context.read<WalletState>();
 
       onLoad();
     });
@@ -133,18 +122,9 @@ class ScannerModalState extends State<ScannerModal>
   }
 
   void onLoad() async {
-    _sendingState.getAccountProfile();
-    _cardsState.fetchCards(tokenAddress: widget.tokenAddress).then((_) {
-      _pageController.jumpToPage(
-        widget.initialIndex,
-      );
-
-      _loading = false;
-    });
-
-    _pageController.jumpToPage(widget.initialIndex);
-
     await delay(const Duration(milliseconds: 100));
+
+    _sendingState.getAccountProfile();
 
     setState(() {
       _showCards = true;
@@ -164,6 +144,8 @@ class ScannerModalState extends State<ScannerModal>
     if (widget.manualScanResult == null) {
       showScanner();
     }
+
+    _cardsState.fetchCards(tokenAddress: widget.tokenAddress);
 
     if (widget.manualScanResult != null) {
       await handleScanData(widget.manualScanResult!);
@@ -187,10 +169,9 @@ class ScannerModalState extends State<ScannerModal>
     _controller.dispose();
   }
 
-  void showScanner() async {
+  void showScanner() {
     setState(() {
       _opacity = 1;
-      _image = null;
     });
   }
 
@@ -200,32 +181,8 @@ class ScannerModalState extends State<ScannerModal>
     });
   }
 
-  void handleDismiss(
-    BuildContext context, {
-    bool reverse = false,
-    String? cardAddress,
-  }) async {
-    _isDismissing = true;
-
-    final lastAccount = cardAddress ?? context.read<SendingState>().lastAccount;
-
-    if (reverse) {
-      hideScanner();
-
-      await delay(const Duration(milliseconds: 100));
-
-      setState(() {
-        _showCards = false;
-      });
-
-      await delay(const Duration(milliseconds: 600));
-    }
-
-    if (!context.mounted) {
-      return;
-    }
-
-    GoRouter.of(context).pop(lastAccount);
+  void handleDismiss(BuildContext context) {
+    GoRouter.of(context).pop();
   }
 
   void handleDetection(BarcodeCapture capture) async {
@@ -236,13 +193,6 @@ class ScannerModalState extends State<ScannerModal>
     final rawValue = capture.barcodes[0].rawValue;
     if (rawValue == null) {
       return;
-    }
-
-    if (_image == null) {
-      _image = capture.image;
-      setState(() {
-        _image = capture.image;
-      });
     }
 
     handleScanData(rawValue);
@@ -282,25 +232,8 @@ class ScannerModalState extends State<ScannerModal>
             (place.place.display == Display.menu ||
                 place.place.display == Display.amountAndMenu) &&
             place.items.isNotEmpty) {
-          final initialAddress = context.read<SendingState>().initialAddress;
-
-          final cards = context.read<CardsState>().cards;
-
-          final lastAccount = context.read<SendingState>().lastAccount;
-
-          final currentCardSerial = cards
-              .firstWhereOrNull((card) => card.account == lastAccount)
-              ?.uid;
-
-          final config = context.read<WalletState>().config;
-
-          handleViewMenu(
-            config,
-            widget.tokenAddress,
-            initialAddress,
-            place,
-            serial: currentCardSerial,
-          );
+          final myAddress = context.read<SendingState>().myAddress;
+          handleViewMenu(widget.tokenAddress, myAddress, place);
         }
 
         if (place != null && (place.place.display == Display.amount)) {
@@ -320,13 +253,13 @@ class ScannerModalState extends State<ScannerModal>
         }
 
         final config = context.read<WalletState>().config;
-        final appAccount = context.read<SendingState>().appAccount;
+        final myAddress = context.read<SendingState>().myAddress;
 
         handleInspectCard(
           config,
           qrData.address,
           profile?.account ?? '',
-          appAccount,
+          myAddress,
           project ?? 'main',
         );
         break;
@@ -349,16 +282,20 @@ class ScannerModalState extends State<ScannerModal>
     }
   }
 
-  void handleCardChanged(CardInfo card) {
-    if (_isDismissing || _loading) {
-      return;
-    }
-
+  void handleCardChanged(int index, CardInfo card) {
     HapticFeedback.heavyImpact();
 
-    _sendingState.setLastAccount(card.profile.account);
-    _profileState.setAccount(card.profile.account);
-    _walletState.switchAccount(card.profile.account);
+    setState(() {
+      _selectedCardIndex = index;
+    });
+  }
+
+  void handleSubmit(BuildContext context) async {
+    final navigator = GoRouter.of(context);
+
+    if (_textController.value.text.isNotEmpty) {
+      navigator.pop(_textController.value.text);
+    }
   }
 
   void handlePay({bool showTransactionInput = true}) async {
@@ -376,8 +313,6 @@ class ScannerModalState extends State<ScannerModal>
   void handleConfirmOrder(
     String tokenAddress, {
     Checkout? checkout,
-    PlaceWithMenu? place,
-    String? serial,
   }) async {
     hideScanner();
 
@@ -385,14 +320,7 @@ class ScannerModalState extends State<ScannerModal>
 
     await delay(const Duration(milliseconds: 100));
 
-    handleSend(
-      tokenAddress,
-      null,
-      null,
-      checkout: checkout,
-      place: place,
-      serial: serial,
-    );
+    handleSend(tokenAddress, null, null, checkout: checkout);
   }
 
   void handleClearData() {
@@ -410,15 +338,12 @@ class ScannerModalState extends State<ScannerModal>
     String? amount,
     String? message, {
     Checkout? checkout,
-    PlaceWithMenu? place,
-    String? serial,
   }) async {
     final success = await _sendingState.sendTransaction(
       tokenAddress,
       amount: amount,
       message: message,
       manualCheckout: checkout,
-      serial: serial,
     );
 
     if (!mounted) {
@@ -434,7 +359,7 @@ class ScannerModalState extends State<ScannerModal>
         alignment: Alignment.bottomCenter,
         builder: (context, toast) => Toast(
           icon: const Text('❌'),
-          title: Text(AppLocalizations.of(context)!.transactionFailed),
+          title: const Text('Transaction failed'),
         ),
       );
       return;
@@ -447,24 +372,23 @@ class ScannerModalState extends State<ScannerModal>
     Config config,
     String serial,
     String cardAddress,
-    EthereumAddress appAccount,
+    String myAddress,
     String project,
   ) async {
     hideScanner();
 
     HapticFeedback.heavyImpact();
 
-    final newCardAddress = await showCupertinoModalPopup<String?>(
+    await showCupertinoModalPopup(
       useRootNavigator: false,
       context: context,
-      barrierColor: blackColor.withAlpha(160),
       builder: (modalContext) {
         return provideCardState(
           context,
           config,
           serial,
           cardAddress,
-          appAccount.hexEip55,
+          myAddress,
           CardModal(uid: serial, project: project),
         );
       },
@@ -472,63 +396,27 @@ class ScannerModalState extends State<ScannerModal>
 
     _cardsState.fetchCards(tokenAddress: widget.tokenAddress);
 
-    if (newCardAddress != null) {
-      if (!mounted) {
-        return;
-      }
-
-      handleDismiss(
-        context,
-        reverse: true,
-        cardAddress: newCardAddress,
-      );
-
-      return;
-    }
-
     handleClearData();
   }
 
   void handleViewMenu(
-    Config config,
-    String tokenAddress,
-    String account,
-    PlaceWithMenu place, {
-    String? serial,
-  }) async {
+      String tokenAddress, String account, PlaceWithMenu place) async {
     hideScanner();
 
-    final checkout = await showCupertinoModalPopup<Checkout?>(
-      useRootNavigator: false,
-      context: context,
-      barrierColor: blackColor.withAlpha(160),
-      builder: (modalContext) {
-        return providePlaceState(
-          context,
-          config,
-          place.place.slug,
-          account,
-          PlaceMenuScreen(),
-        );
-      },
-    );
+    final navigator = GoRouter.of(context);
+
+    final checkout = await navigator
+        .push<Checkout?>('/$account/place/${place.place.slug}/menu');
 
     if (checkout == null) {
       showScanner();
       return;
     }
 
-    handleConfirmOrder(
-      tokenAddress,
-      checkout: checkout,
-      place: place,
-      serial: serial,
-    );
+    handleConfirmOrder(tokenAddress, checkout: checkout);
   }
 
-  void handleTopUp(String tokenAddress) {
-    // TODO: implement top up
-  }
+  void handleTopUp(String tokenAddress) {}
 
   @override
   Widget build(BuildContext context) {
@@ -539,14 +427,15 @@ class ScannerModalState extends State<ScannerModal>
 
     final safeBottomPadding = MediaQuery.of(context).padding.bottom;
     final safeTopPadding = MediaQuery.of(context).padding.top;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     final config = context.select<WalletState, Config>((state) => state.config);
-    final tokenConfig = context.select<AppState, TokenConfig?>(
+    final tokenConfig = context.select<WalletState, TokenConfig?>(
       (state) => state.currentTokenConfig,
     );
 
-    final appAccount = context.select<SendingState, EthereumAddress>(
-      (state) => state.appAccount,
+    final myAddress = context.select<SendingState, String>(
+      (state) => state.myAddress,
     );
 
     final qrData = context.watch<SendingState>().qrData;
@@ -566,7 +455,7 @@ class ScannerModalState extends State<ScannerModal>
         order == null &&
         cardProject == null;
 
-    final primaryColor = context.select<AppState, Color>(
+    final primaryColor = context.select<WalletState, Color>(
       (state) => state.tokenPrimaryColor,
     );
 
@@ -578,19 +467,6 @@ class ScannerModalState extends State<ScannerModal>
 
     final amount =
         context.select<SendingState, double>((state) => state.amount);
-
-    final cards = context.watch<CardsState>().cards;
-
-    final initialAddress = context.select<SendingState, String>(
-      (state) => state.initialAddress,
-    );
-
-    final lastAccount = context.select<SendingState, String?>(
-      (state) => state.lastAccount,
-    );
-
-    final currentCardSerial =
-        cards.firstWhereOrNull((card) => card.account == lastAccount)?.uid;
 
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -626,20 +502,6 @@ class ScannerModalState extends State<ScannerModal>
                         ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    child: _image != null
-                        ? Image.memory(
-                            _image!,
-                            height: height,
-                            width: width,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const SizedBox.shrink(),
-                          )
-                        : const SizedBox.shrink(),
                   ),
                   Positioned(
                     top: safeTopPadding + 20,
@@ -735,8 +597,7 @@ class ScannerModalState extends State<ScannerModal>
                                     profile: ProfileV1(
                                       username: qrData.address,
                                       account: '',
-                                      name: AppLocalizations.of(context)!
-                                          .noResultsFound,
+                                      name: 'User not found',
                                       image: 'assets/icons/profile.png',
                                       imageMedium: 'assets/icons/profile.png',
                                       imageSmall: 'assets/icons/profile.png',
@@ -763,17 +624,15 @@ class ScannerModalState extends State<ScannerModal>
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 10),
                                 child: Button(
-                                  text: AppLocalizations.of(context)!.viewMenu,
+                                  text: 'View Menu',
                                   color: blackColor,
                                   labelColor: whiteColor,
                                   onPressed: place == null || transactionSending
                                       ? null
                                       : () => handleViewMenu(
-                                            config,
                                             widget.tokenAddress,
-                                            lastAccount!,
+                                            myAddress,
                                             place,
-                                            serial: currentCardSerial,
                                           ),
                                 ),
                               ),
@@ -784,8 +643,7 @@ class ScannerModalState extends State<ScannerModal>
                                       (placeDisplay == Display.amount ||
                                           placeDisplay ==
                                               Display.amountAndMenu)) ||
-                                  (profile != null &&
-                                      currentCardSerial == null)) &&
+                                  profile != null) &&
                               !showTransactionInput &&
                               tokenConfig != null &&
                               !isCard)
@@ -798,7 +656,7 @@ class ScannerModalState extends State<ScannerModal>
                                     const EdgeInsets.symmetric(vertical: 10),
                                 child: Button(
                                   text:
-                                      '${order == null ? AppLocalizations.of(context)!.pay : AppLocalizations.of(context)!.confirmOrder}${transactionSending ? '...' : ''}',
+                                      '${order == null ? 'Pay' : 'Confirm Order'}${transactionSending ? '...' : ''}',
                                   color: primaryColor,
                                   labelColor: whiteColor,
                                   onPressed: transactionSending
@@ -807,8 +665,6 @@ class ScannerModalState extends State<ScannerModal>
                                           ? handlePay
                                           : () => handleConfirmOrder(
                                                 tokenConfig.address,
-                                                place: place,
-                                                serial: currentCardSerial,
                                               ),
                                 ),
                               ),
@@ -826,8 +682,7 @@ class ScannerModalState extends State<ScannerModal>
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 10),
                                 child: Button(
-                                  text:
-                                      AppLocalizations.of(context)!.inspectCard,
+                                  text: 'Inspect Card',
                                   color: primaryColor,
                                   labelColor: whiteColor,
                                   onPressed: qrData.address.isNotEmpty
@@ -835,7 +690,7 @@ class ScannerModalState extends State<ScannerModal>
                                             config,
                                             qrData.address,
                                             profile.account,
-                                            appAccount,
+                                            myAddress,
                                             cardProject ?? 'main',
                                           )
                                       : null,
@@ -845,13 +700,7 @@ class ScannerModalState extends State<ScannerModal>
                           SizedBox(height: safeBottomPadding),
                           if (showTransactionInput)
                             Footer(
-                              onSend: (tokenAddress, amount, message) =>
-                                  handleSend(
-                                tokenAddress,
-                                amount,
-                                message,
-                                serial: currentCardSerial,
-                              ),
+                              onSend: handleSend,
                               onTopUpPressed: handleTopUp,
                               amountFocusNode: _amountFocusNode,
                               messageFocusNode: _messageFocusNode,
@@ -870,7 +719,7 @@ class ScannerModalState extends State<ScannerModal>
                         ? safeTopPadding + 20
                         : (height * 0.55),
                     child: AnimatedScale(
-                      scale: _showCards ? 1 : 1,
+                      scale: _showCards ? 1 : 0.8,
                       duration: const Duration(milliseconds: 600),
                       curve: Curves.decelerate,
                       child: Container(
@@ -886,9 +735,6 @@ class ScannerModalState extends State<ScannerModal>
                             context,
                             qrData != null || _manualScan,
                             primaryColor,
-                            cards,
-                            lastAccount,
-                            _pageController,
                           ),
                         ),
                       ),
@@ -900,11 +746,10 @@ class ScannerModalState extends State<ScannerModal>
                       child: Row(
                         children: [
                           Button(
-                            text: AppLocalizations.of(context)!.close,
+                            text: 'Close',
                             color: blackColor,
                             labelColor: whiteColor,
-                            onPressed: () =>
-                                handleDismiss(context, reverse: true),
+                            onPressed: () => handleDismiss(context),
                           ),
                         ],
                       ),
@@ -922,22 +767,20 @@ class ScannerModalState extends State<ScannerModal>
     BuildContext context,
     bool payReady,
     Color primaryColor,
-    List<DBCard> cards,
-    String? lastAccount,
-    PageController controller,
   ) {
     final width = MediaQuery.of(context).size.width;
 
-    final tokenConfig = context.select<AppState, TokenConfig>(
-      (state) => state.currentTokenConfig,
+    final accountBalance = context.select<WalletState, String>(
+      (state) => state.tokenBalances[state.currentTokenAddress] ?? '0.0',
     );
 
-    final accountBalance = context.select<WalletState, String>(
-      (state) => state.tokenBalances[tokenConfig.address] ?? '0.0',
+    final tokenConfig = context.select<WalletState, TokenConfig?>(
+      (state) => state.currentTokenConfig,
     );
 
     final accountProfile = context.watch<SendingState>().accountProfile;
 
+    final cards = context.watch<CardsState>().cards;
     final cardBalances = context.watch<CardsState>().cardBalances;
     final profiles = context.watch<CardsState>().profiles;
 
@@ -945,20 +788,18 @@ class ScannerModalState extends State<ScannerModal>
       if (accountProfile != null)
         CardInfo(
           uid: 'main',
-          account: accountProfile.account,
           profile: accountProfile,
           balance: accountBalance,
           project: 'main',
         ),
-      ...cards.map(
-        (card) => CardInfo(
-          uid: card.uid,
-          account: card.account,
-          profile: ProfileV1.cardProfile(card.account, card.uid),
-          balance: cardBalances[card.account] ?? '0.0',
-          project: card.project,
-        ),
-      ),
+      ...cards.where((card) => profiles[card.account] != null).map(
+            (card) => CardInfo(
+              uid: card.uid,
+              profile: profiles[card.account]!,
+              balance: cardBalances[card.account] ?? '0.0',
+              project: card.project,
+            ),
+          ),
     ];
 
     return [
@@ -968,15 +809,18 @@ class ScannerModalState extends State<ScannerModal>
               ? const NeverScrollableScrollPhysics()
               : const BouncingScrollPhysics(),
           scrollDirection: Axis.horizontal,
-          controller: controller,
+          controller: PageController(
+            viewportFraction: 0.85,
+            initialPage: 0,
+          ),
           onPageChanged: (index) {
-            handleCardChanged(cardInfoList[index]);
+            handleCardChanged(index, cardInfoList[index]);
           },
           itemCount: cardInfoList.length,
           itemBuilder: (context, index) {
             final card = cardInfoList[index];
 
-            final isSelected = card.profile.account == lastAccount;
+            final isSelected = _selectedCardIndex == index;
 
             if (payReady && !isSelected) {
               return const SizedBox.shrink();
@@ -990,16 +834,12 @@ class ScannerModalState extends State<ScannerModal>
                   scale: isSelected ? 1.1 : 1,
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeInOut,
-                  child: cardWidget.Card(
+                  child: Card(
                     width: width * 0.80,
                     uid: card.uid,
                     color: primaryColor,
-                    icon: card.uid == 'main'
-                        ? CupertinoIcons.device_phone_portrait
-                        : null,
                     profile: card.profile,
-                    usernamePrefix: card.uid == 'main' ? '@' : '#',
-                    logo: tokenConfig.logo,
+                    logo: tokenConfig?.logo,
                     balance: card.balance,
                   ),
                 ),

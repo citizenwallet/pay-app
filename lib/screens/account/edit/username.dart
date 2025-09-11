@@ -4,7 +4,6 @@ import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/formatters.dart';
 import 'package:pay_app/widgets/text_field.dart';
-import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class Username extends StatefulWidget {
@@ -80,7 +79,7 @@ class _UsernameState extends State<Username> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          AppLocalizations.of(context)!.username,
+          'Username',
           style: TextStyle(
             fontSize: 27,
             fontWeight: FontWeight.w600,
@@ -92,7 +91,7 @@ class _UsernameState extends State<Username> {
           controller: _usernameController,
           textInputAction: TextInputAction.next,
           inputFormatters: [usernameFormatter],
-          placeholder: AppLocalizations.of(context)!.enterYourUsername,
+          placeholder: 'Enter your username',
           onChanged: handleUsernameChange,
           prefix: Padding(
             padding: const EdgeInsets.only(left: 16.0),
@@ -106,7 +105,7 @@ class _UsernameState extends State<Username> {
                   ),
           ),
           isError: usernameTaken,
-          errorText: AppLocalizations.of(context)!.usernameAlreadyTaken,
+          errorText: 'Username already taken',
         ),
       ],
     );

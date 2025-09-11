@@ -6,7 +6,6 @@ import 'package:pay_app/widgets/blurry_child.dart';
 import 'package:pay_app/widgets/loaders/progress_bar.dart';
 
 import 'package:pay_app/widgets/wide_button.dart';
-import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'profile_picture.dart';
@@ -142,7 +141,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                           WideButton(
                             onPressed: handleSave,
                             child: Text(
-                              AppLocalizations.of(context)!.save,
+                              'Save',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
@@ -189,14 +188,11 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                               Text(
                                 switch (updateState) {
                                   ProfileUpdateState.existing =>
-                                    AppLocalizations.of(context)!
-                                        .fetchingExistingProfile,
+                                    'Fetching existing profile',
                                   ProfileUpdateState.uploading =>
-                                    AppLocalizations.of(context)!
-                                        .uploadingNewProfile,
-                                  ProfileUpdateState.fetching =>
-                                    AppLocalizations.of(context)!.almostDone,
-                                  _ => AppLocalizations.of(context)!.saving,
+                                    'Uploading new profile',
+                                  ProfileUpdateState.fetching => 'Almost done',
+                                  _ => 'Saving',
                                 },
                                 style: TextStyle(
                                   fontSize: 16,

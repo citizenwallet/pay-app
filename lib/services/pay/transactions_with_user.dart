@@ -3,13 +3,13 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/models/transaction.dart';
 import 'package:pay_app/services/api/api.dart';
 
-class TransactionsWithUserService {
+class TransactionsService {
   final APIService apiService =
       APIService(baseURL: dotenv.env['CHECKOUT_API_BASE_URL'] ?? '');
   String firstAccount;
   String secondAccount;
 
-  TransactionsWithUserService(
+  TransactionsService(
       {required this.firstAccount, required this.secondAccount});
 
   Future<(List<Transaction>, int)> getTransactionsWithUser({

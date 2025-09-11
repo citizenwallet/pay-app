@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:pay_app/services/api/api.dart';
 import 'package:pay_app/services/config/legacy.dart';
@@ -17,7 +16,6 @@ import 'package:pay_app/services/wallet/contracts/safe_account.dart';
 import 'package:pay_app/services/wallet/contracts/session_manager_module.dart';
 import 'package:pay_app/services/wallet/contracts/simple_account.dart';
 import 'package:pay_app/services/wallet/contracts/two_fa_factory.dart';
-import 'package:toastification/toastification.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -345,8 +343,7 @@ class TokenConfig {
   final int decimals;
   final int chainId;
   final String? logo;
-  final Color? color;
-  final String? project;
+  final String? color;
 
   TokenConfig({
     required this.standard,
@@ -357,7 +354,6 @@ class TokenConfig {
     required this.chainId,
     this.logo,
     this.color,
-    this.project,
   });
 
   factory TokenConfig.fromJson(Map<String, dynamic> json) {
@@ -369,10 +365,7 @@ class TokenConfig {
       decimals: json['decimals'],
       chainId: json['chain_id'],
       logo: json['logo'],
-      color: json['color'] != null
-          ? Color(int.parse(json['color'].replaceAll('#', '0xFF')))
-          : null,
-      project: json['project'],
+      color: json['color'],
     );
   }
 
@@ -385,10 +378,7 @@ class TokenConfig {
       'decimals': decimals,
       'chain_id': chainId,
       'logo': logo,
-      'color': color != null
-          ? '#${color!.intValue.toRadixString(16).padLeft(8, '0')}'
-          : null,
-      'project': project,
+      'color': color,
     };
   }
 
@@ -397,7 +387,7 @@ class TokenConfig {
   // to string
   @override
   String toString() {
-    return 'TokenConfig{standard: $standard, address: $address , name: $name, symbol: $symbol, decimals: $decimals, chainId: $chainId, project: $project}';
+    return 'TokenConfig{standard: $standard, address: $address , name: $name, symbol: $symbol, decimals: $decimals, chainId: $chainId}';
   }
 }
 
@@ -956,10 +946,6 @@ class Config {
       throw Exception('Token not found in config');
     }
     return token;
-  }
-
-  TokenConfig getTokenByProject(String project) {
-    return tokens.values.firstWhere((token) => token.project == project);
   }
 
   Future<ERC20Contract> getTokenContract(String tokenAddress,

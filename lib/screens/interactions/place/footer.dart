@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/place.dart';
 import 'package:pay_app/services/config/config.dart';
-import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/orders_with_place/orders_with_place.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/utils/formatters.dart';
@@ -11,7 +10,6 @@ import 'package:pay_app/widgets/coin_logo.dart';
 import 'package:pay_app/widgets/text_field.dart';
 import 'package:pay_app/widgets/transaction_input_row.dart';
 import 'package:pay_app/widgets/wide_button.dart';
-import 'package:pay_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class Footer extends StatefulWidget {
@@ -109,7 +107,7 @@ class _FooterState extends State<Footer> {
     final config = context.select<WalletState, Config?>(
       (state) => state.config,
     );
-    final tokenConfig = context.select<AppState, TokenConfig>(
+    final tokenConfig = context.select<WalletState, TokenConfig>(
       (state) => state.currentTokenConfig,
     );
 
@@ -164,7 +162,7 @@ class _FooterState extends State<Footer> {
               onPressed: widget.onMenuPressed,
               disabled: paying,
               child: Text(
-                AppLocalizations.of(context)!.menu,
+                'Menu',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -264,7 +262,7 @@ class AmountFieldWithMessageToggle extends StatelessWidget {
           child: CustomTextField(
             controller: amountController,
             enabled: !isSending,
-            placeholder: AppLocalizations.of(context)!.enterAmount,
+            placeholder: 'Enter amount',
             placeholderStyle: TextStyle(
               color: Color(0xFFB7ADC4),
               fontSize: 20,
@@ -336,7 +334,7 @@ class MessageFieldWithAmountToggle extends StatelessWidget {
           child: CustomTextField(
             controller: messageController,
             enabled: !isSending,
-            placeholder: AppLocalizations.of(context)!.addMessage,
+            placeholder: 'Add a message',
             placeholderStyle: TextStyle(
               color: Color(0xFFB7ADC4),
               fontSize: 20,

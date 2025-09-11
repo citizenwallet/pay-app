@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:pay_app/services/config/config.dart';
-import 'package:pay_app/state/app.dart';
 import 'package:pay_app/state/transactions_with_user/transactions_with_user.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/widgets/transaction_input_row.dart';
@@ -90,7 +89,7 @@ class _FooterState extends State<Footer> {
     final config = context.select<WalletState, Config>(
       (state) => state.config,
     );
-    final tokenConfig = context.select<AppState, TokenConfig>(
+    final tokenConfig = context.select<WalletState, TokenConfig>(
       (state) => state.currentTokenConfig,
     );
 

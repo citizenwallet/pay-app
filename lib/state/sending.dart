@@ -1,11 +1,8 @@
-import 'dart:convert';
-
 import 'package:flutter/cupertino.dart';
 import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/models/checkout_item.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/place_with_menu.dart';
-import 'package:pay_app/services/audio/audio.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/cards.dart';
 import 'package:pay_app/services/db/app/contacts.dart';
@@ -15,7 +12,6 @@ import 'package:pay_app/services/db/app/places_with_menu.dart';
 import 'package:pay_app/services/engine/utils.dart';
 import 'package:pay_app/services/pay/orders.dart';
 import 'package:pay_app/services/pay/places.dart';
-import 'package:pay_app/services/preferences/preferences.dart';
 import 'package:pay_app/services/secure/secure.dart';
 import 'package:pay_app/services/sigauth/sigauth.dart';
 import 'package:pay_app/services/wallet/contracts/erc20.dart';
@@ -23,7 +19,6 @@ import 'package:pay_app/services/wallet/contracts/profile.dart';
 import 'package:pay_app/services/wallet/utils.dart';
 import 'package:pay_app/services/wallet/wallet.dart';
 import 'package:pay_app/utils/qr.dart';
-import 'package:web3dart/web3dart.dart';
 
 class SendingState with ChangeNotifier {
   // instantiate services here
@@ -34,8 +29,6 @@ class SendingState with ChangeNotifier {
   late OrdersService _ordersService;
   PlacesService apiService = PlacesService();
   final SecureService _secureService = SecureService();
-  final AudioService _audioService = AudioService();
-  final PreferencesService _preferencesService = PreferencesService();
 
   // private variables here
   final Config _config;
@@ -45,12 +38,9 @@ class SendingState with ChangeNotifier {
 
   SendingState({
     required config,
-    required this.initialAddress,
+    required this.myAddress,
   }) : _config = config {
-    _ordersService = OrdersService(account: initialAddress);
-    lastAccount = _preferencesService.lastAccount ?? initialAddress;
-
-    init();
+    _ordersService = OrdersService(account: myAddress);
   }
 
   bool _mounted = true;
@@ -66,20 +56,8 @@ class SendingState with ChangeNotifier {
     super.dispose();
   }
 
-  void init() {
-    final credentials = _secureService.getCredentials();
-    if (credentials == null) {
-      return;
-    }
-
-    final (account, key) = credentials;
-
-    appAccount = account;
-  }
-
   // state variables here
-  late EthereumAddress appAccount;
-  String initialAddress;
+  String myAddress;
 
   QRData? qrData;
   ProfileV1? profile;
@@ -94,15 +72,7 @@ class SendingState with ChangeNotifier {
   bool transactionSending = false;
   double amount = 0.0;
 
-  late String lastAccount;
-
   // state methods here
-  void setLastAccount(String account) {
-    _preferencesService.setLastAccount(account);
-    lastAccount = EthereumAddress.fromHex(account).hexEip55;
-    safeNotifyListeners();
-  }
-
   QRData? parseQRData(String rawValue) {
     if (_previousQRData != null && _previousQRData!.rawValue == rawValue) {
       return null;
@@ -342,7 +312,7 @@ class SendingState with ChangeNotifier {
 
   Future<void> getAccountProfile() async {
     try {
-      final contact = await _contacts.getByAccount(appAccount.hexEip55);
+      final contact = await _contacts.getByAccount(myAddress);
       final cachedProfile = contact?.getProfile();
       if (cachedProfile != null) {
         accountProfile = cachedProfile;
@@ -352,7 +322,7 @@ class SendingState with ChangeNotifier {
 
       accountProfile = await getProfile(
         _config,
-        appAccount.hexEip55,
+        myAddress,
       );
       safeNotifyListeners();
     } catch (e, s) {
@@ -366,8 +336,6 @@ class SendingState with ChangeNotifier {
     String? amount,
     String? message,
     Checkout? manualCheckout,
-    PlaceWithMenu? manualPlace,
-    String? serial,
   }) async {
     try {
       transactionSending = true;
@@ -418,8 +386,6 @@ class SendingState with ChangeNotifier {
         throw Exception('Invalid amount');
       }
 
-      final place = manualPlace ?? this.place;
-
       final String? toAddress = switch (data.format) {
         QRFormat.checkoutUrl => place?.place.account,
         QRFormat.sendtoUrl => profile?.account,
@@ -435,14 +401,60 @@ class SendingState with ChangeNotifier {
         throw Exception('Invalid to address');
       }
 
+      final calldata = tokenTransferCallData(
+        _config,
+        account,
+        toAddress,
+        parsedAmount,
+      );
+
+      final (_, userOp) = await prepareUserop(
+        _config,
+        account,
+        key,
+        [token.address],
+        [calldata],
+      );
+
+      final args = {
+        'from': account.hexEip55,
+        'to': toAddress,
+      };
+
+      if (token.standard == 'erc1155') {
+        args['operator'] = account.hexEip55;
+        args['id'] = '0';
+        args['amount'] = parsedAmount.toString();
+      } else {
+        args['value'] = parsedAmount.toString();
+      }
+
+      final eventData = createEventData(
+        stringSignature: transferEventStringSignature(_config),
+        topic: transferEventSignature(_config),
+        args: args,
+      );
+
+      final txHash = await submitUserop(
+        _config,
+        userOp,
+        data: eventData,
+        extraData: sendMessage != null && sendMessage != ''
+            ? TransferData(sendMessage)
+            : null,
+      );
+
+      if (txHash == null) {
+        throw Exception('Transaction failed');
+      }
+
       Checkout? checkout = manualCheckout;
       switch (data.format) {
         case QRFormat.checkoutUrl:
-          if (checkout == null && order != null && place != null) {
-            List<CheckoutItem> items = [];
-            final mappedItems = place.mappedItems;
+          List<CheckoutItem> items = [];
+          if (order != null && place != null) {
             for (final item in order!.items) {
-              final menuItem = mappedItems[item.id];
+              final menuItem = place?.mappedItems[item.id];
               if (menuItem == null) {
                 continue;
               }
@@ -452,13 +464,13 @@ class SendingState with ChangeNotifier {
                 quantity: item.quantity,
               ));
             }
-
-            checkout = Checkout(
-              items: items,
-              manualAmount: double.parse(sendAmount),
-              message: sendMessage,
-            );
           }
+
+          checkout = Checkout(
+            items: items,
+            manualAmount: double.parse(sendAmount),
+            message: sendMessage,
+          );
           break;
         default:
           checkout = null;
@@ -469,119 +481,34 @@ class SendingState with ChangeNotifier {
 
       final sigAuthConnection = sigAuthService.connect();
 
-      if (serial == null) {
-        // this is an account, submit tx from app
-        final calldata = tokenTransferCallData(
-          _config,
-          account,
-          toAddress,
-          parsedAmount,
+      if (order != null && place != null) {
+        final newOrder = await _ordersService.confirmOrder(
+          sigAuthConnection,
+          place!.place.id,
+          order!.id,
+          txHash,
         );
 
-        final (_, userOp) = await prepareUserop(
-          _config,
-          account,
-          key,
-          [token.address],
-          [calldata],
+        if (newOrder == null) {
+          throw Exception('Failed to create order');
+        }
+
+        _ordersTable.upsert(newOrder);
+      }
+
+      if (checkout != null) {
+        final newOrder = await _ordersService.createOrder(
+          sigAuthConnection,
+          place!.place.id,
+          checkout,
+          txHash,
         );
 
-        final args = {
-          'from': account.hexEip55,
-          'to': toAddress,
-        };
-
-        if (token.standard == 'erc1155') {
-          args['operator'] = account.hexEip55;
-          args['id'] = '0';
-          args['amount'] = parsedAmount.toString();
-        } else {
-          args['value'] = parsedAmount.toString();
+        if (newOrder == null) {
+          throw Exception('Failed to create order');
         }
 
-        final eventData = createEventData(
-          stringSignature: transferEventStringSignature(_config),
-          topic: transferEventSignature(_config),
-          args: args,
-        );
-
-        final txHash = await submitUserop(
-          _config,
-          userOp,
-          data: eventData,
-          extraData: sendMessage != null && sendMessage != ''
-              ? TransferData(sendMessage)
-              : null,
-        );
-
-        if (txHash == null) {
-          throw Exception('Transaction failed');
-        }
-
-        _audioService.txNotification();
-
-        if (order != null && place != null) {
-          final newOrder = await _ordersService.confirmOrder(
-            sigAuthConnection,
-            place!.place.id,
-            order!.id,
-            txHash,
-          );
-
-          if (newOrder == null) {
-            throw Exception('Failed to create order');
-          }
-
-          _ordersTable.upsert(newOrder);
-        } else {
-          if (checkout != null) {
-            final newOrder = await _ordersService.createOrder(
-              sigAuthConnection,
-              place!.place.id,
-              checkout,
-              txHash,
-            );
-
-            if (newOrder == null) {
-              throw Exception('Failed to create order');
-            }
-
-            _ordersTable.upsert(newOrder);
-          }
-        }
-      } else {
-        // this is a card, submit tx from card as owner
-        if (order != null && place != null) {
-          final newOrder = await _ordersService.confirmCardOrder(
-            sigAuthConnection,
-            serial,
-            order!.id,
-          );
-
-          if (newOrder == null) {
-            throw Exception('Failed to create order');
-          }
-
-          _ordersTable.upsert(newOrder);
-        } else {
-          if (checkout != null) {
-            final newOrder = await _ordersService.createCardOrder(
-              sigAuthConnection,
-              serial,
-              place!.place.id,
-              checkout,
-              tokenAddress,
-            );
-
-            if (newOrder == null) {
-              throw Exception('Failed to create order');
-            }
-
-            _ordersTable.upsert(newOrder);
-          }
-        }
-
-        _audioService.txNotification();
+        _ordersTable.upsert(newOrder);
       }
 
       transactionSending = false;

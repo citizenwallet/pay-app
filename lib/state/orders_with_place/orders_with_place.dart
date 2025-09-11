@@ -5,7 +5,6 @@ import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/models/place_menu.dart';
 import 'package:pay_app/models/place_with_menu.dart';
-import 'package:pay_app/services/audio/audio.dart';
 import 'package:pay_app/services/config/config.dart';
 import 'package:pay_app/services/db/app/db.dart';
 import 'package:pay_app/services/db/app/orders.dart';
@@ -27,8 +26,6 @@ class OrdersWithPlaceState with ChangeNotifier {
       AppDBService().placesWithMenu;
   final OrdersTable _ordersTable = AppDBService().orders;
 
-  final AudioService _audioService = AudioService();
-
   final SecureService _secureService = SecureService();
   final PlacesService _placesService = PlacesService();
   late OrdersService _ordersService;
@@ -41,11 +38,9 @@ class OrdersWithPlaceState with ChangeNotifier {
   OrdersWithPlaceState(
     this._config, {
     required this.slug,
-    required this.account,
+    required this.myAddress,
   }) {
-    _ordersService = OrdersService(account: account);
-
-    fetchPlaceAndMenu();
+    _ordersService = OrdersService(account: myAddress);
   }
 
   void safeNotifyListeners() {
@@ -66,7 +61,7 @@ class OrdersWithPlaceState with ChangeNotifier {
   PlaceWithMenu? place;
   PlaceMenu? placeMenu;
   List<GlobalKey<State<StatefulWidget>>> categoryKeys = [];
-  String account;
+  String myAddress;
   List<Order> orders = [];
   double toSendAmount = 0.0;
   int total = 0;
@@ -189,7 +184,6 @@ class OrdersWithPlaceState with ChangeNotifier {
 
       // Then load from database
       final dbOrders = await _ordersTable.getOrdersBySlug(
-        account,
         slug,
         limit: ordersLimit,
         offset: ordersOffset,
@@ -243,7 +237,6 @@ class OrdersWithPlaceState with ChangeNotifier {
       // Update existing orders in the list with any changes
       if (orders.isNotEmpty) {
         final currentOrders = await _ordersTable.getOrdersBySlug(
-          account,
           slug,
           limit: orders.length,
           offset: 0,
@@ -288,7 +281,6 @@ class OrdersWithPlaceState with ChangeNotifier {
 
     try {
       final dbOrders = await _ordersTable.getOrdersBySlug(
-        account,
         slug,
         limit: ordersLimit,
         offset: ordersOffset,
@@ -364,7 +356,7 @@ class OrdersWithPlaceState with ChangeNotifier {
       }
 
       final toAddress = place!.place.account;
-      final fromAddress = this.account;
+      final fromAddress = myAddress;
 
       final tempId = 0;
 
@@ -382,9 +374,7 @@ class OrdersWithPlaceState with ChangeNotifier {
           slug: slug,
           display: place!.place.display,
           account: place!.place.account,
-          items: place!.items,
         ),
-        token: token.address,
       );
 
       payingOrder = order;
@@ -442,8 +432,6 @@ class OrdersWithPlaceState with ChangeNotifier {
       if (txHash == null) {
         throw Exception('Failed to pay order');
       }
-
-      _audioService.txNotification();
 
       final sigAuthService = SigAuthService(credentials: key, address: account);
 
@@ -516,7 +504,7 @@ class OrdersWithPlaceState with ChangeNotifier {
       }
 
       final toAddress = place!.place.account;
-      final fromAddress = this.account;
+      final fromAddress = myAddress;
 
       payingOrder = order;
       safeNotifyListeners();
@@ -573,8 +561,6 @@ class OrdersWithPlaceState with ChangeNotifier {
       if (txHash == null) {
         throw Exception('Failed to pay order');
       }
-
-      _audioService.txNotification();
 
       final sigAuthService = SigAuthService(credentials: key, address: account);
 
