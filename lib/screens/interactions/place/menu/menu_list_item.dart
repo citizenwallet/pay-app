@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:pay_app/models/menu_item.dart';
+import 'package:pay_app/screens/interactions/place/menu/menu_item_modal.dart';
 import 'package:pay_app/state/checkout.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
 
@@ -19,60 +20,65 @@ class MenuListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 80,
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      margin: EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Color(0xFFD9D9D9),
-          width: 1,
-        ),
-        color: Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          ItemImage(imageUrl: menuItem.imageUrl),
-          const SizedBox(width: 1.2),
-          VerticalDivider(
-            color: Color(0xFFD9D9D9),
-            thickness: 1,
-            indent: 8,
-            endIndent: 8,
-          ),
-          const SizedBox(width: 1.2),
-          Expanded(
-            child: ItemNameDescription(
-              name: menuItem.name,
-              description: menuItem.description,
+    return GestureDetector(
+        onTap: () => MenuItemModal.show(context, menuItem),
+        child: Container(
+          height: 80,
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          margin: EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Color(0xFFD9D9D9),
+              width: 1,
             ),
+            color: Color(0xFFFFFFFF),
+            borderRadius: BorderRadius.circular(8),
           ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
+          child: Row(
             children: [
-              ItemPrice(price: menuItem.priceString),
-              const SizedBox(height: 4),
-              if (checkoutState.checkout.quantityOfMenuItem(menuItem) <= 0) ...[
-                AddToCartButton(
-                  onAddToCart: checkoutState.addItem,
-                  menuItem: menuItem,
+              ItemImage(imageUrl: menuItem.imageUrl),
+              const SizedBox(width: 1.2),
+              VerticalDivider(
+                color: Color(0xFFD9D9D9),
+                thickness: 1,
+                indent: 8,
+                endIndent: 8,
+              ),
+              const SizedBox(width: 1.2),
+              Expanded(
+                child: ItemNameDescription(
+                  name: menuItem.name,
+                  description: menuItem.description,
                 ),
-              ],
-              if (checkoutState.checkout.quantityOfMenuItem(menuItem) > 0) ...[
-                IncDecButton(
-                  onIncrease: checkoutState.increaseItem,
-                  onDecrease: checkoutState.decreaseItem,
-                  quantityOfMenuItem: checkoutState.checkout.quantityOfMenuItem,
-                  menuItem: menuItem,
-                ),
-              ]
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  ItemPrice(price: menuItem.priceString),
+                  const SizedBox(height: 4),
+                  if (checkoutState.checkout.quantityOfMenuItem(menuItem) <=
+                      0) ...[
+                    AddToCartButton(
+                      onAddToCart: checkoutState.addItem,
+                      menuItem: menuItem,
+                    ),
+                  ],
+                  if (checkoutState.checkout.quantityOfMenuItem(menuItem) >
+                      0) ...[
+                    IncDecButton(
+                      onIncrease: checkoutState.increaseItem,
+                      onDecrease: checkoutState.decreaseItem,
+                      quantityOfMenuItem:
+                          checkoutState.checkout.quantityOfMenuItem,
+                      menuItem: menuItem,
+                    ),
+                  ]
+                ],
+              ),
             ],
           ),
-        ],
-      ),
-    );
+        ));
   }
 }
 
