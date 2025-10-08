@@ -137,9 +137,9 @@ QRFormat parseQRFormat(String raw) {
   final cleanRaw = raw.replaceFirst('/#/', '/');
   final decodedRaw = Uri.decodeComponent(cleanRaw);
 
-  final receiveUrl = Uri.parse(decodedRaw);
+  final checkoutUrl = Uri.parse(decodedRaw);
 
-  final placeSlug = receiveUrl.pathSegments.first;
+  final placeSlug = checkoutUrl.pathSegments.first;
 
   if (placeSlug == '') {
     return ('', null, null, null);
