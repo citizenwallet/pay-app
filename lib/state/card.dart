@@ -152,6 +152,7 @@ class CardState with ChangeNotifier {
       startPolling(tokenAddress);
     } catch (e) {
       debugPrint(e.toString());
+      cardOwnerLoading = false;
     } finally {
       loading = false;
       safeNotifyListeners();
