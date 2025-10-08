@@ -70,6 +70,7 @@ class ScannerModalState extends State<ScannerModal>
   final FocusNode _amountFocusNode = FocusNode();
   final FocusNode _messageFocusNode = FocusNode();
 
+  late AppState _appState;
   late SendingState _sendingState;
   late CardsState _cardsState;
   late ProfileState _profileState;
@@ -107,6 +108,7 @@ class ScannerModalState extends State<ScannerModal>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // make initial requests here
+      _appState = context.read<AppState>();
       _sendingState = context.read<SendingState>();
       _cardsState = context.read<CardsState>();
       _profileState = context.read<ProfileState>();
@@ -275,6 +277,7 @@ class ScannerModalState extends State<ScannerModal>
         }
 
         if (order != null) {
+          _appState.setCurrentToken(order.token);
           break;
         }
 
