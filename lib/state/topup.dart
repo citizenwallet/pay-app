@@ -29,16 +29,17 @@ class TopupState extends ChangeNotifier {
   String topupUrl = '';
 
   // state methods here
-  Future<void> generateTopupUrl(String baseUrl) async {
+  Future<void> generateTopupUrl(String baseUrl,
+      {String? account, String? token}) async {
     try {
-      final lastAccount = _preferencesService.lastAccount;
-      final token = _preferencesService.tokenAddress;
+      final lastAccount = account ?? _preferencesService.lastAccount;
+      final tokenAddress = token ?? _preferencesService.tokenAddress;
 
       String topupUrl = baseUrl;
       if (lastAccount != null) {
         topupUrl = '$baseUrl?account=$lastAccount';
-        if (token != null) {
-          topupUrl += '&token=$token';
+        if (tokenAddress != null) {
+          topupUrl += '&token=$tokenAddress';
         }
       } else {
         final credentials = _secureService.getCredentials();

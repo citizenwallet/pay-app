@@ -167,8 +167,8 @@ class SendingState with ChangeNotifier {
 
       return profile;
     } catch (e, s) {
-      print('error: $e');
-      print('stack trace: $s');
+      debugPrint('error: $e');
+      debugPrint('stack trace: $s');
     }
 
     return null;
@@ -210,8 +210,8 @@ class SendingState with ChangeNotifier {
 
       return profile;
     } catch (e, s) {
-      print('error: $e');
-      print('stack trace: $s');
+      debugPrint('error: $e');
+      debugPrint('stack trace: $s');
     }
 
     return null;
@@ -271,8 +271,8 @@ class SendingState with ChangeNotifier {
 
       return profile;
     } catch (e, s) {
-      print('error: $e');
-      print('stack trace: $s');
+      debugPrint('error: $e');
+      debugPrint('stack trace: $s');
     }
 
     return null;
@@ -302,8 +302,8 @@ class SendingState with ChangeNotifier {
 
       return order;
     } catch (e, s) {
-      print('loadExternalOrder error: $e');
-      print('loadExternalOrder stack trace: $s');
+      debugPrint('loadExternalOrder error: $e');
+      debugPrint('loadExternalOrder stack trace: $s');
     }
 
     return null;
@@ -333,8 +333,8 @@ class SendingState with ChangeNotifier {
 
       return place;
     } catch (e, s) {
-      print('getPlaceWithMenu error: $e');
-      print('getPlaceWithMenu stack trace: $s');
+      debugPrint('getPlaceWithMenu error: $e');
+      debugPrint('getPlaceWithMenu stack trace: $s');
     }
 
     return null;

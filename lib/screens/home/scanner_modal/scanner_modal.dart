@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pay_app/models/card.dart';
 import 'package:pay_app/models/checkout.dart';
 import 'package:pay_app/models/order.dart';
@@ -17,6 +18,7 @@ import 'package:pay_app/state/cards.dart';
 import 'package:pay_app/state/profile.dart';
 import 'package:pay_app/state/sending.dart';
 import 'package:pay_app/state/state.dart';
+import 'package:pay_app/state/topup.dart';
 import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
@@ -30,6 +32,7 @@ import 'package:pay_app/widgets/cards/card.dart' as cardWidget;
 import 'package:pay_app/widgets/profile_card.dart';
 import 'package:pay_app/widgets/toast/toast.dart';
 import 'package:pay_app/l10n/app_localizations.dart';
+import 'package:pay_app/widgets/webview/connected_webview_modal.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
 import 'package:web3dart/web3dart.dart';
@@ -70,10 +73,12 @@ class ScannerModalState extends State<ScannerModal>
   final FocusNode _amountFocusNode = FocusNode();
   final FocusNode _messageFocusNode = FocusNode();
 
+  late AppState _appState;
   late SendingState _sendingState;
   late CardsState _cardsState;
   late ProfileState _profileState;
   late WalletState _walletState;
+  late TopupState _topupState;
 
   double _opacity = 0;
 
@@ -107,10 +112,12 @@ class ScannerModalState extends State<ScannerModal>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // make initial requests here
+      _appState = context.read<AppState>();
       _sendingState = context.read<SendingState>();
       _cardsState = context.read<CardsState>();
       _profileState = context.read<ProfileState>();
       _walletState = context.read<WalletState>();
+      _topupState = context.read<TopupState>();
 
       onLoad();
     });
@@ -254,6 +261,10 @@ class ScannerModalState extends State<ScannerModal>
       return;
     }
 
+    print('rawValue: $rawValue');
+
+    print('qrData: ${qrData.address}');
+
     HapticFeedback.heavyImpact();
 
     switch (qrData.format) {
@@ -275,6 +286,7 @@ class ScannerModalState extends State<ScannerModal>
         }
 
         if (order != null) {
+          _appState.setCurrentToken(order.token);
           break;
         }
 
@@ -305,6 +317,29 @@ class ScannerModalState extends State<ScannerModal>
 
         if (place != null && (place.place.display == Display.amount)) {
           handlePay();
+        }
+
+        if (place != null && place.place.display == Display.topup) {
+          final config = context.read<WalletState>().config;
+
+          final topUpPlugin = config.getTopUpPlugin(
+            tokenAddress: widget.tokenAddress,
+          );
+
+          if (topUpPlugin == null) {
+            break;
+          }
+
+          final rawUri = Uri.parse(rawValue);
+
+          final topUpAccount = rawUri.queryParameters['account'];
+          final topUpToken = rawUri.queryParameters['token'];
+
+          handleTopUp(
+            topUpPlugin.url,
+            account: topUpAccount,
+            token: topUpToken,
+          );
         }
 
         break;
@@ -526,8 +561,65 @@ class ScannerModalState extends State<ScannerModal>
     );
   }
 
-  void handleTopUp(String tokenAddress) {
-    // TODO: implement top up
+  void handleTopUp(String baseUrl, {String? account, String? token}) async {
+    await _topupState.generateTopupUrl(baseUrl, account: account, token: token);
+
+    if (!mounted) {
+      return;
+    }
+
+    HapticFeedback.heavyImpact();
+
+    final redirectDomain = dotenv.env['APP_REDIRECT_DOMAIN'];
+
+    final redirectUrl = redirectDomain != null ? 'https://$redirectDomain' : '';
+
+    final result = await showCupertinoModalPopup<String?>(
+      context: context,
+      barrierDismissible: true,
+      useRootNavigator: false,
+      barrierColor: blackColor.withAlpha(160),
+      builder: (modalContext) {
+        final topupUrl =
+            modalContext.select((TopupState state) => state.topupUrl);
+
+        if (topupUrl.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return ConnectedWebViewModal(
+          modalKey: 'connected-webview',
+          url: topupUrl,
+          redirectUrl: redirectUrl,
+        );
+      },
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    if (!result.startsWith(redirectUrl)) {
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    HapticFeedback.heavyImpact();
+
+    toastification.showCustom(
+      context: context,
+      autoCloseDuration: const Duration(seconds: 5),
+      alignment: Alignment.bottomCenter,
+      builder: (context, toast) => Toast(
+        icon: const Text('🚀'),
+        title: Text(AppLocalizations.of(context)!.topupOnWay),
+      ),
+    );
+
+    await _walletState.updateBalance();
   }
 
   @override

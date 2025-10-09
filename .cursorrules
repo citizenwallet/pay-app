@@ -1,6 +1,10 @@
 flutter
 - cupertino widgets, no material
 
+documentation
+- docs/ directory
+- includes documentation on how the app is structured
+
 colors
 - lib/theme
 - defined as const that can be globally imported
@@ -21,6 +25,7 @@ services
 - any package or external service that needs to be called should be defined as a service
 
 state
+- docs/state.md
 - provider
 - lib/state
 - favor provider over local state management
@@ -41,8 +46,10 @@ models
 - lib/models
 - models related specifically to services should live with the service
 - models intended for the app, should be kept in the models folder
+- docs/models.md - comprehensive documentation of all app models
 
 db
+- docs/db.md
 - a service lib/services/db
 - abstract class for db lib/services/db/db.dart
 - abstract class for a db table lib/services/db/db.dart

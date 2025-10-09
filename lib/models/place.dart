@@ -15,6 +15,7 @@ class Place {
   String? imageUrl;
   String? description;
   Display display;
+  List<String> tokens;
 
   Place({
     required this.id,
@@ -24,6 +25,7 @@ class Place {
     this.imageUrl,
     this.description,
     this.display = Display.amount,
+    this.tokens = const [],
   });
 
   factory Place.fromJson(Map<String, dynamic> json) {
@@ -42,6 +44,7 @@ class Place {
       display:
           Display.values.firstWhereOrNull((e) => e.name == json['display']) ??
               Display.amount,
+      tokens: json['tokens'] != null ? List<String>.from(json['tokens']) : [],
     );
   }
 
@@ -54,6 +57,7 @@ class Place {
       'image': imageUrl,
       'description': description,
       'display': display.name,
+      'tokens': tokens,
     };
   }
 

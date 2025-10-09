@@ -15,7 +15,6 @@ import 'package:pay_app/state/wallet.dart';
 import 'package:pay_app/theme/colors.dart';
 import 'package:pay_app/utils/delay.dart';
 import 'package:pay_app/widgets/blurry_child.dart';
-import 'package:pay_app/widgets/button.dart';
 import 'package:pay_app/widgets/cards/card.dart' as cardWidget;
 import 'package:pay_app/widgets/cards/card_skeleton.dart';
 import 'package:pay_app/widgets/coin_logo.dart';
@@ -175,24 +174,6 @@ class _ProfileBarState extends State<ProfileBar> with TickerProviderStateMixin {
     if (option == 'add-card') {
       HapticFeedback.heavyImpact();
       await widget.onAddCard();
-
-      // widget.onCardChanged(account);
-
-      // if (!mounted) {
-      //   return;
-      // }
-
-      // final cards = context.read<CardsState>().cards;
-
-      // final remainingPage = cards.indexWhere(
-      //   (card) => card.account == account,
-      // );
-
-      // widget.pageController.animateToPage(
-      //   remainingPage + 1,
-      //   duration: const Duration(milliseconds: 200),
-      //   curve: Curves.easeInOut,
-      // );
     }
   }
 

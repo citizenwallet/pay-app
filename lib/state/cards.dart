@@ -349,8 +349,9 @@ class CardsState with ChangeNotifier {
           AddCardError.cardNotConfigured
         );
       }
-    } catch (e) {
+    } catch (e, s) {
       debugPrint(e.toString());
+      debugPrint(s.toString());
 
       updatingCardNameUid = null;
       claimingCard = false;
