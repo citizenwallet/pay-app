@@ -82,4 +82,12 @@ class PreferencesService {
   String? get lastAccount {
     return _preferences.getString('last_account');
   }
+
+  Future setHomeOnboardingSeen(bool seen) async {
+    await _preferences.setBool('home_onboarding_seen', seen);
+  }
+
+  bool get homeOnboardingSeen {
+    return _preferences.getBool('home_onboarding_seen') ?? false;
+  }
 }
