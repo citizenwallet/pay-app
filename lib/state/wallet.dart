@@ -120,6 +120,10 @@ class WalletState with ChangeNotifier {
   }
 
   Future<void> updateBalance() async {
+    if (_address == null) {
+      return;
+    }
+
     tokenBalances = _preferencesService.tokenBalances(_address!.hexEip55);
     safeNotifyListeners();
 
