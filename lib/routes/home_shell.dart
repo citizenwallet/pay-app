@@ -243,7 +243,9 @@ class _HomeShellState extends State<HomeShell> {
         (card) => card.account == selectedAccount,
       );
 
-      _pageController?.jumpToPage(index == -1 ? 0 : index + 1);
+      if (_pageController?.hasClients ?? false) {
+        _pageController?.jumpToPage(index == -1 ? 0 : index + 1);
+      }
 
       handleCardChanged(selectedAccount);
 
