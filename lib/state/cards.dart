@@ -122,6 +122,13 @@ class CardsState with ChangeNotifier {
 
         this.cards = await _cards.getAll();
         safeNotifyListeners();
+      }).catchError((e, s) async {
+        // Handle as if there are no cards - failed fetch shouldn't crash
+        debugPrint('Failed to fetch cards from server: $e');
+        debugPrint('Stack trace: $s');
+
+        cards = await _cards.getAll();
+        safeNotifyListeners();
       });
 
       final token =
