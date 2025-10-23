@@ -1,4 +1,5 @@
 // TODO: implement this with biometrics instead
+import 'dart:typed_data';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
@@ -15,6 +16,7 @@ class SecureService {
   late SharedPreferences _preferences;
 
   static const String _privateKeyKey = 'ethereum_private_key';
+  static const String _pendingSessionKey = 'pending_session';
 
   Future init(SharedPreferences pref) async {
     _preferences = pref;
@@ -85,5 +87,42 @@ class SecureService {
   // Delete the stored private key
   Future clearCredentials() async {
     await _preferences.remove(_privateKeyKey);
+  }
+
+  // Save pending session state (for SMS code waiting)
+  Future setPendingSession(
+    EthPrivateKey sessionKey,
+    Uint8List sessionHash,
+    EthereumAddress accountAddress,
+  ) async {
+    final sessionKeyHex = bytesToHex(sessionKey.privateKey);
+    final sessionHashHex = bytesToHex(sessionHash);
+    final storedValue =
+        '${accountAddress.hexEip55}:$sessionKeyHex:$sessionHashHex';
+    await _preferences.setString(_pendingSessionKey, storedValue);
+  }
+
+  // Get pending session state
+  (EthPrivateKey, Uint8List, EthereumAddress)? getPendingSession() {
+    final storedValue = _preferences.getString(_pendingSessionKey);
+    if (storedValue == null) return null;
+
+    try {
+      final parts = storedValue.split(':');
+      if (parts.length != 3) return null;
+
+      return (
+        EthPrivateKey.fromHex(parts[1]),
+        hexToBytes(parts[2]),
+        EthereumAddress.fromHex(parts[0]),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Clear pending session state
+  Future clearPendingSession() async {
+    await _preferences.remove(_pendingSessionKey);
   }
 }

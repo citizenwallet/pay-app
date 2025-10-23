@@ -71,12 +71,14 @@ class WalletState with ChangeNotifier {
 
       final (account, key) = credentials;
 
+      // Check if session is expired
       final expired = await _config.sessionManagerModuleContract.isExpired(
         account,
         key.address,
       );
 
       if (expired) {
+        debugPrint('Session expired, clearing credentials');
         await _secureService.clearCredentials();
         loading = false;
         credentialsExpired = true;
@@ -91,7 +93,10 @@ class WalletState with ChangeNotifier {
     } catch (e, s) {
       debugPrint('error: $e');
       debugPrint('stack trace: $s');
+      // Don't clear credentials on errors - could be network issues
+      // Just set error state so user can retry
       error = true;
+      loading = false;
       safeNotifyListeners();
     }
   }

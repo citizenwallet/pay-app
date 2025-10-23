@@ -177,7 +177,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String get invalidCode => 'Ongeldige code';
 
   @override
-  String get failedToSendCode => 'Code verzenden mislukt. Probeer het opnieuw.';
+  String get failedToSendCode =>
+      'Code verzenden mislukt. U heeft mogelijk al een code in behandeling - controleer uw berichten of wacht even voordat u het opnieuw probeert.';
 
   @override
   String get sendingSmsCode => 'SMS-code verzenden...';
@@ -193,6 +194,19 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get sendNewCode => 'Nieuwe code verzenden';
+
+  @override
+  String get changePhoneNumber => 'Telefoonnummer wijzigen';
+
+  @override
+  String get iAlreadyHaveCode => 'Ik heb al een code';
+
+  @override
+  String get noCodeFound => 'Geen code in behandeling';
+
+  @override
+  String get noCodeFoundMessage =>
+      'We konden geen code in behandeling vinden voor dit telefoonnummer. Vraag een nieuwe code aan of wacht even voordat u het opnieuw probeert.';
 
   @override
   String get displayContacts => 'Contacten weergeven';
@@ -503,7 +517,8 @@ class AppLocalizationsNlBe extends AppLocalizationsNl {
   String get invalidCode => 'Ongeldige code';
 
   @override
-  String get failedToSendCode => 'Code verzenden mislukt. Probeer het opnieuw.';
+  String get failedToSendCode =>
+      'Code verzenden mislukt. U heeft mogelijk al een code in behandeling - controleer uw berichten of wacht even voordat u het opnieuw probeert.';
 
   @override
   String get sendingSmsCode => 'SMS-code verzenden...';
@@ -519,6 +534,19 @@ class AppLocalizationsNlBe extends AppLocalizationsNl {
 
   @override
   String get sendNewCode => 'Nieuwe code verzenden';
+
+  @override
+  String get changePhoneNumber => 'Telefoonnummer wijzigen';
+
+  @override
+  String get iAlreadyHaveCode => 'Ik heb al een code';
+
+  @override
+  String get noCodeFound => 'Geen code in behandeling';
+
+  @override
+  String get noCodeFoundMessage =>
+      'We konden geen code in behandeling vinden voor dit telefoonnummer. Vraag een nieuwe code aan of wacht even voordat u het opnieuw probeert.';
 
   @override
   String get displayContacts => 'Contacten weergeven';

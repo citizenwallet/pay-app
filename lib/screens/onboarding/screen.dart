@@ -52,8 +52,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   String? _previousChallenge;
   bool _navigating = false;
+  bool _hasCheckedSession = false;
 
   void onLoad() async {
+    // Prevent multiple checks that could cause navigation loops
+    if (_hasCheckedSession) {
+      return;
+    }
+    _hasCheckedSession = true;
+
     final navigator = GoRouter.of(context);
 
     await _onboardingState.init();
@@ -101,7 +108,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
     if (account != null && !_navigating) {
       _navigating = true;
-      _onboardingState.reset();
+      // Don't reset state here - it clears the connectedAccountAddress we just set
+      // Just navigate to home
       navigator.go('/${account.hexEip55}');
     }
   }
@@ -115,6 +123,32 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   void handleRetry() {
     _onboardingState.retry();
+  }
+
+  void handleGoBack() {
+    _onboardingState.goBackToPhoneEntry();
+  }
+
+  void handleTryPreviousCode() {
+    final success = _onboardingState.tryEnterPreviousCode();
+
+    if (!success && mounted) {
+      // No pending session found - show error dialog
+      showCupertinoDialog(
+        context: context,
+        builder: (context) => CupertinoAlertDialog(
+          title: Text(AppLocalizations.of(context)!.noCodeFound),
+          content: Text(AppLocalizations.of(context)!.noCodeFoundMessage),
+          actions: [
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(AppLocalizations.of(context)!.ok),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   void handlePhoneNumberChange(String phoneNumber) {
@@ -376,6 +410,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           style: TextStyle(
                             color: dangerColor,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       if (sessionRequestStatus == SessionRequestStatus.failed)
                         const SizedBox(
@@ -490,6 +525,27 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       const SizedBox(height: 16),
                       if (sessionRequestStatus == SessionRequestStatus.failed)
                         WideButton(
+                          onPressed: handleTryPreviousCode,
+                          color: primaryColor,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                AppLocalizations.of(context)!.iAlreadyHaveCode,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: whiteColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      if (sessionRequestStatus == SessionRequestStatus.failed)
+                        const SizedBox(height: 8),
+                      if (sessionRequestStatus == SessionRequestStatus.failed)
+                        WideButton(
                           onPressed: handleRetry,
                           color: whiteColor,
                           child: Row(
@@ -531,6 +587,32 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         ),
                       if (sessionRequestStatus ==
                           SessionRequestStatus.confirmFailed)
+                        const SizedBox(height: 16),
+                      // Add button to go back to phone number entry
+                      if (sessionRequestStatus ==
+                              SessionRequestStatus.challenge ||
+                          sessionRequestStatus ==
+                              SessionRequestStatus.confirming ||
+                          sessionRequestStatus ==
+                              SessionRequestStatus.confirmFailed)
+                        GestureDetector(
+                          onTap: handleGoBack,
+                          child: Text(
+                            AppLocalizations.of(context)!.changePhoneNumber,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: primaryColor,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      if (sessionRequestStatus ==
+                              SessionRequestStatus.challenge ||
+                          sessionRequestStatus ==
+                              SessionRequestStatus.confirming ||
+                          sessionRequestStatus ==
+                              SessionRequestStatus.confirmFailed)
                         const SizedBox(height: 16),
                     ],
                   ),

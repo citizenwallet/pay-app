@@ -40,6 +40,7 @@ class OnboardingState with ChangeNotifier {
 
   EthPrivateKey? _sessionRequestPrivateKey;
   Uint8List? _sessionRequestHash;
+  EthereumAddress? _tempAccountAddress;
 
   // constructor here
   OnboardingState(this._config) {
@@ -49,6 +50,17 @@ class OnboardingState with ChangeNotifier {
 
   Future<void> init() async {
     _sessionService = SessionService(_config);
+
+    // Check for persisted pending session (SMS sent but not confirmed)
+    final pendingSession = _secureService.getPendingSession();
+    if (pendingSession != null) {
+      debugPrint('Restoring pending session from storage');
+      final (sessionKey, sessionHash, accountAddress) = pendingSession;
+      _sessionRequestPrivateKey = sessionKey;
+      _sessionRequestHash = sessionHash;
+      _tempAccountAddress = accountAddress;
+      sessionRequestStatus = SessionRequestStatus.challenge;
+    }
   }
 
   bool _mounted = true;
@@ -74,10 +86,13 @@ class OnboardingState with ChangeNotifier {
 
   SessionRequestStatus sessionRequestStatus = SessionRequestStatus.none;
 
-  void reset() {
+  Future<void> reset() async {
+    await _secureService.clearPendingSession();
+
     sessionRequestStatus = SessionRequestStatus.none;
     _sessionRequestHash = null;
     _sessionRequestPrivateKey = null;
+    _tempAccountAddress = null;
 
     touched = false;
     regionCode = null;
@@ -94,10 +109,15 @@ class OnboardingState with ChangeNotifier {
     safeNotifyListeners();
   }
 
-  void retry() {
+  Future<void> retry() async {
+    // Clear any saved credentials since session was not successfully confirmed
+    await _secureService.clearCredentials();
+    await _secureService.clearPendingSession();
+
     sessionRequestStatus = SessionRequestStatus.none;
     _sessionRequestHash = null;
     _sessionRequestPrivateKey = null;
+    _tempAccountAddress = null;
 
     challenge = null;
     challengeTouched = false;
@@ -105,6 +125,49 @@ class OnboardingState with ChangeNotifier {
     challengeController.clear();
 
     safeNotifyListeners();
+  }
+
+  Future<void> goBackToPhoneEntry() async {
+    // Clear any saved credentials since session was not successfully confirmed
+    await _secureService.clearCredentials();
+    await _secureService.clearPendingSession();
+
+    sessionRequestStatus = SessionRequestStatus.none;
+    _sessionRequestHash = null;
+    _sessionRequestPrivateKey = null;
+    _tempAccountAddress = null;
+
+    challenge = null;
+    challengeTouched = false;
+    touched = false;
+    regionCode = null;
+
+    phoneNumberController.text = dotenv.get('DEFAULT_PHONE_COUNTRY_CODE');
+    challengeController.clear();
+
+    safeNotifyListeners();
+  }
+
+  bool tryEnterPreviousCode() {
+    // Try to restore any pending session from storage
+    final pendingSession = _secureService.getPendingSession();
+    if (pendingSession != null) {
+      debugPrint('Restoring pending session for code entry');
+      final (sessionKey, sessionHash, accountAddress) = pendingSession;
+      _sessionRequestPrivateKey = sessionKey;
+      _sessionRequestHash = sessionHash;
+      _tempAccountAddress = accountAddress;
+      sessionRequestStatus = SessionRequestStatus.challenge;
+      challengeController.clear();
+      challenge = null;
+      challengeTouched = false;
+      safeNotifyListeners();
+      return true;
+    } else {
+      debugPrint('No pending session found - cannot enter code');
+      // Cannot proceed without session data
+      return false;
+    }
   }
 
   EthereumAddress? getAccountAddress() {
@@ -124,23 +187,48 @@ class OnboardingState with ChangeNotifier {
   }
 
   Future<EthereumAddress?> isSessionExpired() async {
-    final credentials = _secureService.getCredentials();
-    if (credentials == null) {
+    try {
+      final credentials = _secureService.getCredentials();
+      if (credentials == null) {
+        return null;
+      }
+
+      final (account, privateKey) = credentials;
+
+      // Check if account exists on-chain first to catch broken states
+      // where credentials were saved but account was never created
+      try {
+        final exists = await accountExists(_config, account);
+        if (!exists) {
+          debugPrint('Account does not exist on-chain during session check');
+          await _secureService.clearCredentials();
+          await _preferencesService.clear();
+          return null;
+        }
+      } catch (e) {
+        debugPrint('Error checking account existence: $e');
+        // Network error - don't clear credentials, just skip the check
+        // and proceed to session expiry check
+      }
+
+      final isExpired = await _config.sessionManagerModuleContract.isExpired(
+        account,
+        privateKey.address,
+      );
+
+      if (isExpired) {
+        await _secureService.clearCredentials();
+        return null;
+      }
+
+      return account;
+    } catch (e, s) {
+      debugPrint('error checking session: $e');
+      debugPrint('stack trace: $s');
+      // On errors, assume session is valid to avoid navigation loops
+      // Return null to stay on onboarding screen
       return null;
     }
-
-    final (account, privateKey) = credentials;
-
-    final isExpired = await _config.sessionManagerModuleContract.isExpired(
-      account,
-      privateKey.address,
-    );
-
-    if (isExpired) {
-      return null;
-    }
-
-    return account;
   }
 
   // state methods here
@@ -191,9 +279,14 @@ class OnboardingState with ChangeNotifier {
         salt,
       );
 
-      await _secureService.setCredentials(
-        twoFAAddress,
+      // Store the account address temporarily - credentials will be saved after confirmation
+      _tempAccountAddress = twoFAAddress;
+
+      // Persist the pending session so it survives app restarts
+      await _secureService.setPendingSession(
         _sessionRequestPrivateKey!,
+        _sessionRequestHash!,
+        _tempAccountAddress!,
       );
 
       sessionRequestStatus = SessionRequestStatus.challenge;
@@ -221,6 +314,10 @@ class OnboardingState with ChangeNotifier {
         throw Exception('Session request hash not found');
       }
 
+      if (_tempAccountAddress == null) {
+        throw Exception('Account address not found');
+      }
+
       sessionRequestStatus = SessionRequestStatus.confirming;
       safeNotifyListeners();
 
@@ -241,17 +338,23 @@ class OnboardingState with ChangeNotifier {
         throw Exception('Failed to wait for session request tx to be mined');
       }
 
+      // Now that session is confirmed, save credentials
+      await _secureService.setCredentials(
+        _tempAccountAddress!,
+        _sessionRequestPrivateKey!,
+      );
+
+      // Clear pending session from storage
+      await _secureService.clearPendingSession();
+
       sessionRequestStatus = SessionRequestStatus.confirmed;
       safeNotifyListeners();
 
+      final account = _tempAccountAddress!;
+
+      // Clean up temporary variables
       _sessionRequestPrivateKey = null;
-
-      final credentials = _secureService.getCredentials();
-      if (credentials == null) {
-        throw Exception('No credentials found');
-      }
-
-      final (account, _) = credentials;
+      _tempAccountAddress = null;
 
       connectedAccountAddress = account;
 
