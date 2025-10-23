@@ -260,8 +260,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           focusNode: _focusNode, // Use the focus node
                           autofocus:
                               false, // We'll focus manually after animation
-                          enabled:
-                              sessionRequestStatus == SessionRequestStatus.none,
+                          enabled: sessionRequestStatus ==
+                                  SessionRequestStatus.none ||
+                              sessionRequestStatus ==
+                                  SessionRequestStatus.failed,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(30),
                             border: Border.all(
@@ -368,6 +370,17 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           onChanged: handleChallengeChange,
                         ),
                       const SizedBox(height: 16),
+                      if (sessionRequestStatus == SessionRequestStatus.failed)
+                        Text(
+                          AppLocalizations.of(context)!.failedToSendCode,
+                          style: TextStyle(
+                            color: dangerColor,
+                          ),
+                        ),
+                      if (sessionRequestStatus == SessionRequestStatus.failed)
+                        const SizedBox(
+                          height: 16,
+                        ),
                       if (sessionRequestStatus ==
                           SessionRequestStatus.confirmFailed)
                         Text(
@@ -475,6 +488,27 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           ),
                         ),
                       const SizedBox(height: 16),
+                      if (sessionRequestStatus == SessionRequestStatus.failed)
+                        WideButton(
+                          onPressed: handleRetry,
+                          color: whiteColor,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                AppLocalizations.of(context)!.retry,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      if (sessionRequestStatus == SessionRequestStatus.failed)
+                        const SizedBox(height: 16),
                       if (sessionRequestStatus ==
                           SessionRequestStatus.confirmFailed)
                         WideButton(

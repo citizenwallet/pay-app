@@ -177,6 +177,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get invalidCode => 'Code invalide';
 
   @override
+  String get failedToSendCode =>
+      'Échec de l\'envoi du code. Veuillez réessayer.';
+
+  @override
   String get sendingSmsCode => 'Envoi du code SMS...';
 
   @override
@@ -498,6 +502,10 @@ class AppLocalizationsFrBe extends AppLocalizationsFr {
 
   @override
   String get invalidCode => 'Code invalide';
+
+  @override
+  String get failedToSendCode =>
+      'Échec de l\'envoi du code. Veuillez réessayer.';
 
   @override
   String get sendingSmsCode => 'Envoi du code SMS...';

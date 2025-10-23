@@ -55,6 +55,7 @@
     "languageChangedSuccessfully": "Language changed successfully!",
     "enterLoginCode": "Enter login code",
     "invalidCode": "Invalid code",
+    "failedToSendCode": "Failed to send code. Please try again.",
     "sendingSmsCode": "Sending SMS Code...",
     "loggingIn": "Logging in...",
     "confirmCodeAgain": "Confirm code again",
@@ -274,6 +275,9 @@
     },
     "@invalidCode": {
         "description": "Invalid code error message"
+    },
+    "@failedToSendCode": {
+        "description": "Failed to send code error message"
     },
     "@sendingSmsCode": {
         "description": "Sending SMS code message"

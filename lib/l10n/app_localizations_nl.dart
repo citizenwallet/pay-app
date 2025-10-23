@@ -177,6 +177,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get invalidCode => 'Ongeldige code';
 
   @override
+  String get failedToSendCode => 'Code verzenden mislukt. Probeer het opnieuw.';
+
+  @override
   String get sendingSmsCode => 'SMS-code verzenden...';
 
   @override
@@ -498,6 +501,9 @@ class AppLocalizationsNlBe extends AppLocalizationsNl {
 
   @override
   String get invalidCode => 'Ongeldige code';
+
+  @override
+  String get failedToSendCode => 'Code verzenden mislukt. Probeer het opnieuw.';
 
   @override
   String get sendingSmsCode => 'SMS-code verzenden...';

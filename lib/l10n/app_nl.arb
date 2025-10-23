@@ -55,6 +55,7 @@
     "languageChangedSuccessfully": "Taal succesvol gewijzigd!",
     "enterLoginCode": "Voer inlogcode in",
     "invalidCode": "Ongeldige code",
+    "failedToSendCode": "Code verzenden mislukt. Probeer het opnieuw.",
     "sendingSmsCode": "SMS-code verzenden...",
     "loggingIn": "Inloggen...",
     "confirmCodeAgain": "Code opnieuw bevestigen",

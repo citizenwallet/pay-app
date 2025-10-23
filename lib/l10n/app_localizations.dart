@@ -432,6 +432,12 @@ abstract class AppLocalizations {
   /// **'Invalid code'**
   String get invalidCode;
 
+  /// Failed to send code error message
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send code. Please try again.'**
+  String get failedToSendCode;
+
   /// Sending SMS code message
   ///
   /// In en, this message translates to:

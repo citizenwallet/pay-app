@@ -177,6 +177,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidCode => 'Invalid code';
 
   @override
+  String get failedToSendCode => 'Failed to send code. Please try again.';
+
+  @override
   String get sendingSmsCode => 'Sending SMS Code...';
 
   @override

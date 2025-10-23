@@ -55,6 +55,7 @@
     "languageChangedSuccessfully": "Langue changée avec succès !",
     "enterLoginCode": "Entrer le code de connexion",
     "invalidCode": "Code invalide",
+    "failedToSendCode": "Échec de l'envoi du code. Veuillez réessayer.",
     "sendingSmsCode": "Envoi du code SMS...",
     "loggingIn": "Connexion en cours...",
     "confirmCodeAgain": "Confirmer le code à nouveau",
