@@ -656,12 +656,16 @@ class ScannerModalState extends State<ScannerModal>
     final cardProject = context.select<SendingState, String?>(
       (state) => state.cardProject,
     );
+    final fetchingPlace = context.select<SendingState, bool>(
+      (state) => state.fetchingPlace,
+    );
 
     final emptyScan = qrData != null &&
         profile == null &&
         place == null &&
         order == null &&
-        cardProject == null;
+        cardProject == null &&
+        !fetchingPlace;
 
     final primaryColor = context.select<AppState, Color>(
       (state) => state.tokenPrimaryColor,
@@ -815,6 +819,42 @@ class ScannerModalState extends State<ScannerModal>
                                     type: ProfileCardType.user,
                                     loading: transactionSending,
                                     onClose: handleClearData,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          if (fetchingPlace && _showControls && qrData != null)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth: width * 0.8,
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(40),
+                                    decoration: BoxDecoration(
+                                      color: whiteColor,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        CupertinoActivityIndicator(
+                                          radius: 20,
+                                          color: primaryColor,
+                                        ),
+                                        const SizedBox(height: 20),
+                                        Text(
+                                          AppLocalizations.of(context)!.loading,
+                                          style: TextStyle(
+                                            color: blackColor,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
