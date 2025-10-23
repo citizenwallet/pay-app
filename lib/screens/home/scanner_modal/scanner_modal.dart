@@ -153,6 +153,7 @@ class ScannerModalState extends State<ScannerModal>
 
     await delay(const Duration(milliseconds: 100));
 
+    if (!mounted) return;
     setState(() {
       _showCards = true;
     });
@@ -175,6 +176,7 @@ class ScannerModalState extends State<ScannerModal>
     if (widget.manualScanResult != null) {
       await handleScanData(widget.manualScanResult!);
 
+      if (!mounted) return;
       setState(() {
         _manualScan = false;
       });
@@ -195,6 +197,7 @@ class ScannerModalState extends State<ScannerModal>
   }
 
   void showScanner() async {
+    if (!mounted) return;
     setState(() {
       _opacity = 1;
       _image = null;
@@ -221,6 +224,7 @@ class ScannerModalState extends State<ScannerModal>
 
       await delay(const Duration(milliseconds: 100));
 
+      if (!mounted) return;
       setState(() {
         _showCards = false;
       });
@@ -247,6 +251,7 @@ class ScannerModalState extends State<ScannerModal>
 
     if (_image == null) {
       _image = capture.image;
+      if (!mounted) return;
       setState(() {
         _image = capture.image;
       });
