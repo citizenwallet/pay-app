@@ -641,12 +641,11 @@ packages:
   mobile_scanner:
     dependency: "direct main"
     description:
-      path: "."
-      ref: bff8d48a1dde4e3f7afe862e4106fbe073c0b074
-      resolved-ref: bff8d48a1dde4e3f7afe862e4106fbe073c0b074
-      url: "https://github.com/citizenwallet/mobile_scanner.git"
-    source: git
-    version: "7.0.1"
+      name: mobile_scanner
+      sha256: "5e7e09d904dc01de071b79b3f3789b302b0ed3c9c963109cd3f83ad90de62ecf"
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.1.2"
   modal_bottom_sheet:
     dependency: "direct main"
     description:
