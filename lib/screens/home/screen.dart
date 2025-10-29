@@ -197,11 +197,13 @@ class _HomeScreenState extends State<HomeScreen>
 
     _handlingExpiredCredentials = true;
 
-    final navigator = GoRouter.of(context);
+    // Defer state updates to after the current build phase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final navigator = GoRouter.of(context);
 
-    _onboardingState.clearConnectedAccountAddress();
-    navigator.go('/');
-    return;
+      _onboardingState.clearConnectedAccountAddress();
+      navigator.go('/');
+    });
   }
 
   @override
