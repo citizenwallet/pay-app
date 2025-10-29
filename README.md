@@ -1,4 +1,4 @@
-Pay — Mobile Wallet (Flutter)
+# Pay — Mobile Wallet (Flutter)
 
 Open-source Flutter app powering the **Brussels Pay** local payment network.  
 Supports phone-number login, multi-currency wallets, QR payments, P2P transfers, and card-based spending.
