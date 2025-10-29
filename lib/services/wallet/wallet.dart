@@ -17,11 +17,12 @@ import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
 /// given a tx hash, waits for the tx to be mined
+/// waits up to ~19.5 seconds with exponential backoff
 Future<bool> waitForTxSuccess(
   Config config,
   String txHash, {
   int retryCount = 0,
-  int maxRetries = 20,
+  int maxRetries = 12,
 }) async {
   if (retryCount >= maxRetries) {
     return false;

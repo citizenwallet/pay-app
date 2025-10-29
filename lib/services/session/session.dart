@@ -127,7 +127,18 @@ class SessionService {
         body: requestBody,
       );
 
-      return (response['sessionRequestTxHash'] as String, hash);
+      final txHash = response['sessionRequestTxHash'];
+      if (txHash == null) {
+        // Check if there's an error message from the backend
+        final errorMessage = response['error'] ?? response['message'];
+        if (errorMessage != null) {
+          throw Exception('Backend error: $errorMessage');
+        }
+        throw Exception(
+            'There may already be a pending code for this number. Please check your messages or wait a moment before trying again.');
+      }
+
+      return (txHash as String, hash);
     } on BadRequestException {
       throw InvalidChallengeException();
     } catch (e, s) {

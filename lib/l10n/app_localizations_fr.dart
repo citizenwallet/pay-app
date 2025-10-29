@@ -177,6 +177,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get invalidCode => 'Code invalide';
 
   @override
+  String get failedToSendCode =>
+      'Échec de l\'envoi du code. Vous avez peut-être déjà un code en attente - veuillez vérifier vos messages ou attendre un moment avant de réessayer.';
+
+  @override
   String get sendingSmsCode => 'Envoi du code SMS...';
 
   @override
@@ -190,6 +194,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sendNewCode => 'Envoyer un nouveau code';
+
+  @override
+  String get changePhoneNumber => 'Changer le numéro de téléphone';
+
+  @override
+  String get iAlreadyHaveCode => 'J\'ai déjà un code';
+
+  @override
+  String get noCodeFound => 'Aucun code en attente';
+
+  @override
+  String get noCodeFoundMessage =>
+      'Nous n\'avons pas trouvé de code en attente pour ce numéro de téléphone. Veuillez demander un nouveau code ou attendre un moment avant de réessayer.';
 
   @override
   String get displayContacts => 'Afficher les contacts';
@@ -500,6 +517,10 @@ class AppLocalizationsFrBe extends AppLocalizationsFr {
   String get invalidCode => 'Code invalide';
 
   @override
+  String get failedToSendCode =>
+      'Échec de l\'envoi du code. Vous avez peut-être déjà un code en attente - veuillez vérifier vos messages ou attendre un moment avant de réessayer.';
+
+  @override
   String get sendingSmsCode => 'Envoi du code SMS...';
 
   @override
@@ -513,6 +534,19 @@ class AppLocalizationsFrBe extends AppLocalizationsFr {
 
   @override
   String get sendNewCode => 'Envoyer un nouveau code';
+
+  @override
+  String get changePhoneNumber => 'Changer le numéro de téléphone';
+
+  @override
+  String get iAlreadyHaveCode => 'J\'ai déjà un code';
+
+  @override
+  String get noCodeFound => 'Aucun code en attente';
+
+  @override
+  String get noCodeFoundMessage =>
+      'Nous n\'avons pas trouvé de code en attente pour ce numéro de téléphone. Veuillez demander un nouveau code ou attendre un moment avant de réessayer.';
 
   @override
   String get displayContacts => 'Afficher les contacts';

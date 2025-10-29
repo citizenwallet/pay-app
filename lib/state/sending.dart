@@ -92,6 +92,7 @@ class SendingState with ChangeNotifier {
 
   bool showTransactionInput = false;
   bool transactionSending = false;
+  bool fetchingPlace = false;
   double amount = 0.0;
 
   late String lastAccount;
@@ -315,6 +316,8 @@ class SendingState with ChangeNotifier {
       this.place = place;
 
       if (place != null) {
+        safeNotifyListeners();
+
         apiService.getPlaceAndMenu(slug).then((result) {
           this.place = result;
           safeNotifyListeners();
@@ -324,8 +327,12 @@ class SendingState with ChangeNotifier {
       }
 
       if (place == null) {
+        fetchingPlace = true;
+        safeNotifyListeners();
+
         final remotePlace = await apiService.getPlaceAndMenu(slug);
         this.place = remotePlace;
+        fetchingPlace = false;
         safeNotifyListeners();
 
         _places.upsert(remotePlace);
@@ -335,6 +342,9 @@ class SendingState with ChangeNotifier {
     } catch (e, s) {
       debugPrint('getPlaceWithMenu error: $e');
       debugPrint('getPlaceWithMenu stack trace: $s');
+
+      fetchingPlace = false;
+      safeNotifyListeners();
     }
 
     return null;
@@ -618,6 +628,7 @@ class SendingState with ChangeNotifier {
     cardProject = null;
     amount = 0.0;
     showTransactionInput = false;
+    fetchingPlace = false;
     safeNotifyListeners();
   }
 }

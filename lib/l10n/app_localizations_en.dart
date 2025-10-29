@@ -177,6 +177,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidCode => 'Invalid code';
 
   @override
+  String get failedToSendCode =>
+      'Failed to send code. You may already have a pending code - please check your messages or wait a moment before trying again.';
+
+  @override
   String get sendingSmsCode => 'Sending SMS Code...';
 
   @override
@@ -190,6 +194,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sendNewCode => 'Send new code';
+
+  @override
+  String get changePhoneNumber => 'Change phone number';
+
+  @override
+  String get iAlreadyHaveCode => 'I already have a code';
+
+  @override
+  String get noCodeFound => 'No Pending Code';
+
+  @override
+  String get noCodeFoundMessage =>
+      'We couldn\'t find a pending code for this phone number. Please request a new code or wait a moment before trying again.';
 
   @override
   String get displayContacts => 'Display contacts';

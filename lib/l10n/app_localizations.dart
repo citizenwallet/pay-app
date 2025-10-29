@@ -432,6 +432,12 @@ abstract class AppLocalizations {
   /// **'Invalid code'**
   String get invalidCode;
 
+  /// Failed to send code error message
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send code. You may already have a pending code - please check your messages or wait a moment before trying again.'**
+  String get failedToSendCode;
+
   /// Sending SMS code message
   ///
   /// In en, this message translates to:
@@ -461,6 +467,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send new code'**
   String get sendNewCode;
+
+  /// No description provided for @changePhoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Change phone number'**
+  String get changePhoneNumber;
+
+  /// No description provided for @iAlreadyHaveCode.
+  ///
+  /// In en, this message translates to:
+  /// **'I already have a code'**
+  String get iAlreadyHaveCode;
+
+  /// No description provided for @noCodeFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No Pending Code'**
+  String get noCodeFound;
+
+  /// No description provided for @noCodeFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find a pending code for this phone number. Please request a new code or wait a moment before trying again.'**
+  String get noCodeFoundMessage;
 
   /// Display contacts permission text
   ///

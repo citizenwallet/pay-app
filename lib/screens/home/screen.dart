@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pay_app/models/interaction.dart';
 import 'package:pay_app/models/order.dart';
 import 'package:pay_app/screens/home/contact_list_item.dart';
+import 'package:pay_app/screens/home/home_onboarding_modal.dart';
 import 'package:pay_app/screens/home/profile_list_item.dart';
 import 'package:pay_app/screens/home/profile_modal.dart';
 import 'package:pay_app/screens/home/transaction_list_item.dart';
@@ -115,6 +116,7 @@ class _HomeScreenState extends State<HomeScreen>
       // Start listening to lifecycle changes.
       WidgetsBinding.instance.addObserver(this);
       await onLoad();
+      await _showOnboardingIfNeeded();
     });
   }
 
@@ -151,6 +153,25 @@ class _HomeScreenState extends State<HomeScreen>
     // Initialize transactions for the current account
     if (widget.accountAddress.isNotEmpty) {
       _transactionsState.getTransactions(token: currentTokenAddress);
+    }
+  }
+
+  Future<void> _showOnboardingIfNeeded() async {
+    // Check if user has seen the home onboarding
+    if (!PreferencesService().homeOnboardingSeen) {
+      // Wait a bit for the screen to settle
+      await delay(const Duration(milliseconds: 500));
+
+      if (!mounted) return;
+
+      await showCupertinoDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const HomeOnboardingModal(),
+      );
+
+      // Mark as seen
+      await PreferencesService().setHomeOnboardingSeen(true);
     }
   }
 
